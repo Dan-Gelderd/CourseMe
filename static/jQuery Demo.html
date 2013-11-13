@@ -1,0 +1,30 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+    "http://www.w3.org/TR/html4/strict.dtd"
+    >
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Demo</title>
+</head>
+<body>
+    <a href="http://jquery.com/">jQuery</a>
+    <script src="js/lib/jquery.js"></script>
+    <script>
+ 
+    $( document ).ready(function() {
+ 
+        $( "a" ).click(function( event ) {
+ 
+            alert( "Thanks for visiting!" );
+            event.preventDefault();
+        });
+
+ 
+    });
+ 
+
+ 
+    </script>
+</body>
+</html>
