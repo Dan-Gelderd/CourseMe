@@ -1,0 +1,28 @@
+student questions
+student groups doing course at same time
+student feedack
+collaberation
+progress bars
+goals
+completion %
+time on task
+sign in to jump to point in course - not unambiguous - just last point viewed (not latest)
+breadcrumbs for nested courses
+copy a course into your own
+logos to determine length of nested course structure - eg. boarder, double border
+pool of logos to pic? could be repeats
+links to assumed, recap, intro, followons
+problem sets, interactive tools, lectures - different in category list - different icons
+name of next module in course
+data about how they answered questions - dig into to pupils work - needs scratch pads, working, hints buttons, links followed
+room for student notes
+syllabus map with courses attached
+suggestions for followon in parallel to coach recommendations
+number of molules in course - by type
+flag to mark as useful or to be revisited
+generate randomised tests
+recommended logo by modules and courses that are explicitly recommended by tutor
+started logo - if you are part way through?
+"pop-links" easy navigation back to recent courses you were looking at - maybe recents dropdown on nav bar? split by courses and modules by type?
+cross bar to remove recommendatilons/suggestions so others appear
+
