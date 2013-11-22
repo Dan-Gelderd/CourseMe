@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CourseMe</title>
+  <link rel="stylesheet" href="../css/lib/bootstrap.css" />
+</head>
+
+<body>
+
+
+
+  <div class="container">
+
+  <header>
+    <nav class="navbar navbar-default" role="navigation">
+      <!-- Brand and toggle get grouped for better mobile display -->
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="/static/preview/catalogue.html">CourseMe</a>
+      </div>
+    
+      <!-- Collect the nav links, forms, and other content for toggling -->
+      <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <ul class="nav navbar-nav">
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Recents<b class="caret"></b></a>
+            <ul class="dropdown-menu">
+              <li><a href="#"><span class="glyphicon glyphicon-list-alt"></span> Course Name <span class="badge badge-info">13</span></a></li>
+              <li class="divider"></li>
+              <li><a href="#"><span class="glyphicon glyphicon-play-circle"></span> Lecture Name</a></li>
+            </ul>
+          </li>
+        </ul>
+        <form class="navbar-form navbar-left" role="search"> 
+          <div class="form-group">
+            <input type="text" class="form-control" placeholder="Search">
+          </div>
+          <button type="submit" class="btn btn-default"><span class="glyphicon glyphicon-search"></span></button>
+        </form>
+        <ul class="nav navbar-nav navbar-right">
+          <li><a href="/static/preview/about.html">About</a></li>
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-user"></span> Dan<b class="caret"></b></a>
+            <ul class="dropdown-menu">
+              <li><a href="#">Sign Out</a></li>
+              <li><a href="#">Account Settings</a></li>
+              <li><a href="#">Something else here</a></li>
+              <li class="divider"></li>
+              <li><a href="#">Separated link</a></li>
+            </ul>
+          </li>
+        </ul>
+        
+      </div><!-- /.navbar-collapse -->
+    </nav>    
+
+  </header>
+
+  <div id=course-header>
+    <div class="row">
+      <div class="col-xs-11"><h2>Module Name</h2>
+        <ol class="breadcrumb">
+          <li><a href="#">Course Name</a></li>
+          <li class="active">Module Name</li>
+        </ol>
+      </div>
+      <div class="col-xs-1">
+        <div class="progress">
+          <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;">
+            <span class="sr-only">60% Complete</span>
+          </div>
+        </div>        
+      </div>
+      
+    </div>
+
+  </div>  
+
+  <hr>
+
+  <div class="row" id="module-material-and-actions">
+    <div class="col-sm-9" id="module-material">
+      <video width="100%" controls>
+        <source src="\static\preview\media\big_buck_bunny.mp4" type="video/mp4">
+        Need HTML5 video
+      </video>
+    </div>
+    <div class="col-sm-3" id="module-actions">
+      <span id="main-module-actions" style="font-size: large">
+        <span class="glyphicon glyphicon-chevron-left"></span>
+        <span class="glyphicon glyphicon-chevron-right"></span>
+        <span class="dropdown"></span>
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-share-alt"></span></a>
+          <ul class="dropdown-menu">
+            <li><a href="#">Recommend</a></li>
+            <li class="divider"></li>
+            <li><a href="#">Add to course</a></li>
+          </ul>
+        </span>
+
+        <span class="glyphicon glyphicon-pencil"></span>
+        <span class="glyphicon glyphicon-star-empty"></span>
+        <span id="module-voting" class="pannel">
+          <span class="glyphicon glyphicon-hand-up"></span> 
+          <span class="glyphicon glyphicon-hand-down"></span> 312 votes          
+        </span>
+      </span>    
+      <div id="module-course-structure">
+        
+      </div>
+    </div>  
+  </div>
+  
+  <hr>
+
+  
+  <div id="related-material">
+    <div class="row">
+<!--      <div class="col-sm-3">
+        <div>
+          <h4>This Course</h4>
+          <dl class="dl">
+            <dt>Previous</dt>
+            <dd>
+              <ul class="list-unstyled">
+                <li><a href="#"><span class="glyphicon glyphicon-play-circle"></span> Lecture Name</a></li>
+              </ul>
+            </dd>
+            <dt>Next</dt>
+            <dd>
+              <ul class="list-unstyled">
+                <li><a href="#"><span class="glyphicon glyphicon-check"></span> Questions</a></li>
+                <li><a href="#"><span class="glyphicon glyphicon-play-circle"></span> Lecture Name</a></li>
+              </ul>
+            </dd>
+          </dl>
+          <div class="input-group-btn">
+            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">Add to course <span class="caret"></span></button>
+            <ul class="dropdown-menu">
+              <li><a href="#">Course name</a></li>
+              <li><a href="#">Another course name</a></li>
+              <li><a href="#">Another one</a></li>
+              <li class="divider"></li>
+              <li><a href="#">Create new course</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>-->
+      <div class="col-sm-3">
+        <div>
+          <h4>Related Courses</h4>
+          <dl class="dl">
+            <dt>Courses with this module</dt>
+            <dd>
+              <ul class="list-unstyled">
+                <li><a href="#"><span class="glyphicon glyphicon-list-alt"></span> Course Name <span class="badge badge-info">23</span></a></li>
+                <li><a href="#"><span class="glyphicon glyphicon-list-alt"></span> Course Name <span class="badge badge-info">15</span></a></li>
+                <li><a href="#"><span class="glyphicon glyphicon-list-alt"></span> Course Name <span class="badge badge-info">12</span></a></li>
+              </ul>
+            </dd>
+            <dt>Alternative modules</dt>
+            <dd>
+              <ul class="list-unstyled">
+                <li><a href="#"><span class="glyphicon glyphicon-play-circle"></span> Lecture Name</a></li>
+                <li><a href="#"><span class="glyphicon glyphicon-play-circle"></span> Lecture Name</a></li>
+                <li><a href="#"><span class="glyphicon glyphicon-play-circle"></span> Lecture Name</a></li>
+              </ul>
+            </dd>
+          </dl>
+        </div>
+      </div>
+      <div class="col-sm-3">
+        <div>
+          <h4>Too advanced?</h4>
+          <dl class="dl">
+            <dt>Algebra</dt>
+            <dd>
+              <ul class="list-unstyled">
+                <li><a href="#"><span class="glyphicon glyphicon-list-alt"></span> Course Name <span class="badge badge-info">15</span></a></li>
+                <li><a href="#"><span class="glyphicon glyphicon-play-circle"></span> Lecture Name</a></li>
+                <li><a href="#"><span class="glyphicon glyphicon-play-circle"></span> Lecture Name</a></li>
+              </ul>
+            </dd>
+            <dt>Solving Equations</dt>
+            <dd>
+              <ul class="list-unstyled">
+                <li><a href="#"><span class="glyphicon glyphicon-wrench"></span> Interactive tool</a></li>
+                <li><a href="#"><span class="glyphicon glyphicon-list-alt"></span> Course Name <span class="badge badge-info">7</span></a></li>
+                <li><a href="#"><span class="glyphicon glyphicon-play-circle"></span> Lecture Name</a></li>
+              </ul>
+            </dd>
+          </dl>
+        </div>
+      </div>
+      <div class="col-sm-3">
+        <div>
+          <h4>What's next?</h4>
+          <dl class="dl">
+            <dt>Practice</dt>
+            <dd>
+              <ul class="list-unstyled">
+                <li><a href="#"><span class="glyphicon glyphicon-check"></span> Questions</a></li>
+                <li><a href="#"><span class="glyphicon glyphicon-check"></span> Hard Questions</a></li>
+                <li><a href="#"><span class="glyphicon glyphicon-check"></span> Very Hard Questions</a></li>
+                <li><a href="#"><span class="glyphicon glyphicon-wrench"></span> Experiment</a></li>
+              </ul>
+            </dd>
+            <dt>Next topics</dt>
+            <dd>
+              <ul class="list-unstyled">
+                <li><a href="#"><span class="glyphicon glyphicon-list-alt"></span> Course Name <span class="badge badge-info">13</span></a></li>
+                <li><a href="#"><span class="glyphicon glyphicon-play-circle"></span> Lecture Name</a></li>
+                <li><a href="#"><span class="glyphicon glyphicon-play-circle"></span> Lecture Name</a></li>
+              </ul>
+            </dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <hr>
+  
+  <div class="row" id="Comments">
+    <col-sm-9>
+         
+      <div id="Voting" class="panel">
+        <button class="btn" type="button" id = "up-vote" rel="popover" data-content="Up-voting makes the module more likely to come up in other people's searches. Up-voting is annonymous.">
+          <span class="glyphicon glyphicon-hand-up"></span> Up vote
+        </button>
+        <button class="btn" type="button" id = "down-vote" rel="popover" data-content="Down-voting makes the module less likely to come up in other people's searches. Down-voting is annonymous.">
+          <span class="glyphicon glyphicon-hand-down"></span> Down vote
+        </button>
+      </div>
+ 
+    </col-sm-9>
+    <col-sm-3>
+      
+    </col-sm-3>
+  </div>
+  
+  
+  <!--example to show breadcrumbs working-->
+  <div class="row" id="course-outline-breadcrumbs">
+    <div id="breadcrumb"></div>
+    <ul id="navigation_links">
+      <li><a href="/static/preview/course.html">Page 1</a></li>
+      <li><a href="/static/preview/course.html">Page 2</a></li>
+      <li><a href="/static/preview/course.html">Page 3</a></li>
+      <li><a href="/static/preview/course.html">Page 4</a></li>
+    </ul>      
+  </div>
+    
+      
+  <footer>
+    <div><a href="http://glyphicons.com/">With thanks to Glphicons for making their icons freely available</a></div>
+
+    <ul class="list-unstyled">  
+      <li class="socials"><g:plusone annotation="inline" width="150"></g:plusone></li>  
+      <li class="socials"><div class="fb-like" data-href="https://developers.facebook.com/docs/plugins/" data-width="The pixel width of the plugin" data-height="The pixel height of the plugin" data-colorscheme="light" data-layout="standard" data-action="like" data-show-faces="true" data-send="false"></div></li>  
+      <li class="socials"><a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>  
+        <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script></li>  
+    </ul>  
+
+  </footer>    
+
+  
+  
+  </div><!--End Container-->
+  
+  
+  <script src="../js/lib/jquery.js"></script>
+  <script src="../js/lib/bootstrap.js"></script>
+  <script src="../js/lib/tooltip.js"></script>
+  <script src="../js/lib/popover.js"></script>
+  <script src="../js/breadcrumbs.js"></script>
+  <script>  
+    $(function ()  
+      { $("#up-vote").popover();  
+      });  
+  </script> 
+ 
+  
+</body>
+</html>
