@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>CourseMe</title>
+        <link rel="stylesheet" href="../../static/css/lib/bootstrap.css" />
+        <link rel="stylesheet" href="../../static/css/main.css" />
+        <link rel="shortcut icon" href="../../static/courseme.ico" />
+    </head>
+
+
+    <body>
+    <div class="container">   <!--Needed for twitter bootstrap. Creates an untitled section in the document outline.-->    
+        <header>
+          <nav class="navbar navbar-default" role="navigation">   <!--DJG - Creates an untitled section in the document outline.-->
+            <h1 style="display:none;">Site Navigation</h1>
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+              <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="navbar-brand" href="/static/preview/catalogue.html">CourseMe</a>
+            </div>
+          
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+              <ul class="nav navbar-nav">
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown">Quick Links<b class="caret"></b></a>
+                  <ul class="dropdown-menu">
+                    <li role="presentation" class="dropdown-header">Recently viewed material</li>
+                    <li><a href="#"><span class="glyphicon glyphicon-list-alt"></span> My latest viewed course <span class="badge badge-info">13</span></a></li>
+                    <li><a href="#"><span class="glyphicon glyphicon-play-circle"></span> My latest viewed module</a></li>
+                    <li><a href="#"><span class="glyphicon glyphicon-play-circle"></span> My latest module within one of my courses</a></li>
+                    <li role="presentation" class="divider"></li>
+                    <li role="presentation" class="dropdown-header">My courses</li>
+                    <li><a href="#"><span class="glyphicon glyphicon-list-alt"></span> Course name <span class="badge badge-info">13</span></a></li>
+    
+                  </ul>
+                </li>
+              </ul>
+              <form class="navbar-form navbar-left" role="search"> 
+                <div class="form-group">
+                  <input type="text" class="form-control" placeholder="Search">
+                </div>
+                <button type="submit" class="btn btn-default"><span class="glyphicon glyphicon-search"></span></button>
+              </form>
+              <ul class="nav navbar-nav navbar-right">
+                <li><a href="/static/preview/about.html">About</a></li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-user"></span> Dan<b class="caret"></b></a>
+                  <ul class="dropdown-menu">
+                    <li><a href="#">Sign Out</a></li>
+                    <li><a href="#">Account Settings</a></li>
+                    <li class="divider"></li>
+                    <li><a href="#">My Courses</a></li>
+                  </ul>
+                </li>
+              </ul>
+              
+            </div><!-- /.navbar-collapse -->
+          </nav>    
+        </header>    
+    
+
+        {% block content %}
+        <!-- insert page specific content here -->
+        {% endblock %}
+
+        <hr>
+    
+        <footer>
+            <div><a href="http://glyphicons.com/">With thanks to Glphicons for making their icons freely available through Twiter Bootstrap</a></div>
+  
+            <ul class="list-unstyled">  
+                <li class="socials"><g:plusone annotation="inline" width="150"></g:plusone></li>  
+                <li class="socials"><div class="fb-like" data-href="https://developers.facebook.com/docs/plugins/" data-width="The pixel width of the plugin" data-height="The pixel height of the plugin" data-colorscheme="light" data-layout="standard" data-action="like" data-show-faces="true" data-send="false"></div></li>  
+                <li class="socials"><a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>  
+                <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script></li>  
+            </ul>  
+  
+        </footer>
+        
+        <script src="../../static/js/lib/jquery.js"></script>
+        <script src="../../static/js/lib/bootstrap.js"></script>
+        <script src="../../static/js/lib/tooltip.js"></script>
+        <script src="../../static/js/lib/popover.js"></script>
+        <script src="../../static/js/lib/collapse.js"></script>
+        <script src="../../static/js/lib/transition.js"></script>
+    </div>
+    </body>
+</html>
