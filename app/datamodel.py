@@ -1,33 +1,48 @@
-import datetime
+#!/usr/bin/env python
+
+from datetime import datetime
+import json
+
 
 class Module(object):
-    _modules = {}           # DJG - just for the static database - would change to a database lookup once we have mongodb
+    _modules = {}                   # DJG - just for the static database - would change to a database lookup once we have mongodb
     
     def __init__(self, name):
         self.name = name
         
         self.objectives = set()
         self.author = None
-        #self.vote = 333
+        self.vote = 0            # DJG - Maybe keep here as shorthand for the vote count rather than do a sum over usermodules
         
         self.save()
         
     def save(self):
         self._modules[self.name] = self
-        
-    @classmethod
-    def find(cls, name):            # DJG - just for the static database - would change to a database ;lookup once we have mongodb
-        return cls._modules[name]
 
         
-    
+    @classmethod
+    def find(cls, name):            # DJG - just for the static database - would change to a database lookup once we have mongodb
+        return cls._modules[name]
+
 class User(object):
-    def __init__(self):
-        self.name = "User 1"
+    _users = {}                     # DJG - just for the static database - would change to a database lookup once we have mongodb
+
+    def __init__(self, name):
+        self.name = name
+        self.blurb = ""
         
-        self.modules = set()
+        self.institutions = set()
+        self.modules = set()        #DJG - don't understand these three
         self.courses = set()
         self.recommendations = set()
+
+    def save(self):
+        self._users[self.name] = self
+        
+    @classmethod
+    def find(cls, name):            # DJG - just for the static database - would change to a database lookup once we have mongodb
+        return cls._users[name]    
+
         
 class Course(object):
     def __init__(self):
@@ -37,10 +52,21 @@ class Course(object):
         self.modules = []
 
 class Objective(object):
-    def __init__(self):
-        self.name = "Objective 1"
-        
+    _objectives = {}                # DJG - just for the static database - would change to a database lookup once we have mongodb
+
+    def __init__(self, name):
+        self.name = name
+
         self.prerequisites = set()
+
+        self.save()
+
+    def save(self):
+        self._objectives[self.name] = self
+        
+    @classmethod
+    def find(cls, name):            # DJG - just for the static database - would change to a database lookup once we have mongodb
+        return cls._objectives[name]
         
 class Group(object):
     def __init__(self):
@@ -56,27 +82,41 @@ class Recommendation(object):
         self.module = None
 
 class UserModule(object):
-    def __init__(self):
-        self.completed = date(01/01/2014)
-        self.starred = False
+    _usermodules = {}                   # DJG - just for the static database - would change to a database lookup once we have mongodb
 
-        self.user = None
-        self.module = None
+    def __init__(self, user, module):
+        self.initiated = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        self.starred = False
+        self.vote = 0
+        self.notes = ""
+
+        self.user = user
+        self.module = module
+
+        self.save()
+
+    def save(self):
+        self._usermodules[self.user, self.module] = self
+
+    def as_json(self):
+        data = {}
+        data['user'] = self.user.name
+        data['module'] = self.module.name
+        data['starred'] = self.starred
+        return json.dumps(data)
+
+    @classmethod
+    def find(cls, user, module):                # DJG - just for the static database - would change to a database lookup once we have mongodb
+        return cls._usermodules[user, module]
+
 
 class UserCourse(object):
     pass
 
-class Vote(object):
-    def __init__(self):
-        self.value = 0
-        
-        self.voter = None
-        self.module = None
-        
 class Institution(object):
     def __init__(self):
         self.name = "Institution 1"
-        self.blurb = "Institution 1"
-        self.website = "Institution 1"
+        self.blurb = "This institution creates lots of great material"
+        self.website = "www.Institution1.com"
 
         self.users = set()

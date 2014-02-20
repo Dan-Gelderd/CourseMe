@@ -1,6 +1,76 @@
 {% extends "layout.html" %}
 {% block content %}
 
+<script type='text/javascript'>
+  function dostars(span) {
+    $.getJSON(
+      '/modulestar/{{module.name}}',
+      {},   //DJG - could pass back query parameters
+      function(json) {
+        console.log(json);
+        console.log(json["user"]);
+        console.log(json.starred);
+        if (json.starred == "True") {
+          span.addClass("glyphicon glyphicon-star");
+          span.removeClass("glyphicon glyphicon-star-empty");
+        }
+        else {
+          span.addClass("glyphicon glyphicon-star-empty");
+          span.removeClass("glyphicon glyphicon-star");          
+        }
+      }
+    );
+  }
+</script>
+
+
+  
+
+<script>    
+    //$.ajax(
+    //       {
+    //        url: '/modulestar/{{module.name}}',
+    //        //success: function(result) {
+    //        //  if ($(result).nodeValue('starred') == "True") {
+    //        //    span.addClass("glyphicon glyphicon-star");
+    //        //    span.removeClass("glyphicon glyphicon-star-empty");              
+    //        //  }
+    //        //  else {
+    //        //    span.addClass("glyphicon glyphicon-star-empty");
+    //        //    span.removeClass("glyphicon glyphicon-star");                              
+    //        //  }
+    //        //},
+    //        dataType: "json",
+    //        complete: function(result) {
+    //          console.log(JSON.stringify(result.responseText));
+    //
+    //        }
+    //        
+    //       }
+    //) 
+</script>
+
+
+
+<!--    <script type='text/javascript'>
+      function dostars(span) {
+        $.ajax('/modulestar/{{module.name}}', {
+          complete: function(obj, res) {
+            if (res == "success") {
+              alert($(obj).getElementsByTagName('starred')); //find('courseme').text());          //syntax not working
+              if ($(obj).find('starred').text() == "True") {
+                span.addClass("glyphicon glyphicon-star");
+                span.removeClass("glyphicon glyphicon-star-empty");                
+              } else {
+                span.addClass("glyphicon glyphicon-star-empty");
+                span.removeClass("glyphicon glyphicon-star");                              }
+            } else {
+              //error
+            }
+          }
+        })
+      }
+    </script>-->
 
     <div class="row" id="material-and-actions">
       <div class="col-sm-9">
@@ -19,10 +89,10 @@
                       <li><a href="#">Add to course</a></li>
                     </ul> 
                   </span>
-                  {% if module_user.starred %}
-                  <span class="glyphicon glyphicon-star"></span>
+                  {% if usermodule.starred %}
+                  <span class="glyphicon glyphicon-star" onclick="dostars(this);"></span>
                   {% else %}
-                  <span class="glyphicon glyphicon-star-empty"></span>                  
+                  <span class="glyphicon glyphicon-star-empty" onclick="dostars(this);"></span>                  
                   {% endif %}
                   <span id="voting" class="pull-right">
                     <span class="glyphicon glyphicon-hand-up"></span> 
@@ -39,8 +109,8 @@
             </article>
             <footer>
               <ul class="pager">
-                <li class="previous"><a href="/static/preview/module.html">&larr; {{modules[module.previous_module].name}}</a></li>
-                <li class="next"><a href="/static/preview/module.html">{{modules[module.next_module].name}} &rarr;</a></li>
+                <li class="previous"><a href="/static/preview/module.html">&larr; Previous Module HC</a></li>
+                <li class="next"><a href="/static/preview/module.html">Next Module HC &rarr;</a></li>
               </ul>
             </footer>
 
@@ -71,7 +141,7 @@
               <div class="panel-heading">
                 <span class="panel-title">
                   <a data-toggle="collapse" data-parent="#collapsable-course-navigation" href="#{{objective}}">
-                    {{global_objectives[objective]}}
+                    {{objective.name}}
                   </a>
                 </span>
               </div>
@@ -81,18 +151,14 @@
                     <dt>Alternative Lectures</dt>
                     <dd>
                       <ul class="list-unstyled">
-                        {% for lecture in module.alternatives.lectures %}
-                        <li><a href="#"><span class="glyphicon glyphicon-play-circle"></span> {{modules[lecture].name}}</a></li>
-                        {% endfor %}
+
                         <li><a href="#">Search all...</a></li>  
                       </ul>
                     </dd>
                     <dt>Exercises</dt>
                     <dd>
                       <ul class="list-unstyled">
-                        {% for lecture in module.alternatives.exercises %}
-                        <li><a href="#"><span class="glyphicon glyphicon-check"></span> {{modules[lecture].name}}</a></li>
-                        {% endfor %}
+
                         <li><a href="#"><span class="glyphicon glyphicon-check"></span> Questions</a></li>
                         <li><a href="#"><span class="glyphicon glyphicon-check"></span> Hard Questions</a></li>
                         <li><a href="#"><span class="glyphicon glyphicon-check"></span> Very Hard Questions</a></li>
@@ -121,8 +187,10 @@
               <div id="prerequisites" class="panel-collapse collapse">
                 <div class="panel-body">
                   <ul class="list-unstyled">
-                    {% for prerequisite in module.prerequisites %}
-                    <li><a href="/static/preview/catalogue.html">{{global_objectives[prerequisite]}}</a></li>
+                    {% for objective in module.objectives %}
+                    {% for prerequisite in objective.prerequisites %}                    
+                    <li><a href="/static/preview/catalogue.html">{{prerequisite.name}}</a></li>
+                    {% endfor %}
                     {% endfor %}
                   </ul>
                 </div>
@@ -147,7 +215,7 @@
           <div class="tab-content">
             <article class="tab-pane active" id="author-notes">
               <h1 style="display:none;">Author Notes</h1>
-              These are the module author notes. Raw denim you probably haven't heard of them jean shorts Austin. Nesciunt tofu stumptown aliqua, retro synth master cleanse. Mustache cliche tempor, williamsburg carles vegan helvetica. Reprehenderit butcher retro keffiyeh dreamcatcher synth. Cosby sweater eu banh mi, qui irure terry richardson ex squid. Aliquip placeat salvia cillum iphone. Seitan aliquip quis cardigan american apparel, butcher voluptate nisi qui.
+              {{authormodule.notes}}
             </article>
             <article class="tab-pane" id="tutor-notes">
               <h1 style="display:none;">Tutor Notes</h1>
@@ -156,7 +224,7 @@
             <article class="tab-pane" id="my-notes">
               <h1 style="display:none;">My Notes</h1>
               <button type="submit" class="btn btn-sm"><span class="glyphicon glyphicon-pencil"></span></button>
-               These are my notes. Raw denim you probably haven't heard of them jean shorts Austin. Nesciunt tofu stumptown aliqua, retro synth master cleanse. Mustache cliche tempor, williamsburg carles vegan helvetica. Reprehenderit butcher retro keffiyeh dreamcatcher synth. Cosby sweater eu banh mi, qui irure terry richardson ex squid. Aliquip placeat salvia cillum iphone. Seitan aliquip quis cardigan american apparel, butcher voluptate nisi qui. Raw denim you probably haven't heard of them jean shorts Austin. Nesciunt tofu stumptown aliqua, retro synth master cleanse. Mustache cliche tempor, williamsburg carles vegan helvetica. Reprehenderit butcher retro keffiyeh dreamcatcher synth. Cosby sweater eu banh mi, qui irure terry richardson ex squid. Aliquip placeat salvia cillum iphone. Seitan aliquip quis cardigan american apparel, butcher voluptate nisi qui.
+               {{usermodule.notes}}
             </article>
           </div>
         </section>
@@ -166,9 +234,9 @@
         <aside id="profiles">
           <article class="thumbnail">
             <img class = "img-responsive" id="author-picture" src="../../static/preview/media/zippy.png" alt="Module Author Profile Picture">
-            <span class="lead">{{users[module.author].name}}</span>
-            <address>{{users[module.author].institution}}</address> 
-            <p>{{users[module.author].blurb}}</p>
+            <span class="lead">{{module.author.name}}</span>
+            <p>{{module.author.blurb}}</p>
+            <address>Change this to a list of institutions?</address> 
           </article>
         </aside>
       </div>
