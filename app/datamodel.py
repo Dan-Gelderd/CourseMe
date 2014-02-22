@@ -12,7 +12,7 @@ class Module(object):
         
         self.objectives = set()
         self.author = None
-        self.vote = 0            # DJG - Maybe keep here as shorthand for the vote count rather than do a sum over usermodules
+        self.votes = 0            # DJG - Maybe keep here as shorthand for the vote count rather than do a sum over usermodules
         
         self.save()
         
@@ -103,7 +103,8 @@ class UserModule(object):
         data['user'] = self.user.name
         data['module'] = self.module.name
         data['starred'] = self.starred
-        return json.dumps(data)
+        data['vote'] = self.vote
+        return json.dumps(data, sort_keys=True, separators=(',',':'))
 
     @classmethod
     def find(cls, user, module):                # DJG - just for the static database - would change to a database lookup once we have mongodb

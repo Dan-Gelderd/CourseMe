@@ -33,6 +33,7 @@ for x in range(1,5,1):
     m = datamodel.Module("Module" + str(x))
     m.author = datamodel.User.find("Author")
     m.objectives = set([datamodel.Objective.find("Objective " + str(x)), datamodel.Objective.find("Objective " + str(x + 4))])
+    m.votes = x*10
     m.save()
 
 um = datamodel.UserModule(datamodel.User.find("Student"), datamodel.Module.find("Module1"))

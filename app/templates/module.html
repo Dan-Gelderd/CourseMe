@@ -1,245 +1,285 @@
 {% extends "layout.html" %}
 {% block content %}
 
+<span class="starred">1</span>
+
 <script type='text/javascript'>
-  function dostars(span) {
+$(document).ready(function () {
+  $(".star").on('click', function( event ) {
+    //console.log("Star Click");
+    var star = $(this)
+    star.animate({left:'+=10px'});
+    star.animate({left:'-=10px'});
+    
     $.getJSON(
-      '/modulestar/{{module.name}}',
+      '/star/{{module.name}}',
       {},   //DJG - could pass back query parameters
       function(json) {
-        console.log(json);
-        console.log(json["user"]);
-        console.log(json.starred);
-        if (json.starred == "True") {
-          span.addClass("glyphicon glyphicon-star");
-          span.removeClass("glyphicon glyphicon-star-empty");
+        //console.log(json.starred);
+        if (json.starred) {
+          star.addClass("glyphicon-star");
+          star.removeClass("glyphicon-star-empty");
         }
         else {
-          span.addClass("glyphicon glyphicon-star-empty");
-          span.removeClass("glyphicon glyphicon-star");          
+          star.addClass("glyphicon-star-empty");
+          star.removeClass("glyphicon-star");
         }
       }
     );
+  });
+});
+</script>
+
+
+<script type='text/javascript'>
+$(document).ready(function () {
+  $("#up-vote").on('click', function( event ) {
+    //console.log("Up Vote Click");
+    var current_vote = parseInt($("#current-vote").text())
+    var current_total = parseInt($("#total-votes").text())    
+    //console.log("original vote : " + current_vote);    
+    //console.log("original total votes : " + current_total);    
+    if (current_vote == 1) {
+      //console.log("case 1")
+      current_vote = 0
+      $("#up-vote").animate({top:'+=50px'});
+      $("#total-votes").text(current_total-1)
+      $("#current-vote").text(current_vote)
+    }
+    else if (current_vote == -1) {
+      //console.log("case -1")
+      current_vote = 1
+      $("#up-vote").animate({top:'-=50px'});
+      $("#down-vote").animate({top:'+=50px'});      
+      $("#total-votes").text(current_total+2)
+      $("#current-vote").text(current_vote)
+    }
+    else {
+      //console.log("case 0")
+      current_vote = 1
+      $("#up-vote").animate({top:'-=50px'});
+      $("#total-votes").text(current_total+1)
+      $("#current-vote").text(current_vote)
+    }
+    saveVote(current_vote)
+  });
+
+  $("#down-vote").on('click', function( event ) {
+    //console.log("Down Vote Click");
+    var current_vote = parseInt($("#current-vote").text())
+    var current_total = parseInt($("#total-votes").text())
+    //console.log("original vote : " + current_vote);    
+    //console.log("original total votes : " + current_total);    
+    if (current_vote == 1) {
+      //console.log("case 1")
+      current_vote = -1
+      $("#up-vote").animate({top:'+=50px'});
+      $("#down-vote").animate({top:'-=50px'});      
+      $("#total-votes").text(current_total-2);
+      $("#current-vote").text(current_vote);
+    }
+    else if (current_vote == -1) {
+      //console.log("case -1")
+      current_vote = 0
+      $("#down-vote").animate({top:'+=50px'});      
+      $("#total-votes").text(current_total+1);
+      $("#current-vote").text(current_vote);
+    }
+    else {
+      //console.log("case 0")
+      current_vote = -1
+      $("#down-vote").animate({top:'-=50px'});
+      $("#total-votes").text(current_total-1);
+      $("#current-vote").text(current_vote);
+    }
+    saveVote(current_vote)
+  });
+
+  function saveVote(vote) {
+    console.log("writing vote to database " + vote)
+    $.getJSON('/vote/{{module.name}}',
+              {vote:vote},
+              function(json) {
+              //DJG - all reformatting of buttons should happen at this stage after checking the usernodule vote value from the response                
+              }
+    )
   }
+});
+
 </script>
 
 
-  
-
-<script>    
-    //$.ajax(
-    //       {
-    //        url: '/modulestar/{{module.name}}',
-    //        //success: function(result) {
-    //        //  if ($(result).nodeValue('starred') == "True") {
-    //        //    span.addClass("glyphicon glyphicon-star");
-    //        //    span.removeClass("glyphicon glyphicon-star-empty");              
-    //        //  }
-    //        //  else {
-    //        //    span.addClass("glyphicon glyphicon-star-empty");
-    //        //    span.removeClass("glyphicon glyphicon-star");                              
-    //        //  }
-    //        //},
-    //        dataType: "json",
-    //        complete: function(result) {
-    //          console.log(JSON.stringify(result.responseText));
-    //
-    //        }
-    //        
-    //       }
-    //) 
-</script>
-
-
-
-<!--    <script type='text/javascript'>
-      function dostars(span) {
-        $.ajax('/modulestar/{{module.name}}', {
-          complete: function(obj, res) {
-            if (res == "success") {
-              alert($(obj).getElementsByTagName('starred')); //find('courseme').text());          //syntax not working
-              if ($(obj).find('starred').text() == "True") {
-                span.addClass("glyphicon glyphicon-star");
-                span.removeClass("glyphicon glyphicon-star-empty");                
-              } else {
-                span.addClass("glyphicon glyphicon-star-empty");
-                span.removeClass("glyphicon glyphicon-star");                              }
-            } else {
-              //error
-            }
-          }
-        })
-      }
-    </script>-->
-
-    <div class="row" id="material-and-actions">
-      <div class="col-sm-9">
-        <section>
-          <main>
-            <header>
-              <h1>{{module.name}}</h1>  
-              <section id="social-actions">
-                <h1 style="display:none;">Social Actions</h1>
-                <div style="font-size: large">
-                  <span class="dropdown">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-share-alt"></span></a>
-                    <ul class="dropdown-menu">
-                      <li><a href="#">Recommend</a></li>
-                      <li class="divider"></li>
-                      <li><a href="#">Add to course</a></li>
-                    </ul> 
-                  </span>
-                  {% if usermodule.starred %}
-                  <span class="glyphicon glyphicon-star" onclick="dostars(this);"></span>
-                  {% else %}
-                  <span class="glyphicon glyphicon-star-empty" onclick="dostars(this);"></span>                  
-                  {% endif %}
-                  <span id="voting" class="pull-right">
-                    <span class="glyphicon glyphicon-hand-up"></span> 
-                    <span class="glyphicon glyphicon-hand-down"></span> {{module.votes}} votes          
-                  </span>
-                </div>          
-              </section>
-            </header>
-            <article id="main-module-material">
-              <h1 style="display:none;">Main Content</h1>
-              <iframe width="100%" height="315" frameborder="0" allowfullscreen
-                      src="//www.youtube.com/embed/Id6UovYjd-M">
-              </iframe>
-            </article>
-            <footer>
-              <ul class="pager">
-                <li class="previous"><a href="/static/preview/module.html">&larr; Previous Module HC</a></li>
-                <li class="next"><a href="/static/preview/module.html">Next Module HC &rarr;</a></li>
-              </ul>
-            </footer>
-
-          </main>
-        </section>
-      </div>
-      <div class="col-sm-3">
-        <aside id="course-information">
-          <header><h1 style="display:none;">Course Information</h1></header>
-          <a href="/static/preview/course.html">  
-            <span class="lead"><span class="glyphicon glyphicon-list-alt"></span> Course Progress</span>
-            <!--DJG - could i use a progress element here?-->
-            <div class="progress">
-              <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;">
-                <span class="sr-only">60% Complete</span>
-              </div>
-            </div>        
-          </a>          
-        </aside>
-        <section id="objectives-and-prerequisites">
-
-          <h1 style="display:none;">Module Objectives and Prerequisites</h1>
-
-          <span class="lead">Learning Objectives</span>
-          <div class="panel-group" id="collapsable-course-navigation">
-            {% for objective in module.objectives %}
-            <div class="panel panel-default">
-              <div class="panel-heading">
-                <span class="panel-title">
-                  <a data-toggle="collapse" data-parent="#collapsable-course-navigation" href="#{{objective}}">
-                    {{objective.name}}
-                  </a>
+  <div class="row" id="material-and-actions">
+    <div class="col-sm-9">
+      <section>
+        <main>
+          <header>
+            <h1>{{module.name}}</h1>  
+            <section id="social-actions">
+              <h1 style="display:none;">Social Actions</h1>
+              <div style="font-size: large">
+                <span class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-share-alt"></span></a>
+                  <ul class="dropdown-menu">
+                    <li><a href="#">Recommend</a></li>
+                    <li class="divider"></li>
+                    <li><a href="#">Add to course</a></li>
+                  </ul> 
                 </span>
-              </div>
-              <div id="{{objective}}" class="panel-collapse collapse">
-                <div class="panel-body">
-                  <dl class="dl">
-                    <dt>Alternative Lectures</dt>
-                    <dd>
-                      <ul class="list-unstyled">
+                {% if usermodule.starred %}
+                <span class="star glyphicon glyphicon-star"></span>     <!--DJG - DRY class star>-->
+                {% else %}
+                <span class="star glyphicon glyphicon-star-empty"></span>                  
+                {% endif %}
+                <span id="voting" class="pull-right">
+                  <span id="current-vote" style="display:none;">{{usermodule.vote}}</span> 
+                  <span id="up-vote" class="vote glyphicon glyphicon-thumbs-up"></span> 
+                  <span id="down-vote" class="vote glyphicon glyphicon-thumbs-down"></span>
+                  <span id="total-votes">{{module.votes}}</span>  votes          
+                </span>
+              </div>          
+            </section>
+          </header>
+          <article id="main-module-material">
+            <h1 style="display:none;">Main Content</h1>
+            <iframe width="100%" height="315" frameborder="0" allowfullscreen
+                    src="//www.youtube.com/embed/Id6UovYjd-M">
+            </iframe>
+          </article>
+          <footer>
+            <ul class="pager">
+              <li class="previous"><a href="/static/preview/module.html">&larr; Previous Module HC</a></li>
+              <li class="next"><a href="/static/preview/module.html">Next Module HC &rarr;</a></li>
+            </ul>
+          </footer>
 
-                        <li><a href="#">Search all...</a></li>  
-                      </ul>
-                    </dd>
-                    <dt>Exercises</dt>
-                    <dd>
-                      <ul class="list-unstyled">
-
-                        <li><a href="#"><span class="glyphicon glyphicon-check"></span> Questions</a></li>
-                        <li><a href="#"><span class="glyphicon glyphicon-check"></span> Hard Questions</a></li>
-                        <li><a href="#"><span class="glyphicon glyphicon-check"></span> Very Hard Questions</a></li>
-                        <li><a href="#">Search all...</a></li>  
-                      </ul>
-                    <dt>Interactive Tools</dt>
-                    <dd>
-                      <ul class="list-unstyled">
-                        <li><a href="#"><span class="glyphicon glyphicon-wrench"></span> Interactive tool</a></li>
-                      </ul>
-                  </dl>
-                </div>
-              </div>
+        </main>
+      </section>
+    </div>
+    <div class="col-sm-3">
+      <aside id="course-information">
+        <header><h1 style="display:none;">Course Information</h1></header>
+        <a href="/static/preview/course.html">  
+          <span class="lead"><span class="glyphicon glyphicon-list-alt"></span> Course Progress</span>
+          <!--DJG - could i use a progress element here?-->
+          <div class="progress">
+            <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;">
+              <span class="sr-only">60% Complete</span>
             </div>
+          </div>        
+        </a>          
+      </aside>
+      <section id="objectives-and-prerequisites">
 
-            {% endfor %}
+        <h1 style="display:none;">Module Objectives and Prerequisites</h1>
 
-            <div class="panel panel-default">
-              <div class="panel-heading">
-                <span class="panel-title">
-                  <a data-toggle="collapse" data-parent="#collapsable-course-navigation" href="#prerequisites">
-                    <i>see assumed knowledge</i>
-                  </a>
-                </span>
-              </div>
-              <div id="prerequisites" class="panel-collapse collapse">
-                <div class="panel-body">
-                  <ul class="list-unstyled">
-                    {% for objective in module.objectives %}
-                    {% for prerequisite in objective.prerequisites %}                    
-                    <li><a href="/static/preview/catalogue.html">{{prerequisite.name}}</a></li>
-                    {% endfor %}
-                    {% endfor %}
-                  </ul>
-                </div>
+        <span class="lead">Learning Objectives</span>
+        <div class="panel-group" id="collapsable-course-navigation">
+          {% for objective in module.objectives %}
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <span class="panel-title">
+                <a data-toggle="collapse" data-parent="#collapsable-course-navigation" href="#{{objective}}">
+                  {{objective.name}}
+                </a>
+              </span>
+            </div>
+            <div id="{{objective}}" class="panel-collapse collapse">
+              <div class="panel-body">
+                <dl class="dl">
+                  <dt>Alternative Lectures</dt>
+                  <dd>
+                    <ul class="list-unstyled">
+
+                      <li><a href="#">Search all...</a></li>  
+                    </ul>
+                  </dd>
+                  <dt>Exercises</dt>
+                  <dd>
+                    <ul class="list-unstyled">
+                      <li><a href="#"><span class="glyphicon glyphicon-check"></span> Questions</a></li>
+                      <li><a href="#"><span class="glyphicon glyphicon-check"></span> Hard Questions</a></li>
+                      <li><a href="#"><span class="glyphicon glyphicon-check"></span> Very Hard Questions</a></li>
+                      <li><a href="#">Search all...</a></li>  
+                    </ul>
+                  <dt>Interactive Tools</dt>
+                  <dd>
+                    <ul class="list-unstyled">
+                      <li><a href="#"><span class="glyphicon glyphicon-wrench"></span> Interactive tool</a></li>
+                    </ul>
+                </dl>
               </div>
             </div>
           </div>
 
-        </section>
-      </div>
+          {% endfor %}
+
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <span class="panel-title">
+                <a data-toggle="collapse" data-parent="#collapsable-course-navigation" href="#prerequisites">
+                  <i>see assumed knowledge</i>
+                </a>
+              </span>
+            </div>
+            <div id="prerequisites" class="panel-collapse collapse">
+              <div class="panel-body">
+                <ul class="list-unstyled">
+                  {% for objective in module.objectives %}
+                  {% for prerequisite in objective.prerequisites %}                    
+                  <li><a href="/static/preview/catalogue.html">{{prerequisite.name}}</a></li>
+                  {% endfor %}
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </div>
+  </div>
+
+  <div class="row" id="notes-and-profiles">
+    <div class="col-sm-9">
+      <section id="notes">
+        <h1 style="display:none;">Module Notes</h1>
+        <ul class="nav nav-tabs">
+          <li><a href="#author-notes" data-toggle="tab">Author Notes</a></li>
+          <li><a href="#tutor-notes" data-toggle="tab">Tutor Notes</a></li>
+          <li><a href="#my-notes" data-toggle="tab">My Notes</a></li>
+        </ul>
+  
+        <div class="tab-content">
+          <article class="tab-pane active" id="author-notes">
+            <h1 style="display:none;">Author Notes</h1>
+            {{authormodule.notes}}
+          </article>
+          <article class="tab-pane" id="tutor-notes">
+            <h1 style="display:none;">Tutor Notes</h1>
+            Furthermore, these are my tutor's notes. Raw denim you probably haven't heard of them jean shorts Austin. Nesciunt tofu stumptown aliqua, retro synth master cleanse. Mustache cliche tempor, williamsburg carles vegan helvetica. Reprehenderit butcher retro keffiyeh dreamcatcher synth. Cosby sweater eu banh mi, qui irure terry richardson ex squid. Aliquip placeat salvia cillum iphone. Seitan aliquip quis cardigan american apparel, butcher voluptate nisi qui.
+          </article>
+          <article class="tab-pane" id="my-notes">
+            <h1 style="display:none;">My Notes</h1>
+            <button type="submit" class="btn btn-sm"><span class="glyphicon glyphicon-pencil"></span></button>
+             {{usermodule.notes}}
+          </article>
+        </div>
+      </section>
     </div>
   
-    <div class="row" id="notes-and-profiles">
-      <div class="col-sm-9">
-        <section id="notes">
-          <h1 style="display:none;">Module Notes</h1>
-          <ul class="nav nav-tabs">
-            <li><a href="#author-notes" data-toggle="tab">Author Notes</a></li>
-            <li><a href="#tutor-notes" data-toggle="tab">Tutor Notes</a></li>
-            <li><a href="#my-notes" data-toggle="tab">My Notes</a></li>
-          </ul>
-    
-          <div class="tab-content">
-            <article class="tab-pane active" id="author-notes">
-              <h1 style="display:none;">Author Notes</h1>
-              {{authormodule.notes}}
-            </article>
-            <article class="tab-pane" id="tutor-notes">
-              <h1 style="display:none;">Tutor Notes</h1>
-              Furthermore, these are my tutor's notes. Raw denim you probably haven't heard of them jean shorts Austin. Nesciunt tofu stumptown aliqua, retro synth master cleanse. Mustache cliche tempor, williamsburg carles vegan helvetica. Reprehenderit butcher retro keffiyeh dreamcatcher synth. Cosby sweater eu banh mi, qui irure terry richardson ex squid. Aliquip placeat salvia cillum iphone. Seitan aliquip quis cardigan american apparel, butcher voluptate nisi qui.
-            </article>
-            <article class="tab-pane" id="my-notes">
-              <h1 style="display:none;">My Notes</h1>
-              <button type="submit" class="btn btn-sm"><span class="glyphicon glyphicon-pencil"></span></button>
-               {{usermodule.notes}}
-            </article>
-          </div>
-        </section>
-      </div>
-    
-      <div class="col-sm-3">
-        <aside id="profiles">
-          <article class="thumbnail">
-            <img class = "img-responsive" id="author-picture" src="../../static/preview/media/zippy.png" alt="Module Author Profile Picture">
-            <span class="lead">{{module.author.name}}</span>
-            <p>{{module.author.blurb}}</p>
-            <address>Change this to a list of institutions?</address> 
-          </article>
-        </aside>
-      </div>
-    </div>  
+    <div class="col-sm-3">
+      <aside id="profiles">
+        <article class="thumbnail">
+          <img class = "img-responsive" id="author-picture" src="../../static/preview/media/zippy.png" alt="Module Author Profile Picture">
+          <span class="lead">{{module.author.name}}</span>
+          <p>{{module.author.blurb}}</p>
+          <address>Change this to a list of institutions?</address> 
+        </article>
+      </aside>
+    </div>
+  </div>  
+
+
 
 {% endblock %}

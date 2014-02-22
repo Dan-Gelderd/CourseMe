@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 import datamodel
 import database
 import json
@@ -40,13 +40,9 @@ def module(name):
                            authormodule=authormodule,
     )
 
-@app.route('/testpage')
-def test():
-    return render_template('test.html')
 
-
-@app.route('/modulestar/<name>')
-def modulestarclick(name):
+@app.route('/star/<name>')
+def starclick(name):
     
     module = datamodel.Module.find(name)
     user = datamodel.User.find("Student")
@@ -58,7 +54,26 @@ def modulestarclick(name):
     usermodule.starred = not usermodule.starred
     usermodule.save()
     
-    return json.dumps(usermodule.as_json(), sort_keys=True, default=str, separators=(',',':'))
+    return usermodule.as_json()
+
+@app.route('/vote/<name>')
+def voteclick(name):
+    
+    module = datamodel.Module.find(name)
+    user = datamodel.User.find("Student")
+    try:
+        usermodule = datamodel.UserModule.find(user, module)
+    except KeyError:
+        usermodule = datamodel.UserModule(user, module)
+    
+    newVote = int(request.args.get("vote"))
+    module.votes = module.votes - usermodule.vote + newVote       #DJG - Almost certainly a better way
+    usermodule.vote = newVote
+        
+    usermodule.save()
+    module.save
+    
+    return ""   #DJG - What is best return value when I don't care about the return result? Only thing I found that worked
     
 def run_devserver():
     app.run(debug=True)

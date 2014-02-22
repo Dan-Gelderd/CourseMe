@@ -1,0 +1,16 @@
+.col-centered{
+    float: none;
+    margin: 0 auto;
+}
+
+.star{
+    cursor: pointer;
+}
+
+.vote{
+    cursor: pointer;
+}
+
+.starred{
+    background-image: url(../images/starred.png);
+}
