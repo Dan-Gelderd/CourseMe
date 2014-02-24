@@ -24,6 +24,8 @@ class Module(object):
     def find(cls, name):            # DJG - just for the static database - would change to a database lookup once we have mongodb
         return cls._modules[name]
 
+    
+
 class User(object):
     _users = {}                     # DJG - just for the static database - would change to a database lookup once we have mongodb
 
@@ -77,6 +79,7 @@ class Group(object):
 
 class Recommendation(object):
     def __init__(self):
+
         self.from_user = None
         self.to_user = None
         self.module = None

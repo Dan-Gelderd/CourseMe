@@ -3,6 +3,7 @@
 from flask import Flask, render_template, request
 import datamodel
 import database
+import database_def
 import json
 
 app = Flask(__name__, static_folder="../static", static_url_path="/static")
@@ -74,6 +75,10 @@ def voteclick(name):
     module.save
     
     return ""   #DJG - What is best return value when I don't care about the return result? Only thing I found that worked
+
+@app.route('/objectives')
+def objectives():
+    return ""
     
 def run_devserver():
     app.run(debug=True)
