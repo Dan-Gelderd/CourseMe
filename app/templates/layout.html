@@ -24,7 +24,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
               </button>
-              <a class="navbar-brand" href="/static/preview/catalogue.html">CourseMe</a>
+              <a class="navbar-brand" href={{ url_for('index') }}>CourseMe</a>
             </div>
           
             <!-- Collect the nav links, forms, and other content for toggling -->
@@ -53,19 +53,34 @@
               <ul class="nav navbar-nav navbar-right">
                 <li><a href="/static/preview/about.html">About</a></li>
                 <li class="dropdown">
-                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-user"></span> Dan<b class="caret"></b></a>
+                  {% if g.user.is_authenticated() %}
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-user"></span> {{ g.user.nickname }}<b class="caret"></b></a>
                   <ul class="dropdown-menu">
-                    <li><a href="#">Sign Out</a></li>
+                    <li><a href="{{ url_for('logout') }}">Sign Out</a></li>
                     <li><a href="#">Account Settings</a></li>
                     <li class="divider"></li>
                     <li><a href="#">My Courses</a></li>
                   </ul>
+                  {% else %}
+                  <a href="{{ url_for('login') }}"><span class="glyphicon glyphicon-user"></span> Sign in</a>                  
+                  {% endif %}    
                 </li>
               </ul>
               
             </div><!-- /.navbar-collapse -->
           </nav>    
         </header>    
+
+        <!-- displaying flash messages from flask -->
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <ul>
+        {% for message in messages %}
+            <li>{{ message }} </li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+        {% endwith %}
     
 
         {% block content %}

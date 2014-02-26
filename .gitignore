@@ -45,3 +45,6 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
+
+# database repository
+db_repository/

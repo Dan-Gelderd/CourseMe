@@ -1,0 +1,47 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<script type='text/javascript'>
+$(document).ready(function () {
+    console.log("document ready")
+    $(".delete-objective").on('click', function ( event ) {
+        var objective_id = this.id.split('_')[0]
+        console.log("button " + objective_id + " clicked")
+        $.getJSON(
+            '/objectivedelete',
+            {objective_id: objective_id}, 
+            function(json) {
+                console.log(json.a)
+        });
+    });    
+});
+</script>
+
+{% for objective in objectives %}
+<span class="row">
+    <div class="col-sm-4"><h3>{{ objective.name }}</h2></div>
+    <div class="col-sm-4">
+        <ul>
+            {% for prerequisite in objective.prerequisites %}
+            <li>{{ prerequisite.name }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="col-sm-4">
+        <button class="delete-objective" id="{{ objective.id ~ "_delete" }}">Delete</button>     <!-- ~ is a jinja2 function that works like + but first converting everything to strings -->
+        <button class="edit-objective" id="{{ objective.id ~ "_edit" }}">Edit</button>
+    </div>
+</span>
+{% endfor %}
+
+
+<form action="" method="post" name="add_objective">
+    {{form.hidden_tag()}}
+    <p>
+        Enter new objective name:<br>
+        {{form.objective_name(size=80)}}<br>
+    </p>
+    <p><input type="submit" value="Add"></p>
+</form>
+
+{% endblock %}

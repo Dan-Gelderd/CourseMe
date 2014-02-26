@@ -1,0 +1,13 @@
+# run pip install -r requirements.txt from command line
+livereload
+tornado
+pyzmq
+Fabric
+ipython
+Flask
+Flask-Script
+flask-sqlalchemy
+sqlalchemy-migrate
+flask-login
+flask-openid
+flask-mail

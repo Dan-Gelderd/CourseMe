@@ -25,4 +25,15 @@ recommended logo by modules and courses that are explicitly recommended by tutor
 started logo - if you are part way through?
 "pop-links" easy navigation back to recent courses you were looking at - maybe recents dropdown on nav bar? split by courses and modules by type?
 cross bar to remove recommendatilons/suggestions so others appear
-
+section breaks within courses
+course objectives
+collate courses by organisation
+allow organisation home page customisation?
+big data to point users to most relevant institution or author sites
+objectives
+predefined objectives in hierachy to autopopulate meta data for course/lecture
+100% specified metric for course and lecture metadata
+LRMI - give content standardised meta data - grade level, topic area, media type, licencing notes
+keywords
+extention material
+edit notes from course interface
