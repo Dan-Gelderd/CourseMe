@@ -1,4 +1,4 @@
-from app import db
+from courseme import db
 
 ROLE_USER = 0
 ROLE_ADMIN = 1
@@ -49,7 +49,6 @@ objective_heirarchy = db.Table("objective_heirarchy",
 )
 
 class Objective(db.Model):
-    #__tablename__ = 'objectives'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique = True)
     prerequisites = db.relationship("Objective",

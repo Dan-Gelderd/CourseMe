@@ -7,6 +7,7 @@ from sqlalchemy.orm import sessionmaker
 engine = create_engine('sqlite:///courseme.db', echo=True)
 Session = sessionmaker(bind=engine)
 session = Session()
+
 Base = declarative_base()
 
 objective_heirarchy = Table("objective_heirarchy", Base.metadata,
@@ -58,5 +59,3 @@ o4.prerequisites.append(o2)
 o4.prerequisites.append(o3)
 
 session.commit()
-
-session.close()

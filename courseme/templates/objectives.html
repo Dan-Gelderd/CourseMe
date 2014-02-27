@@ -19,7 +19,7 @@ $(document).ready(function () {
 
 {% for objective in objectives %}
 <span class="row">
-    <div class="col-sm-4"><h3>{{ objective.name }}</h2></div>
+    <div class="col-sm-4"><b>{{ objective.name }}<b></div>
     <div class="col-sm-4">
         <ul>
             {% for prerequisite in objective.prerequisites %}
