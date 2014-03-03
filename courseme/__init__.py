@@ -2,8 +2,8 @@ import os
 from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
-from flask.ext.openid import OpenID
 from config import basedir
+import md5
 
 app = Flask(__name__,
             static_folder="../static",
@@ -16,7 +16,7 @@ db = SQLAlchemy(app)
 lm = LoginManager()
 lm.init_app(app)
 lm.login_view = 'login'
-oid = OpenID(app, os.path.join(basedir, 'tmp'))
+#lm.session_protection = "strong"   DJG - Need to consider this
 
 if not app.debug:
     import logging
@@ -27,5 +27,9 @@ if not app.debug:
     file_handler.setLevel(logging.INFO)
     app.logger.addHandler(file_handler)
     app.logger.info('microblog startup')
+
+def hash_string(string):
+    salted_hash = string + app.config['SECRET_KEY']
+    return md5.new(salted_hash).hexdigest()
 
 from courseme import views, models

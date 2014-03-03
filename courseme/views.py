@@ -1,10 +1,12 @@
 from flask import render_template, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_user, logout_user, current_user, login_required
-from courseme import app, db, lm, oid
+from courseme import app, db, lm, hash_string
 import forms
 from models import User, ROLE_USER, ROLE_ADMIN, Objective
 from datetime import datetime
+import json
 import datamodel
+#import pdb; pdb.set_trace()
 
 #admin
 @lm.user_loader
@@ -30,8 +32,9 @@ def internal_error(error):
 
 @app.route('/')
 @app.route('/index')
-@login_required
+#@login_required
 def index():
+    title = "CourseMe"
     user = g.user
     posts = [
         { 
@@ -44,44 +47,52 @@ def index():
         }
     ]
     return render_template('index.html',
-        title = 'Home',
+        title = title,
         user = user,
         posts = posts)
 
-@app.route('/login', methods = ['GET', 'POST'])
-@oid.loginhandler
+
+@app.route('/signup', methods = ['GET', 'POST'])
+def signup():
+    title = 'CourseMe - Sign up'
+    form = forms.SignupForm()
+    if form.validate_on_submit():
+        email_exist = User.query.filter_by(email=form.email.data).count()
+        if email_exist:
+            form.email.errors.append('This email address has already been registered')
+            return render_template('signup.html', form = form, title = title)
+        else:
+            user = User(email=form.email.data,
+                        password=hash_string(form.password.data),
+                        username=form.username.data,
+                        time_registered=datetime.utcnow(),
+                        last_seen=datetime.utcnow(),
+                        role = ROLE_USER)
+            db.session.add(user)
+            db.session.commit()
+            login_user(user, remember = form.remember_me.data)
+            flash("Successfully signed up.")
+            return redirect(request.args.get("next") or url_for("index"))
+    return render_template('signup.html', form=form, title=title)
+
+
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    if g.user is not None and g.user.is_authenticated():
-        return redirect(url_for('index'))
+    title = 'CourseMe - Login'
     form = forms.LoginForm()
     if form.validate_on_submit():
-        session['remember_me'] = form.remember_me.data
-        return oid.try_login(form.openid.data, ask_for = ['nickname', 'email'])
-    return render_template('login.html', 
-        title = 'Sign In',
-        form = form,
-        providers = app.config['OPENID_PROVIDERS'])
+        user = User.query.filter_by(email = form.email.data).first()
+        if user is None:
+            form.email.errors.append('Email not registered')
+            return render_template('login.html', form = form, title=title)
+        if user.password != hash_string(form.password.data):
+            form.password.errors.append('Incorrect password')
+            return render_template('login.html', form = form, title=title)
+        login_user(user, remember = form.remember_me.data)
+        flash("Logged in successfully.")
+        return redirect(request.args.get("next") or url_for("index"))
+    return render_template('login.html', form=form, title=title)
 
-@oid.after_login
-def after_login(resp):
-    if resp.email is None or resp.email == "":
-        flash('Invalid login. Please try again.')
-        return redirect(url_for('login'))
-    user = User.query.filter_by(email = resp.email).first()
-    if user is None:
-        nickname = resp.nickname
-        if nickname is None or nickname == "":
-            nickname = resp.email.split('@')[0]
-        nickname = User.make_unique_nickname(nickname)
-        user = User(nickname = nickname, email = resp.email, role = ROLE_USER)
-        db.session.add(user)
-        db.session.commit()
-    remember_me = False
-    if 'remember_me' in session:
-        remember_me = session['remember_me']
-        session.pop('remember_me', None)
-    login_user(user, remember = remember_me)
-    return redirect(request.args.get('next') or url_for('index'))
 
 @app.route('/logout')
 def logout():
@@ -89,29 +100,34 @@ def logout():
     return redirect(url_for('index'))
 
 
-
 #objectives
 @app.route('/objectives', methods = ['GET', 'POST'])
 def objectives():
+    title = "CourseMe - Objectives"
     form = forms.AddObjective()
     if form.validate_on_submit():
-        objective = Objective(name=form.objective_name.data)
+        newObjectiveName = form.objective_name.data
+        objective = Objective(name=newObjectiveName)
         db.session.add(objective)
         db.session.commit()
     objectives = Objective.query.all()
     return render_template('objectives.html',
-                                 form=form,
-                                 objectives=objectives)
+                           title=title,
+                           form=form,
+                           objectives=objectives)
 
 
 @app.route('/objectivedelete')
 def objectivedelete():
     objective = Objective.query.filter_by(id = request.args.get("objective_id")).first()
-    #import pdb; pdb.set_trace() # <-- DJG - this is temporary!
     db.session.delete(objective)
     db.session.commit()
-    objectives = Objective.query.all()
-    return {"a": "A"}
+    return ""
+
+@app.route('/objectiveedit')
+def objectiveedit():
+    objective = Objective.query.filter_by(id = request.args.get("objective_id")).first()
+    return json.dumps(objective.as_dict(), sort_keys=True, separators=(',',':'))
 
 
 #modules

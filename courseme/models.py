@@ -1,14 +1,17 @@
 from courseme import db
+import json
 
 ROLE_USER = 0
 ROLE_ADMIN = 1
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key = True)
-    nickname = db.Column(db.String(64), index = True, unique = True)
+    password = db.Column(db.String(120), index = True)
     email = db.Column(db.String(120), index = True, unique = True)
+    username = db.Column(db.String(64), index = True)
     role = db.Column(db.SmallInteger, default = ROLE_USER)
     last_seen =  db.Column(db.DateTime)
+    time_registered = db.Column(db.DateTime)
 
     def is_authenticated(self):
         return True
@@ -58,7 +61,6 @@ class Objective(db.Model):
                         #backref = db.backref('followons', lazy = 'dynamic'), 
                         lazy = 'dynamic')
     
-
     def require(self, objective):
         if not self.is_required(objective):
             self.prerequisites.append(objective)
@@ -72,3 +74,25 @@ class Objective(db.Model):
     def is_required(self, objective):
         return self.prerequisites.filter(objective_heirarchy.c.prerequisite_id == objective.id).count() > 0
 
+    def score(self):
+        prerequisites = self.prerequisites.all()
+        if prerequisites:
+            return max(p.score() for p in prerequisites)+1
+        else:
+            return 1
+    
+    def all_prerequisites(self):
+        all_prerequisites = self.prerequisites.all()
+        #all_prerequisites.extend #p for p in second_list if x not in resulting_list)
+        return []
+   
+    def as_dict(self):
+        #wouldn't handle relationships
+        #public_fields = ['name']
+        #return {key: getattr(self, key) for key in public_fields}  
+        
+        data = {}
+        data['name'] = self.name
+        data['prerequisites'] = [p.name for p in self.prerequisites.all()]
+        #return json.dumps(data, sort_keys=True, separators=(',',':'))
+        return data

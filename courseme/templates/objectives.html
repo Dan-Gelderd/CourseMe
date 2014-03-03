@@ -3,24 +3,41 @@
 
 <script type='text/javascript'>
 $(document).ready(function () {
-    console.log("document ready")
     $(".delete-objective").on('click', function ( event ) {
         var objective_id = this.id.split('_')[0]
-        console.log("button " + objective_id + " clicked")
-        $.getJSON(
+        $.get(
             '/objectivedelete',
             {objective_id: objective_id}, 
-            function(json) {
-                console.log(json.a)
+            function(data) {
+                location.reload(True)
         });
     });    
 });
 </script>
 
+<script type='text/javascript'>
+$(document).ready(function () {
+    console.log("document ready")
+    $(".edit-objective").on('click', function ( event ) {
+        var objective_id = this.id.split('_')[0]
+        console.log("edit button " + objective_id + " clicked")
+        $.getJSON(
+            '/objectiveedit',
+            {objective_id: objective_id}, 
+            function(json) {
+                console.log(json)
+
+        });
+    });    
+});
+</script>
+
+
 {% for objective in objectives %}
 <span class="row">
     <div class="col-sm-4"><b>{{ objective.name }}<b></div>
     <div class="col-sm-4">
+        {{ objective.score() }}
         <ul>
             {% for prerequisite in objective.prerequisites %}
             <li>{{ prerequisite.name }}</li>
@@ -35,13 +52,23 @@ $(document).ready(function () {
 {% endfor %}
 
 
-<form action="" method="post" name="add_objective">
+<form action="" method="post" name="add_objective">     <!--DJG - what to make the action attribute -->
     {{form.hidden_tag()}}
     <p>
         Enter new objective name:<br>
         {{form.objective_name(size=80)}}<br>
     </p>
     <p><input type="submit" value="Add"></p>
+    <p><input type="reset" value="Reset"></p>    
+</form>
+
+<form action="" method="post" name="edit_objective">        
+    <p>
+        Enter new objective name:<br>
+        <input></input><br>
+    </p>
+    <p><input type="submit" value="Add"></p>
+    <p><input type="reset" value="Reset"></p>    
 </form>
 
 {% endblock %}

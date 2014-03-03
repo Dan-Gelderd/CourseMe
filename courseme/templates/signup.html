@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<form action="{{ url_for('signup') }}" class="form" method="POST">
+    {{form.hidden_tag()}}   <!--needed for cross-site request forgery prevention-->
+    
+<!--    <div style="display: none">
+        <input id="csrf_token" name="csrf_token" type="hidden" value="1383635238.9##d8f7f433e854cc682ade261cd9bb7113a147ee29" />
+    </div>  DJG - don't get this bit
+-->
+    
+    <div class="form-group {% if form.email.errors %} has-error {% endif %}">
+        {{ form.email.label }}
+        {{ form.email(placeholder="E.g. brucewayne@wayne.com", class="form-control") }}
+        <p class="help-block">{{ form.email.errors[0] }}</p>
+    </div>
+
+    <div class="form-group {% if form.password.errors %} has-error {% endif %}">
+        {{ form.password.label }}
+        {{ form.password(placeholder="Minimum 6 Characters", class="form-control") }}
+        <p class="help-block">{{ form.password.errors[0] }}</p>
+    </div>
+
+    <div class="form-group {% if form.username.errors %} has-error {% endif %}">
+        {{ form.username.label }}
+        {{ form.username(placeholder="Enter your preferred name", class="form-control") }} 
+        <p class="help-block">{{ form.username.errors[0] }}</p>
+    </div>
+    
+    <div class="form-group {% if form.agree.errors %} has-error {% endif %}">
+        <label class="checkbox">
+        {{form.agree}}
+        {{form.agree.label}}
+        </label>
+        <p class="help-block">{{ form.agree.errors[0] }}</p>
+    </div>
+
+    <p>{{form.remember_me}} Keep me logged in</p>
+
+    <button class="btn btn-success" type="submit">Sign Up</button>
+</form>
+
+{% endblock %}
