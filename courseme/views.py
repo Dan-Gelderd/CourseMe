@@ -102,9 +102,10 @@ def logout():
 
 #objectives
 @app.route('/objectives', methods = ['GET', 'POST'])
+#@login_required
 def objectives():
     title = "CourseMe - Objectives"
-    form = forms.AddObjective()
+    form = forms.AddUpdateObjective()
     if form.validate_on_submit():
         newObjectiveName = form.objective_name.data
         objective = Objective(name=newObjectiveName)
@@ -116,16 +117,49 @@ def objectives():
                            form=form,
                            objectives=objectives)
 
+@app.route('/objective-add-update', methods = ['GET', 'POST'])
+def objective_add_update():
+    form = forms.AddUpdateObjective()
+    #import pdb; pdb.set_trace()
+    if form.validate_on_submit():
+        obj_id = form.edit_objective_id.data
+        name = form.edit_objective_name.data
+        result = {}
+        result['iserror'] = False
+        if not obj_id:
+            #The objective id is not found on the form so this is an add objective case
+            objective = Objectives.query.filter_by(name = name).first()
+            if objective is not None:
+                #The new objective name is already taken
+                result['iserror'] = 'Objective ' + name + ' already exists'
+            else:
+                #A new objective can be created with the new name
+                
+                objective = Objective(name=name,
+                                      )    
+                result['savedsuccess'] = False
+        else:
+            #The objective id is found on the form so this is an update objective case
+            objective = Objective.query.get(obj_id)
+            #form.populate_obj(objective)
+            #db.session.commit()
+            result['savedsuccess'] = True
+            
+        return json.dumps(result)
+ 
+    form.errors['iserror'] = True
+    return json.dumps(form.errors)
 
-@app.route('/objectivedelete')
-def objectivedelete():
+
+@app.route('/objective-delete')
+def objective_delete():
     objective = Objective.query.filter_by(id = request.args.get("objective_id")).first()
     db.session.delete(objective)
     db.session.commit()
     return ""
 
-@app.route('/objectiveedit')
-def objectiveedit():
+@app.route('/objective-get')
+def objective_get():
     objective = Objective.query.filter_by(id = request.args.get("objective_id")).first()
     return json.dumps(objective.as_dict(), sort_keys=True, separators=(',',':'))
 

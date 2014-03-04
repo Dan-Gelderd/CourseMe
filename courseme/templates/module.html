@@ -1,6 +1,8 @@
 {% extends "layout.html" %}
 {% block content %}
 
+<!-- DJG - Could use eager loading technique so users and module don't load all child data? -->
+
 <span class="starred">1</span>
 
 <script type='text/javascript'>
@@ -117,6 +119,7 @@ $(document).ready(function () {
             <h1>{{module.name}}</h1>  
             <section id="social-actions">
               <h1 style="display:none;">Social Actions</h1>
+              <!-- DJG need to make acessible to screen readers using <a class="sr-only" href="#content">Skip to main content</a> -->
               <div style="font-size: large">
                 <span class="dropdown">
                   <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-share-alt"></span></a>

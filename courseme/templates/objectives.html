@@ -3,41 +3,135 @@
 
 <script type='text/javascript'>
 $(document).ready(function () {
-    $(".delete-objective").on('click', function ( event ) {
-        var objective_id = this.id.split('_')[0]
-        $.get(
-            '/objectivedelete',
-            {objective_id: objective_id}, 
-            function(data) {
-                location.reload(True)
-        });
-    });    
-});
-</script>
-
-<script type='text/javascript'>
-$(document).ready(function () {
     console.log("document ready")
+
+    //Button to bring up new empty form modal to create a new objective with prerequisites
+    $("#add_objective").click(function(){
+            $("#edit_objective_id").val("");
+            $("#edit_objective_name").val("");
+            $("#new_prerequisite").val("");
+            $(".existing-prerequisites-item").remove();
+            $("#objective_form").modal('show');
+            return false;
+    });
+    
+    //Button per objective to bring up prepopulated form modal to edit the corresponding objective
     $(".edit-objective").on('click', function ( event ) {
         var objective_id = this.id.split('_')[0]
         console.log("edit button " + objective_id + " clicked")
         $.getJSON(
-            '/objectiveedit',
+            '{{ url_for('objective_get') }}',
             {objective_id: objective_id}, 
             function(json) {
-                console.log(json)
+                console.log(json);
+                console.log(json.prerequisites.length);
+                $("#edit_objective_id").val(json.id);
+                $("#edit_objective_name").val(json.name);
+                $("#new_prerequisite").val("");
+                $(".existing-prerequisites-item").remove();
+                var num_objectives = json.prerequisites.length;
+                for (var p = 0; p < num_objectives; p++) {
+                    loadPrerequisite(json.prerequisites[p]); 
+                }
+                $("#objective_form").modal('show');
+                return false;
+            }
+        );
+    });
 
+    //Button per objective to delete the corresponding objective
+    $(".delete-objective").on('click', function ( event ) {
+        var objective_id = this.id.split('_')[0]
+        console.log("delete button " + objective_id + " clicked")
+        $.get(
+            '{{ url_for('objective_delete') }}',
+            {objective_id: objective_id}, 
+            function(data) {
+                location.reload(true)
         });
     });    
-});
-</script>
 
+    //button within the form modal to add the prerequisite named in the corresponding input text field
+    $("#add_prerequisite").click(function(){
+        loadPrerequisite($("#new_prerequisite").val());
+        $("#new_prerequisite").val("");
+    });
+    
+    //button within the form modal to post the new or updated objective data to the server for validation and storage
+    $("#save_objective").click(function(){
+        var prerequisites = new Array();
+        $('.existing-prerequisites-name').each(function() {
+            prerequisites.push($(this).text());
+        });
+        var form_data = {
+            objective_id: $("#edit_objective_id").val(),
+            objective_name: $("#edit_objective_name").val(),
+            prerequisites: prerequisites
+        };
+        
+        console.log(prerequisites);
+        console.log(form_data);
+        
+        $.post(  
+            '{{ url_for('objective_add_update') }}',  
+            form_data,  
+            function() {console.log("save pressed")}
+            //
+            //  var errors = $.parseJSON(data);
+            //    $("#error_title").text("");
+            //    $("#error_description").text("");
+            //    $("#error_tags").text("");
+            //
+            //    if(errors.iserror)
+            //    {       
+            //        if(errors.title!=undefined) $("#error_title").text(errors.title[0]);
+            //        if(errors.description!=undefined) $("#error_description").text(errors.description[0]);
+            //        if(errors.tags!=undefined) $("#error_tags").text(errors.tags[0]);
+            //    }else if (errors.savedsuccess)
+            //    {
+            //        $("#porto_form").modal('hide');
+            //        location.reload();
+            //    }
+            //}  
+        );
+    });
+    
+});
+
+function loadPrerequisite(name){
+    list = document.getElementById('existing_prerequisites');
+    new_li = document.createElement('li');
+    new_li.setAttribute('class', 'list-group-item existing-prerequisites-item');
+    new_li.setAttribute('id', 'existing-prerequisite-' + name)
+    new_div = document.createElement('div');
+    new_div.setAttribute('class', 'input-group');
+    new_span = document.createElement('span');
+    new_span.setAttribute('class', 'existing-prerequisites-name');
+    new_span.innerHTML = name;      //easier to have a separate span just containing the text we want as easier for jquery to read as innerText    
+    new_span_button = document.createElement('span');
+    new_span_button.setAttribute('class', 'input-group-btn');
+    new_button = document.createElement('button');
+    new_button.setAttribute('class', 'btn btn-link');
+    new_button.setAttribute('type', 'button');
+    new_button.innerHTML = "&times;";
+    new_button.onclick = function() {
+        list.removeChild(document.getElementById('existing-prerequisite-' + name));
+    };            
+    new_span_button.appendChild(new_button);
+    new_div.appendChild(new_span);
+    new_div.appendChild(new_span_button);    
+    new_li.appendChild(new_div);
+    list.appendChild(new_li);
+}
+
+</script>
 
 {% for objective in objectives %}
 <span class="row">
     <div class="col-sm-4"><b>{{ objective.name }}<b></div>
     <div class="col-sm-4">
         {{ objective.score() }}
+
         <ul>
             {% for prerequisite in objective.prerequisites %}
             <li>{{ prerequisite.name }}</li>
@@ -52,23 +146,51 @@ $(document).ready(function () {
 {% endfor %}
 
 
-<form action="" method="post" name="add_objective">     <!--DJG - what to make the action attribute -->
-    {{form.hidden_tag()}}
-    <p>
-        Enter new objective name:<br>
-        {{form.objective_name(size=80)}}<br>
-    </p>
-    <p><input type="submit" value="Add"></p>
-    <p><input type="reset" value="Reset"></p>    
-</form>
 
-<form action="" method="post" name="edit_objective">        
-    <p>
-        Enter new objective name:<br>
-        <input></input><br>
-    </p>
-    <p><input type="submit" value="Add"></p>
-    <p><input type="reset" value="Reset"></p>    
-</form>
+
+<div class="modal fade" id="objective_form">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button class="close" type="button" data-dismiss="modal" aria-hidden="true">&times;</button> 
+                <h4 class="modal-title">Objective</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form" action="" method="POST" id="add_update_objective">
+                    {{ form.edit_objective_id }}     <!-- This has the id objective_id as that is the attribute name defined on the form, this is populated with the id of the objective if editiong or left blank if not so the server knows whether this was an update or a new creation -->
+                    {{ form.hidden_tag() }}
+                    <div class="form-group">
+                        {{ form.edit_objective_name.label }}
+                        {{ form.edit_objective_name(class="form-control", placeholder="The objective should be clear, separable and testable.")}}
+                        <p class="help-block" id="error_edit_objective_name">{{ form.edit_objective_name.errors[0] }}</p>
+                    </div>
+                    <div class="form-group">
+                        {{ form.new_prerequisite.label }}
+                        <div class="input-group">
+                            {{ form.new_prerequisite(class="form-control", placeholder="Add new prerequisite for this objective")}}
+                            <span class="input-group-btn">
+                                <button class="btn btn-default" id="add_prerequisite" type="button">Add</button>
+                            </span>
+                        </div>
+                        <p class="help-block" id="error_new_prerequisite">{{ form.new_prerequisite.errors[0] }}</p>
+                    </div>
+                    
+                    <ul class="list-group", id="existing_prerequisites">
+                        <!-- javascript loads existing list of prerequisites when the modal form is initiated -->
+                    </ul>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary btn-success" type="submit" id="save_objective">Save</button>
+                <button class="btn btn-default" type="button" data-dismiss="modal">Cancel</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<button class="btn btn-default btn-sm btn-success" id="add_objective">Create New Objective</button>
+
 
 {% endblock %}

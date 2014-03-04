@@ -92,6 +92,7 @@ class Objective(db.Model):
         #return {key: getattr(self, key) for key in public_fields}  
         
         data = {}
+        data['id'] = self.id
         data['name'] = self.name
         data['prerequisites'] = [p.name for p in self.prerequisites.all()]
         #return json.dumps(data, sort_keys=True, separators=(',',':'))

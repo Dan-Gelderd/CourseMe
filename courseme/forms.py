@@ -1,5 +1,5 @@
 from flask.ext.wtf import Form
-from wtforms import TextField, PasswordField, BooleanField
+from wtforms import TextField, PasswordField, BooleanField, HiddenField
 from wtforms.validators import Required, Length, Email
 
 class SignupForm(Form):
@@ -23,5 +23,9 @@ class LoginForm(Form):
                 Length(min=6, message=(u'Password must be at least 6 characters'))])
     remember_me = BooleanField('remember_me', default = False)
 
-class AddObjective(Form):
-    objective_name = TextField('objective_name', validators = [Required()])
+class AddUpdateObjective(Form):
+    edit_objective_id = HiddenField()
+    edit_objective_name = TextField('Objective', validators = [
+                Required('Enter a description of the objective')])
+                #Length(min=6, message=(u'Description must be at least 10 characters'))])
+    new_prerequisite = TextField('Prerequisites', validators=[])    
