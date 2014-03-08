@@ -10,8 +10,8 @@ $(document).ready(function () {
   $(".star").on('click', function( event ) {
     //console.log("Star Click");
     var star = $(this)
-    star.animate({left:'+=10px'});
-    star.animate({left:'-=10px'});
+    star.stop().animate({left:'+=10px'});
+    star.stop().animate({left:'-=10px'});
     
     $.getJSON(
       '/star/{{module.name}}',

@@ -58,8 +58,9 @@ class Objective(db.Model):
                         secondary=objective_heirarchy,
                         primaryjoin=(objective_heirarchy.c.followon_id==id),
                         secondaryjoin=(objective_heirarchy.c.prerequisite_id==id),
-                        #backref = db.backref('followons', lazy = 'dynamic'), 
-                        lazy = 'dynamic')
+                        backref = db.backref('followons', lazy = 'dynamic'),        #DJG - Does this need to be included to make the secondary table update when an objective is passed to session.delete()? 
+                        lazy = 'dynamic',                                           #DJG - not the default, don't know why I need it: the attribute will return a pre-configured Query object for all read operations, onto which further filtering operations can be applied before iterating the results.
+                        passive_updates=False)                                      #DJG - Does this need to be included to make the secondary table update when an objective is passed to session.delete()? 
     
     def require(self, objective):
         if not self.is_required(objective):
@@ -71,8 +72,11 @@ class Objective(db.Model):
             self.prerequisites.remove(objective)
             return self
 
-    def is_required(self, objective):
-        return self.prerequisites.filter(objective_heirarchy.c.prerequisite_id == objective.id).count() > 0
+    def is_required_direct(self, objective):
+        return self == objective or self.prerequisites.filter(objective_heirarchy.c.prerequisite_id == objective.id).count() > 0
+
+    def is_required_indirect(self, objective):
+        return self == objective or objective in self.all_prerequisites()
 
     def score(self):
         prerequisites = self.prerequisites.all()
@@ -82,9 +86,13 @@ class Objective(db.Model):
             return 1
     
     def all_prerequisites(self):
-        all_prerequisites = self.prerequisites.all()
-        #all_prerequisites.extend #p for p in second_list if x not in resulting_list)
-        return []
+        all_prerequisites = set()
+        prerequisites_found = set(self.prerequisites.all())
+        while prerequisites_found:
+            all_prerequisites = set.union(all_prerequisites, prerequisites_found)
+            prerequisites_found_iterator = (set(p.prerequisites) for p in prerequisites_found)
+            prerequisites_found = set.union(*prerequisites_found_iterator)          #DJG - http://stackoverflow.com/questions/14720436/set-union-complains-that-it-has-no-argument-when-passing-in-a-generator
+        return list(all_prerequisites)
    
     def as_dict(self):
         #wouldn't handle relationships

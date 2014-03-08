@@ -3,7 +3,7 @@ from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
 from config import basedir
-import md5
+import md5      #DJG - depricated, explore hashlib or passlib or some password storing package
 
 app = Flask(__name__,
             static_folder="../static",

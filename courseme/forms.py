@@ -1,6 +1,6 @@
 from flask.ext.wtf import Form
-from wtforms import TextField, PasswordField, BooleanField, HiddenField
-from wtforms.validators import Required, Length, Email
+from wtforms import TextField, PasswordField, BooleanField, HiddenField, FileField, SelectMultipleField
+from wtforms.validators import Required, Length, Email, Regexp
 
 class SignupForm(Form):
     email = TextField('Email address', validators=[
@@ -26,6 +26,17 @@ class LoginForm(Form):
 class AddUpdateObjective(Form):
     edit_objective_id = HiddenField()
     edit_objective_name = TextField('Objective', validators = [
-                Required('Enter a description of the objective')])
-                #Length(min=6, message=(u'Description must be at least 10 characters'))])
-    new_prerequisite = TextField('Prerequisites', validators=[])    
+                Regexp(r'\w'),                  #DJG - need to exclude commas in current implementation of ajax calls but this isn't working
+                Required('Enter a description of the objective'),
+                Length(min=4, message=(u'Description must be at least 4 characters'))])
+    new_prerequisite = TextField('Prerequisites', validators=[])
+                #Regexp(r'\w', message=(u'Can only use spaces, numbers and letters in the description'))])
+
+
+class CreateModule(Form):
+    name = TextField('Module name', validators=[Required()])
+    objectives = SelectMultipleField('Objectives')
+    material = FileField('Material')
+    tags = TextField('Tags', validators=[
+            Length(min=2, message=(u'The tag at least having 2 characters length'))
+            ])
