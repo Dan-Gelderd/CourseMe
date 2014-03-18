@@ -2,6 +2,7 @@ import os
 from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
+from flask.ext.uploads import UploadSet, configure_uploads, patch_request_class
 from config import basedir
 import md5      #DJG - depricated, explore hashlib or passlib or some password storing package
 
@@ -17,6 +18,10 @@ lm = LoginManager()
 lm.init_app(app)
 lm.login_view = 'login'
 #lm.session_protection = "strong"   DJG - Need to consider this
+
+lectures = UploadSet('lectures', extensions=('mp4'))
+configure_uploads(app, (lectures))
+patch_request_class(app, 8 * 1024 * 1024)        # 16 megabytes
 
 if not app.debug:
     import logging

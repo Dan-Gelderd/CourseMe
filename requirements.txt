@@ -11,3 +11,4 @@ sqlalchemy-migrate
 flask-login
 flask-openid
 flask-mail
+flask-uploads

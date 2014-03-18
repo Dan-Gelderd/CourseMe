@@ -35,8 +35,7 @@ class AddUpdateObjective(Form):
 
 class CreateModule(Form):
     name = TextField('Module name', validators=[Required()])
-    objectives = SelectMultipleField('Objectives')
     material = FileField('Material')
-    tags = TextField('Tags', validators=[
-            Length(min=2, message=(u'The tag at least having 2 characters length'))
-            ])
+    #tags = TextField('Tags', validators=[])
+    #objectives = SelectMultipleField('Objectives')
+    

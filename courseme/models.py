@@ -13,6 +13,8 @@ class User(db.Model):
     last_seen =  db.Column(db.DateTime)
     time_registered = db.Column(db.DateTime)
 
+    modules_authored = db.relationship("Module", backref="author")
+
     def is_authenticated(self):
         return True
 
@@ -54,6 +56,7 @@ objective_heirarchy = db.Table("objective_heirarchy",
 class Objective(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique = True)
+    
     prerequisites = db.relationship("Objective",
                         secondary=objective_heirarchy,
                         primaryjoin=(objective_heirarchy.c.followon_id==id),
@@ -105,3 +108,12 @@ class Objective(db.Model):
         data['prerequisites'] = [p.name for p in self.prerequisites.all()]
         #return json.dumps(data, sort_keys=True, separators=(',',':'))
         return data
+    
+class Module(db.Model):
+    id = db.Column(db.Integer, primary_key = True)      #DJG - What does index=True do?
+    name = db.Column(db.String(120))
+    time_created = db.Column(db.DateTime)
+    material_path = db.Column(db.String(400))
+    
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    

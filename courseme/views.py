@@ -1,12 +1,12 @@
 from flask import render_template, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_user, logout_user, current_user, login_required
-from courseme import app, db, lm, hash_string
+from courseme import app, db, lm, hash_string, lectures
 import forms
-from models import User, ROLE_USER, ROLE_ADMIN, Objective
+from models import User, ROLE_USER, ROLE_ADMIN, Objective, Module
 from datetime import datetime
 import json, operator
 import datamodel
-#import pdb; pdb.set_trace()
+#import pdb; pdb.set_trace()        #DJG - remove
 
 #admin
 @lm.user_loader
@@ -199,34 +199,42 @@ def objective_get():
 
 
 #modules
-@app.route('/createmodule')
+@app.route('/createmodule', methods = ["GET", "POST"])
 @login_required
 def createmodule():
     title = 'CourseMe - Create Module'
     form = forms.CreateModule()
-
+    if request.method == 'POST' and 'material' in request.files:        #DJG - Does flask-uploads automatically check against the allowed extention types and make the filename safe?
+        name = lectures.save(request.files['material'])                 #This saves the file and returns its name (including the folder)
+        print name
+        print form.name.data
+        module = Module(name=form.name.data,
+                        time_created=datetime.utcnow(),
+                        author_id=g.user.id,
+                        material_path=name)     
+        db.session.add(module)
+        db.session.commit()
+        flash("Lecture saved as " + name)
+        return redirect(url_for('module', id=module.id))
     return render_template('createmodule.html',
                            title=title,
                            form=form)
 
 
-@app.route('/module/<name>')
-def module(name):
+@app.route('/module/<id>')
+def module(id):
     
-    module = datamodel.Module.find(name)
-    user = datamodel.User.find("Student")
-    try:
-        usermodule = datamodel.UserModule.find(user, module)
-    except KeyError:
-        usermodule = datamodel.UserModule(user, module)
-
-    authormodule = datamodel.UserModule.find(module.author, module)
+    module = Module.query.get(id)
+    #user = datamodel.User.find("Student")
+    #try:
+    #    usermodule = datamodel.UserModule.find(user, module)
+    #except KeyError:
+    #    usermodule = datamodel.UserModule(user, module)
+    #
+    #authormodule = datamodel.UserModule.find(module.author, module)
 
     return render_template('module.html',
-                           module=module,
-                           usermodule=usermodule,
-                           authormodule=authormodule,
-    )
+                           module=module)
 
 
 @app.route('/star/<name>')
@@ -264,8 +272,3 @@ def voteclick(name):
     
     return ""   #DJG - What is best return value when I don't care about the return result? Only thing I found that worked
 
-
-
-@app.route('/autocomplete')
-def autocomplete():
-    return render_template('Test/autocomplete.html')

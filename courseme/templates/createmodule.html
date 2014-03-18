@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<form enctype=multipart/form-data action="{{ url_for('createmodule') }}" class="form" method="POST">
+    {{form.hidden_tag()}}   <!--needed for cross-site request forgery prevention-->
+    
+    <div class="form-group {% if form.name.errors %} has-error {% endif %}">
+        {{ form.name.label }}
+        {{ form.name(placeholder="E.g. Solving quadratic equations", class="form-control") }}
+        <p class="help-block">{{ form.name.errors[0] }}</p>
+    </div>
+
+
+
+    <div class="form-group">
+        {{ form.material.label }}
+        {{ form.material }} 
+        <p class="help-block">{{ form.material.errors[0] }}</p>
+    </div>
+    
+    <button class="btn btn-success" type="submit">Create Module</button>    
+    
+</form>
+
+{% endblock %}
