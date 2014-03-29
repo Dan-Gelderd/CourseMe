@@ -5,6 +5,9 @@ __pycache__/
 # C extensions
 *.so
 
+# Virtual Env
+courseme-env/
+
 # Distribution / packaging
 bin/
 build/

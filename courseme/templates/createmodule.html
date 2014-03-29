@@ -1,25 +1,53 @@
 {% extends "layout.html" %}
 {% block content %}
 
+<script type='text/javascript'>
+$(document).ready(function () {
+    $(function() {
+        
+        var availableTags = [];
+        {% for objective in objectives %}
+            availableTags.push('{{ objective.name }}')    
+        {% endfor %}    
+
+        $("#module_objectives").find(".dynamic-list-new-item").autocomplete({
+            source: availableTags
+        });
+        
+        $("#new_prerequisite_form_group").find(".dynamic-list-new-item").autocomplete({
+            source: availableTags
+        });
+    });
+});
+</script>
+
 <form enctype=multipart/form-data action="{{ url_for('createmodule') }}" class="form" method="POST">
-    {{form.hidden_tag()}}   <!--needed for cross-site request forgery prevention-->
+    {{moduleform.hidden_tag()}}   <!-- DJG - needed for cross-site request forgery prevention -->
     
-    <div class="form-group {% if form.name.errors %} has-error {% endif %}">
-        {{ form.name.label }}
-        {{ form.name(placeholder="E.g. Solving quadratic equations", class="form-control") }}
-        <p class="help-block">{{ form.name.errors[0] }}</p>
+    <div class="form-group {% if moduleform.name.errors %} has-error {% endif %}">
+        {{ moduleform.name.label }}
+        {{ moduleform.name(placeholder="E.g. Solving quadratic equations", class="form-control") }}
+        <p class="help-block">{{ moduleform.name.errors[0] }}</p>
     </div>
 
-
-
     <div class="form-group">
-        {{ form.material.label }}
-        {{ form.material }} 
-        <p class="help-block">{{ form.material.errors[0] }}</p>
+        {{ moduleform.material.label }}
+        {{ moduleform.material }} 
+        <p class="help-block">{{ moduleform.material.errors[0] }}</p>
+    </div>
+
+    <div class="dynamic-list-container" id="module_objectives">
+        {% include "parts/dynamic-list.html" %}
     </div>
     
     <button class="btn btn-success" type="submit">Create Module</button>    
     
 </form>
+
+<br />
+
+{% include "parts/edit-objective-modal.html" %}
+
+<button class="btn btn-default btn-sm btn-success" id="create_objective">Create New Objective</button>
 
 {% endblock %}

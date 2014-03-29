@@ -10,11 +10,11 @@ $(document).ready(function () {
   $(".star").on('click', function( event ) {
     //console.log("Star Click");
     var star = $(this)
-    star.stop().animate({left:'+=10px'});
-    star.stop().animate({left:'-=10px'});
+    star.animate({left:'+=10px'});
+    star.animate({left:'-=10px'});
     
     $.getJSON(
-      '/star/{{module.name}}',
+      '/star/{{ module.id }}',
       {},   //DJG - could pass back query parameters
       function(json) {
         //console.log(json.starred);
@@ -99,7 +99,7 @@ $(document).ready(function () {
 
   function saveVote(vote) {
     console.log("writing vote to database " + vote)
-    $.getJSON('/vote/{{module.name}}',
+    $.getJSON('/vote/{{module.id}}',
               {vote:vote},
               function(json) {
               //DJG - all reformatting of buttons should happen at this stage after checking the usernodule vote value from the response                
@@ -145,9 +145,9 @@ $(document).ready(function () {
           </header>
           <article id="main-module-material">
             <h1 style="display:none;">Main Content</h1>
-            <iframe width="100%" height="315" frameborder="0" allowfullscreen
-                    src="//www.youtube.com/embed/Id6UovYjd-M">
-            </iframe>
+            <video width="100%" height="100%" controls>
+              <source src="{{ module.material_path }}" type="video/mp4">
+            </video>
           </article>
           <footer>
             <ul class="pager">
@@ -256,7 +256,7 @@ $(document).ready(function () {
         <div class="tab-content">
           <article class="tab-pane active" id="author-notes">
             <h1 style="display:none;">Author Notes</h1>
-            {{authormodule.notes}}
+            ""
           </article>
           <article class="tab-pane" id="tutor-notes">
             <h1 style="display:none;">Tutor Notes</h1>
@@ -274,9 +274,9 @@ $(document).ready(function () {
     <div class="col-sm-3">
       <aside id="profiles">
         <article class="thumbnail">
-          <img class = "img-responsive" id="author-picture" src="../../static/preview/media/zippy.png" alt="Module Author Profile Picture">
-          <span class="lead">{{module.author.name}}</span>
-          <p>{{module.author.blurb}}</p>
+          <img class = "img-responsive" id="author-picture" src="#" alt="Module Author Profile Picture">
+          <span class="lead">{{ module.author.name }}</span>
+          <p>{{ module.author.blurb }}</p>
           <address>Change this to a list of institutions?</address> 
         </article>
       </aside>

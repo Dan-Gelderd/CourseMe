@@ -1,20 +1,30 @@
 from courseme import db
 import json
+from datetime import datetime
+import md5
 
 ROLE_USER = 0
 ROLE_ADMIN = 1
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key = True)
-    password = db.Column(db.String(120), index = True)
-    email = db.Column(db.String(120), index = True, unique = True)
-    username = db.Column(db.String(64), index = True)
-    role = db.Column(db.SmallInteger, default = ROLE_USER)
+    password = db.Column(db.String(120), index = True, nullable=False)      #DJG - What does index=True do?
+    email = db.Column(db.String(120), index = True, unique = True, nullable=False)
+    name = db.Column(db.String(64), index = True, nullable=False)
+    blurb = db.Column(db.String(240), default = "This is some blurb")
+    role = db.Column(db.SmallInteger, default = ROLE_USER, nullable=False)
     last_seen =  db.Column(db.DateTime)
     time_registered = db.Column(db.DateTime)
 
+    objectives_created = db.relationship("Objective", backref="created_by")
     modules_authored = db.relationship("Module", backref="author")
 
+    def visible_objectives(self):
+        visible_objective_user_ids = [u.id for u in User.admin_users()]
+        visible_objective_user_ids.append(self.id)
+        return Objective.query.filter(Objective.created_by_id.in_(visible_objective_user_ids))   
+        
+    
     def is_authenticated(self):
         return True
 
@@ -28,25 +38,26 @@ class User(db.Model):
         return unicode(self.id)
 
     def __repr__(self):
-        return '<User %r>' % (self.nickname)
-
-    def __repr__(self):
-        return '<User %r>' % (self.nickname)
+        return '<User %r>' % (self.name)
     
-    def avatar(self, size):
+    def avatar(self, size=50):
         return 'http://www.gravatar.com/avatar/' + md5(self.email).hexdigest() + '?d=mm&s=' + str(size)
 
     @staticmethod
-    def make_unique_nickname(nickname):
-        if User.query.filter_by(nickname = nickname).first() == None:
-            return nickname
+    def make_unique_username(username):
+        if User.query.filter_by(name = username).first() == None:
+            return username
         version = 2
         while True:
-            new_nickname = nickname + str(version)
-            if User.query.filter_by(nickname = new_nickname).first() == None:
+            new_username = username + str(version)
+            if User.query.filter_by(name = new_username).first() == None:
                 break
             version += 1
-        return new_nickname
+        return new_username
+
+    @staticmethod
+    def admin_users():
+        return User.query.filter(User.role == ROLE_ADMIN).all()
 
 objective_heirarchy = db.Table("objective_heirarchy",
     db.Column("prerequisite_id", db.Integer, db.ForeignKey("objective.id")),
@@ -55,8 +66,10 @@ objective_heirarchy = db.Table("objective_heirarchy",
 
 class Objective(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), unique = True)
-    
+    name = db.Column(db.String(50))
+
+    created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))     #DJG - why is user lower case in ForeignKey('user.id')    
+
     prerequisites = db.relationship("Objective",
                         secondary=objective_heirarchy,
                         primaryjoin=(objective_heirarchy.c.followon_id==id),
@@ -106,14 +119,68 @@ class Objective(db.Model):
         data['id'] = self.id
         data['name'] = self.name
         data['prerequisites'] = [p.name for p in self.prerequisites.all()]
-        #return json.dumps(data, sort_keys=True, separators=(',',':'))
+        #return json.dumps(data, sort_keys=True, separators=(',',':'))      DJG - could convert to JSON in here
         return data
+
+    @staticmethod
+    def system_objectives():
+        system_objectives_iterator = (set(u.objectives_created) for u in User.admin_users())
+        system_objectives = set.union(*system_objectives_iterator)
+        return system_objectives
+    
     
 class Module(db.Model):
-    id = db.Column(db.Integer, primary_key = True)      #DJG - What does index=True do?
+    id = db.Column(db.Integer, primary_key = True)      
     name = db.Column(db.String(120))
     time_created = db.Column(db.DateTime)
     material_path = db.Column(db.String(400))
+    votes = db.Column(db.Integer, default = 0)
     
-    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))     #DJG - why is user lower case in ForeignKey('user.id')
     
+    def calculate_votes():
+        pass #DJG - calculate the proper votes total by summing usermodules and store in this parameter, to be run periodically to keep votes count properly alligned; should print out a record if mismatched to developer log
+    
+class UserModule(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    user_id = db.Column(db.Integer, db.ForeignKey(User.id))
+    module_id = db.Column(db.Integer, db.ForeignKey(Module.id))
+    first_viewed = db.Column(db.DateTime)
+    last_viewed = db.Column(db.DateTime)
+    starred = db.Column(db.Boolean, default = False)
+    vote = db.Column(db.Integer, default = 0)
+    notes = db.Column(db.String(1000))
+    
+    user = db.relationship(User, backref='user_modules')
+    module = db.relationship(Module, backref='user_modules')
+
+    def as_json(self):
+        data = {}
+        data['id'] = self.id
+        data['starred'] = self.starred
+        data['vote'] = self.vote
+        return json.dumps(data, sort_keys=True, separators=(',',':'))
+
+    @staticmethod
+    def FindOrCreate(user_id, module_id):
+        usermodule = UserModule.query.filter_by(user_id=user_id, module_id=module_id).first()
+        if usermodule is None:
+            usermodule = UserModule(user_id=user_id,
+                                    module_id=module_id,
+                                    first_viewed=datetime.utcnow())
+        usermodule.last_viewed=datetime.utcnow()
+        db.session.add(usermodule)
+        db.session.commit()
+        return usermodule
+
+class Recommendation(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    id_user_from = db.Column(db.Integer, db.ForeignKey(User.id))
+    id_user_to = db.Column(db.Integer, db.ForeignKey(User.id))
+    subject = db.Column(db.Text, nullable=False)
+    body = db.Column(db.Text, nullable=True)
+    sent_date = db.Column(db.DateTime)
+    received_date = db.Column(db.DateTime)
+
+    user_from = db.relationship(User, foreign_keys=[id_user_from], backref='sent_recommendations')
+    user_to = db.relationship(User, foreign_keys=[id_user_to], backref='received_recommendations')

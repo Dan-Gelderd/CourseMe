@@ -1,6 +1,6 @@
 from flask.ext.wtf import Form
 from wtforms import TextField, PasswordField, BooleanField, HiddenField, FileField, SelectMultipleField
-from wtforms.validators import Required, Length, Email, Regexp
+from wtforms.validators import Required, Length, Email, Regexp, EqualTo
 
 class SignupForm(Form):
     email = TextField('Email address', validators=[
@@ -9,8 +9,10 @@ class SignupForm(Form):
     password = PasswordField('Pick a secure password', validators=[
                 Required('Please enter a password'),
                 Length(min=6, message=(u'Password must be at least 6 characters'))])
-    username = TextField('Choose your username', validators=[Required()])
-    agree = BooleanField('By signing up your agree to follow our <a href="#">Terms of Services</a>',
+    confirm_password = PasswordField('Confirm password', validators=[
+                EqualTo('password', message='Password confirmation did not match')])
+    username = TextField('Name', validators=[Required()])
+    agree = BooleanField('By signing up your agree to follow our <a href="#">Terms and Conditions</a>',
                 validators=[Required(u'You must agree the Terms of Service')])    
     remember_me = BooleanField('remember_me', default = False)
 
@@ -35,7 +37,7 @@ class AddUpdateObjective(Form):
 
 class CreateModule(Form):
     name = TextField('Module name', validators=[Required()])
-    material = FileField('Material')
+    material = FileField('Material', validators=[Required()])
     #tags = TextField('Tags', validators=[])
     #objectives = SelectMultipleField('Objectives')
     

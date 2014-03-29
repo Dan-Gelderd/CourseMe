@@ -2,10 +2,9 @@ from flask import render_template, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from courseme import app, db, lm, hash_string, lectures
 import forms
-from models import User, ROLE_USER, ROLE_ADMIN, Objective, Module
+from models import User, ROLE_USER, ROLE_ADMIN, Objective, Module, UserModule
 from datetime import datetime
 import json, operator
-import datamodel
 #import pdb; pdb.set_trace()        #DJG - remove
 
 #admin
@@ -64,7 +63,7 @@ def signup():
         else:
             user = User(email=form.email.data,
                         password=hash_string(form.password.data),
-                        username=form.username.data,
+                        name=form.username.data,
                         time_registered=datetime.utcnow(),
                         last_seen=datetime.utcnow(),
                         role = ROLE_USER)
@@ -102,15 +101,15 @@ def logout():
 
 #objectives
 @app.route('/objectives')
-#@login_required
+@login_required
 def objectives():
     title = "CourseMe - Objectives"
-    form = forms.AddUpdateObjective()
-    objectives = Objective.query.all()
+    objectiveform = forms.AddUpdateObjective()
+    objectives = g.user.visible_objectives().all()
     objectives.sort(key=operator.methodcaller("score"))   #DJG - isn't there a way of doing this within the order_by of the query
     return render_template('objectives.html',
                            title=title,
-                           form=form,
+                           objectiveform=objectiveform,
                            objectives=objectives)
 
 @app.route('/objective-add-update', methods = ['POST'])
@@ -124,15 +123,15 @@ def objective_add_update():
         obj_id = form.edit_objective_id.data
         name = form.edit_objective_name.data
         prerequisites_unicode = request.form["prerequisites"]       #DJG - the data sent by the ajax request has the list of prerequisites converted into a unicode text string with commas
-        prerequisites_list = filter(None, prerequisites_unicode.split(','))            #DJG - Dodgy string manipulation, measn I can't have commas in objective names
-        prerequisites = Objective.query.filter(Objective.name.in_(prerequisites_list)).all()
+        #DJG - need to update this so only visible objectives for the user are tested against
+        prerequisites_list = filter(None, prerequisites_unicode.split(','))            #DJG - Dodgy string manipulation, means I can't have commas in objective names
+        prerequisites = g.user.visible_objectives().filter(Objective.name.in_(prerequisites_list)).all()
         undefined_prerequisites = list(set(prerequisites_list) - set(obj.name for obj in prerequisites))
         result = {}
         result['savedsuccess'] = False
-        #import pdb; pdb.set_trace()
         if not obj_id:
             #The objective id is not found on the form so this is an add objective case
-            check_obj = Objective.query.filter_by(name = name).first()
+            check_obj = g.user.visible_objectives().filter_by(name = name).first()
             if check_obj is not None:
                 #The new objective name is already taken
                 result['edit_objective_name'] = ["Objective '" + name + "' already exists"]     #Need to make the new result attributes the same as the form.errors attributes which will be the form input field ids
@@ -143,7 +142,8 @@ def objective_add_update():
                     is_are = 'is' if len(undefined_prerequisites) == 1 else 'are'
                     result['new_prerequisite'] = ["'" + "', '".join(undefined_prerequisites) + "' " + is_are + " not already defined"]
                 else:
-                    objective = Objective(name=name, prerequisites=prerequisites)
+                    #No need to check for cyclic prerequisites as the new objective cannot be a prerequisite to anything already
+                    objective = Objective(name=name, prerequisites=prerequisites, created_by_id=g.user.id)
                     db.session.add(objective)
                     db.session.commit()
                     result['savedsuccess'] = True
@@ -151,18 +151,27 @@ def objective_add_update():
         else:
             #The objective id is found on the form so this is an update objective case
             objective = Objective.query.get(obj_id)
-            new_name_valid = True
-            #Check whether the name has changed
-            if name != objective.name:
-                #Name has changed - need to check if new name already exists
-                check_obj = Objective.query.filter_by(name = name).first()                  #DJG - code repeat of above, how to avoid this
-                if check_obj is not None:
-                    #The new objective name is already taken
-                    result['edit_objective_name'] = ["Objective '" + name + "' already exists"]
-                    new_name_valid = False
-            if new_name_valid:
-                #Name not changed or new name not taken
-                #Need to check all the prerequisites exist already
+            #DJG - should handle the case where no objective matches the id on the form request
+            proceed = True
+            #Check whether the user has the authority to edit it
+            if g.user.role != ROLE_ADMIN and objective.created_by_id != g.user.id:
+                result['edit_objective_name'] = ["You do not have authority to edit this objective"]
+                proceed = False
+            
+            #Authorised to edit
+            #Check whether the name has changed and if so check it is valid
+            if proceed:
+                if name != objective.name:
+                    #Name has changed - need to check if new name already exists
+                    check_obj = g.user.visible_objectives().filter_by(name = name).first()                  #DJG - code repeat of above, how to avoid this
+                    if check_obj is not None:
+                        #The new objective name is already taken
+                        result['edit_objective_name'] = ["Objective '" + name + "' already exists"]
+                        proceed = False
+ 
+            #Name not changed or new name not taken
+            if proceed:
+                #Need to check all the prerequisites exist already            
                 if undefined_prerequisites:       #DJG - code repeat of above, how to avoid this
                     is_are = 'is' if len(undefined_prerequisites) == 1 else 'are'
                     result['new_prerequisite'] = ["'" + "', '".join(undefined_prerequisites) + "' " + is_are  + " not already defined"]
@@ -187,14 +196,15 @@ def objective_add_update():
 
 @app.route('/objective-delete')
 def objective_delete():
-    objective = Objective.query.filter_by(id = request.args.get("objective_id")).first()
+    #DJG - need to check user has authority to delete objective
+    objective = Objective.query.filter_by(id = request.args.get("objective_id")).first()        #DJG - could replace with get as we are looking up a primary key
     db.session.delete(objective)        #DJG - secondary table should be updated automatically because of relationship definintion
     db.session.commit()
     return ""
 
 @app.route('/objective-get')
 def objective_get():
-    objective = Objective.query.filter_by(id = request.args.get("objective_id")).first()
+    objective = Objective.query.filter_by(id = request.args.get("objective_id")).first()    #DJG - could replace with get as we are looking up a primary key
     return json.dumps(objective.as_dict(), sort_keys=True, separators=(',',':'))
 
 
@@ -203,72 +213,87 @@ def objective_get():
 @login_required
 def createmodule():
     title = 'CourseMe - Create Module'
-    form = forms.CreateModule()
-    if request.method == 'POST' and 'material' in request.files:        #DJG - Does flask-uploads automatically check against the allowed extention types and make the filename safe?
+    moduleform = forms.CreateModule()
+    objectiveform = forms.AddUpdateObjective()
+    #DJG - need to test for validate
+    if moduleform.validate_on_submit() and 'material' in request.files:        #DJG - Does flask-uploads automatically check against the allowed extention types and make the filename safe? Believe so.
         name = lectures.save(request.files['material'])                 #This saves the file and returns its name (including the folder)
-        print name
-        print form.name.data
-        module = Module(name=form.name.data,
+        #print name         #DJG - check saving process
+        #print moduleform.name.data
+        module = Module(name=moduleform.name.data,
                         time_created=datetime.utcnow(),
                         author_id=g.user.id,
                         material_path=name)     
         db.session.add(module)
         db.session.commit()
-        flash("Lecture saved as " + name)
+        #flash("Lecture saved as " + name)
         return redirect(url_for('module', id=module.id))
+
+    objectives = g.user.visible_objectives().all()
+    objectives.sort(key=operator.methodcaller("score"))   #DJG - isn't there a way of doing this within the order_by of the query    
     return render_template('createmodule.html',
                            title=title,
-                           form=form)
+                           objectives=objectives,
+                           moduleform=moduleform,
+                           objectiveform=objectiveform)
 
 
 @app.route('/module/<id>')
+@login_required
+    #DJG - Login should not be required just temporary
 def module(id):
+       
+    module = Module.query.get(id)
+    user = g.user
+
+    usermodule = UserModule.FindOrCreate(user.id, id)
+    
+    #import pdb; pdb.set_trace()        #DJG - remove 
+    
+    return render_template('module.html',
+                           module=module,
+                           usermodule=usermodule)
+
+
+@app.route('/star/<id>')
+def starclick(id):
     
     module = Module.query.get(id)
-    #user = datamodel.User.find("Student")
-    #try:
-    #    usermodule = datamodel.UserModule.find(user, module)
-    #except KeyError:
-    #    usermodule = datamodel.UserModule(user, module)
-    #
-    #authormodule = datamodel.UserModule.find(module.author, module)
+    user = g.user
 
-    return render_template('module.html',
-                           module=module)
-
-
-@app.route('/star/<name>')
-def starclick(name):
-    
-    module = datamodel.Module.find(name)
-    user = datamodel.User.find("Student")
-    try:
-        usermodule = datamodel.UserModule.find(user, module)
-    except KeyError:
-        usermodule = datamodel.UserModule(user, module)
+    usermodule = UserModule.FindOrCreate(user.id, module.id)
 
     usermodule.starred = not usermodule.starred
-    usermodule.save()
+    db.session.add(usermodule)
+    db.session.commit()
     
     return usermodule.as_json()
 
 
-@app.route('/vote/<name>')
-def voteclick(name):
+@app.route('/vote/<id>')
+def voteclick(id):
     
-    module = datamodel.Module.find(name)
-    user = datamodel.User.find("Student")
-    try:
-        usermodule = datamodel.UserModule.find(user, module)
-    except KeyError:
-        usermodule = datamodel.UserModule(user, module)
+    module = Module.query.get(id)
+    user = g.user
+
+    usermodule = UserModule.FindOrCreate(user.id, module.id)
     
-    newVote = int(flask.request.args.get("vote"))
+    newVote = int(request.args.get("vote"))
     module.votes = module.votes - usermodule.vote + newVote       #DJG - Almost certainly a better way
     usermodule.vote = newVote
         
-    usermodule.save()
-    module.save
+    db.session.add(usermodule)
+    db.session.add(module)
+    db.session.commit()
     
     return ""   #DJG - What is best return value when I don't care about the return result? Only thing I found that worked
 
+
+@app.route('/test')
+def test():
+    objectiveform = forms.AddUpdateObjective()
+    objectives = Objective.query.all()
+    objectives.sort(key=operator.methodcaller("score"))
+    return render_template('test.html',
+                           objectives=objectives,
+                           objectiveform=objectiveform)
