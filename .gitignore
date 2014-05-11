@@ -7,6 +7,7 @@ __pycache__/
 
 # Virtual Env
 courseme-env/
+venv/
 
 # Distribution / packaging
 bin/
@@ -45,6 +46,7 @@ coverage.xml
 # Django stuff:
 *.log
 *.pot
+
 
 # Sphinx documentation
 docs/_build/

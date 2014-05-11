@@ -18,13 +18,16 @@ class User(db.Model):
 
     objectives_created = db.relationship("Objective", backref="created_by")
     modules_authored = db.relationship("Module", backref="author")
+    courses_authored = db.relationship("Course", backref="author")
+
+    def recent_modules(self, count):
+        return UserModule.query.filter_by(user=self).order_by(UserModule.last_viewed).limit(count).all()
 
     def visible_objectives(self):
         visible_objective_user_ids = [u.id for u in User.admin_users()]
         visible_objective_user_ids.append(self.id)
         return Objective.query.filter(Objective.created_by_id.in_(visible_objective_user_ids))   
         
-    
     def is_authenticated(self):
         return True
 
@@ -55,9 +58,11 @@ class User(db.Model):
             version += 1
         return new_username
 
-    @staticmethod
+    @staticmethod       #DJG - suspect this should be taken out of the user class as the user is passed to the template and so the server side through g.user - may therefore give access to the client about admin users?
     def admin_users():
         return User.query.filter(User.role == ROLE_ADMIN).all()
+
+
 
 objective_heirarchy = db.Table("objective_heirarchy",
     db.Column("prerequisite_id", db.Integer, db.ForeignKey("objective.id")),
@@ -132,7 +137,9 @@ class Objective(db.Model):
 class Module(db.Model):
     id = db.Column(db.Integer, primary_key = True)      
     name = db.Column(db.String(120))
+    #type = db.Column(db.String(120), default = 'Lecture')      #DJG - need to bring these extra fields in
     time_created = db.Column(db.DateTime)
+    #last_updated = db.Column(db.DateTime)
     material_path = db.Column(db.String(400))
     votes = db.Column(db.Integer, default = 0)
     
@@ -140,6 +147,10 @@ class Module(db.Model):
     
     def calculate_votes():
         pass #DJG - calculate the proper votes total by summing usermodules and store in this parameter, to be run periodically to keep votes count properly alligned; should print out a record if mismatched to developer log
+    
+    def icon_class(self):
+        return "glyphicon glyphicon-list-alt"       #DJG - this is just a placeholder, should probably define a css class based directly on the module.type
+
     
 class UserModule(db.Model):
     id = db.Column(db.Integer, primary_key = True)
@@ -171,9 +182,10 @@ class UserModule(db.Model):
         usermodule.last_viewed=datetime.utcnow()
         db.session.add(usermodule)
         db.session.commit()
+        #import pdb; pdb.set_trace()        #DJG - remove
         return usermodule
 
-class Recommendation(db.Model):
+class Recommendation(db.Model):     #DJG - probably need a separate one for module and course recommendations, need to add the relationship to the material being recommended and all the permissions
     id = db.Column(db.Integer, primary_key = True)
     id_user_from = db.Column(db.Integer, db.ForeignKey(User.id))
     id_user_to = db.Column(db.Integer, db.ForeignKey(User.id))
@@ -184,3 +196,27 @@ class Recommendation(db.Model):
 
     user_from = db.relationship(User, foreign_keys=[id_user_from], backref='sent_recommendations')
     user_to = db.relationship(User, foreign_keys=[id_user_to], backref='received_recommendations')
+
+
+course_modules = db.Table('course_modules',
+    db.Column('course_id', db.Integer, db.ForeignKey('course.id')),
+    db.Column('module_id', db.Integer, db.ForeignKey('module.id'))
+)
+
+class Course(db.Model):
+    id = db.Column(db.Integer, primary_key = True)      
+    name = db.Column(db.String(120))
+    time_created = db.Column(db.DateTime)
+    last_updated = db.Column(db.DateTime)
+    votes = db.Column(db.Integer, default = 0)
+    
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))     #DJG - why is user lower case in ForeignKey('user.id')
+
+    modules = db.relationship('Module', secondary=course_modules,
+        backref=db.backref('courses', lazy='dynamic'))
+    
+    def calculate_votes():
+        pass #DJG - calculate the proper votes total by summing usermodules and store in this parameter, to be run periodically to keep votes count properly alligned; should print out a record if mismatched to developer log
+
+
+

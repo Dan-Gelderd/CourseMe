@@ -104,7 +104,7 @@ def logout():
 @login_required
 def objectives():
     title = "CourseMe - Objectives"
-    objectiveform = forms.AddUpdateObjective()
+    objectiveform = forms.EditObjective()
     objectives = g.user.visible_objectives().all()
     objectives.sort(key=operator.methodcaller("score"))   #DJG - isn't there a way of doing this within the order_by of the query
     return render_template('objectives.html',
@@ -114,7 +114,7 @@ def objectives():
 
 @app.route('/objective-add-update', methods = ['POST'])
 def objective_add_update():
-    form = forms.AddUpdateObjective()   
+    form = forms.EditObjective()   
     #import pdb; pdb.set_trace()
     #form will be the fields of the html form with the csrf
     #request.form will be the data posted back through the ajax request
@@ -122,11 +122,12 @@ def objective_add_update():
     if form.validate():
         obj_id = form.edit_objective_id.data
         name = form.edit_objective_name.data
-        prerequisites_unicode = request.form["prerequisites"]       #DJG - the data sent by the ajax request has the list of prerequisites converted into a unicode text string with commas
-        #DJG - need to update this so only visible objectives for the user are tested against
-        prerequisites_list = filter(None, prerequisites_unicode.split(','))            #DJG - Dodgy string manipulation, means I can't have commas in objective names
-        prerequisites = g.user.visible_objectives().filter(Objective.name.in_(prerequisites_list)).all()
-        undefined_prerequisites = list(set(prerequisites_list) - set(obj.name for obj in prerequisites))
+        
+        #Reading off the list of prerequisites
+        unicode_list = request.form["prerequisites"]       #DJG - the data sent by the ajax request has the list converted into a unicode text string with commas
+        python_list = filter(None, unicode_list.split(','))            #DJG - Dodgy string manipulation, means I can't have commas in objective names
+        prerequisites = g.user.visible_objectives().filter(Objective.name.in_(python_list)).all()
+        undefined_prerequisites = list(set(python_list) - set(obj.name for obj in prerequisites))
         result = {}
         result['savedsuccess'] = False
         if not obj_id:
@@ -209,17 +210,22 @@ def objective_get():
 
 
 #modules
-@app.route('/createmodule', methods = ["GET", "POST"])
+@app.route('/editmodule', methods = ["GET", "POST"])
 @login_required
-def createmodule():
-    title = 'CourseMe - Create Module'
-    moduleform = forms.CreateModule()
-    objectiveform = forms.AddUpdateObjective()
+def editmodule():
+    title = 'CourseMe - Edit Module'
+    moduleform = forms.EditModule()
+    objectiveform = forms.EditObjective()
     #DJG - need to test for validate
     if moduleform.validate_on_submit() and 'material' in request.files:        #DJG - Does flask-uploads automatically check against the allowed extention types and make the filename safe? Believe so.
         name = lectures.save(request.files['material'])                 #This saves the file and returns its name (including the folder)
-        #print name         #DJG - check saving process
-        #print moduleform.name.data
+
+        #Reading off the list of objectives
+        unicode_list = request.form["objectives"]       #DJG - the data sent by the ajax request has the list converted into a unicode text string with commas
+        python_list = filter(None, unicode_list.split(','))            #DJG - Dodgy string manipulation, means I can't have commas in objective names
+        objectives = g.user.visible_objectives().filter(Objective.name.in_(python_list)).all()
+        undefined_objectives = list(set(python_list) - set(obj.name for obj in objectives))
+
         module = Module(name=moduleform.name.data,
                         time_created=datetime.utcnow(),
                         author_id=g.user.id,
@@ -231,10 +237,10 @@ def createmodule():
 
     objectives = g.user.visible_objectives().all()
     objectives.sort(key=operator.methodcaller("score"))   #DJG - isn't there a way of doing this within the order_by of the query    
-    return render_template('createmodule.html',
+    return render_template('editmodule.html',
                            title=title,
                            objectives=objectives,
-                           moduleform=moduleform,
+                           edit_material_form=moduleform,
                            objectiveform=objectiveform)
 
 
@@ -289,9 +295,47 @@ def voteclick(id):
     return ""   #DJG - What is best return value when I don't care about the return result? Only thing I found that worked
 
 
+
+
+#courses
+@app.route('/editcourse/<int:id>', methods = ["GET", "POST"])
+@login_required
+def editcourse(id):
+    title = 'CourseMe - Edit Course'
+    form = forms.EditCourse()
+
+    if form.validate_on_submit():
+        result = {}
+        result['savedsuccess'] = False
+        if id > 0:
+            course = Course.query.get(id)
+            if course:
+                course.name = form.name.data
+                course.last_updated = datetime.utcnow()
+            else:
+                result['error'] = "This course could not be found and so has not been edited"
+        else:
+            course = Course(name=form.name.data,
+                            time_created=datetime.utcnow(),
+                            last_updated = datetime.utcnow(),
+                            author_id=g.user.id)     
+        db.session.add(course)
+        db.session.commit()
+        result['savedsuccess'] = True
+        return redirect(url_for('course', id=course.id))
+
+    return render_template('editcourse.html',
+                           title=title,
+                           edit_material_form=form)
+
+
+
+
+
+
 @app.route('/test')
 def test():
-    objectiveform = forms.AddUpdateObjective()
+    objectiveform = forms.EditObjective()
     objectives = Objective.query.all()
     objectives.sort(key=operator.methodcaller("score"))
     return render_template('test.html',

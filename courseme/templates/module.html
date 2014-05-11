@@ -138,15 +138,16 @@ $(document).ready(function () {
                   <span id="current-vote" style="display:none;">{{usermodule.vote}}</span> 
                   <span id="up-vote" class="vote glyphicon glyphicon-thumbs-up"></span> 
                   <span id="down-vote" class="vote glyphicon glyphicon-thumbs-down"></span>
-                  <span id="total-votes">{{module.votes}}</span>  votes          
+                  <span id="total-votes">{{module.votes}}</span> votes          
                 </span>
               </div>          
             </section>
           </header>
           <article id="main-module-material">
             <h1 style="display:none;">Main Content</h1>
-            <video width="100%" height="100%" controls>
-              <source src="{{ module.material_path }}" type="video/mp4">
+            <video width="100%" height="100%" controls>     <!-- DJG - poster attribute for video caption/logo, can also specift start and end times to play if say pointing to utube video -->
+              <source src="#" type="video/mp4" />
+              Your browser does not support the video element.
             </video>
           </article>
           <footer>

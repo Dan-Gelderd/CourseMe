@@ -8,6 +8,7 @@
         <link rel="stylesheet" href="/static/css/lib/bootstrap-tagsinput.css" />
         <link rel="stylesheet" href="/static/css/main.css" />
         <link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">
+        <link rel="stylesheet" href="//raw.github.com/jharding/typeahead.js-bootstrap.css/master/typeahead.js-bootstrap.css" media="screen">
         <link rel="shortcut icon" href="/static/courseme.ico" />
         <script src="http://code.jquery.com/jquery-latest.js"></script>
     </head>
@@ -35,14 +36,17 @@
                 <li class="dropdown">
                   <a href="#" class="dropdown-toggle" data-toggle="dropdown">Quick Links<b class="caret"></b></a>
                   <ul class="dropdown-menu">
-                    <li role="presentation" class="dropdown-header">Recently viewed material</li>
-                    <li><a href="#"><span class="glyphicon glyphicon-list-alt"></span> My latest viewed course <span class="badge badge-info">13</span></a></li>
-                    <li><a href="#"><span class="glyphicon glyphicon-play-circle"></span> My latest viewed module</a></li>
-                    <li><a href="#"><span class="glyphicon glyphicon-play-circle"></span> My latest module within one of my courses</a></li>
+                    <li><a href="{{ url_for('editmodule') }}">Create a new module</a></li>
+                    <li><a href="{{ url_for('editcourse', id=0) }}">Create a new course</a></li>     <!-- DJG: using course id 0 as no course or new course - is this good practice? -->
+                    <li><a href="{{ url_for('objectives') }}">See all objectives</a></li>
+                    <li role="presentation" class="divider"></li>                    
+                    <li role="presentation" class="dropdown-header">Recent modules</li>
+                    {% for module in g.user.recent_modules(5) %}
+                        <li><a href="{{ url_for('module', id=module.id) }}"><span class="glyphicon glyphicon-list-alt"></span> {{module.name}}</a></li>
+                    {% endfor %}
                     <li role="presentation" class="divider"></li>
                     <li role="presentation" class="dropdown-header">My courses</li>
                     <li><a href="#"><span class="glyphicon glyphicon-list-alt"></span> Course name <span class="badge badge-info">13</span></a></li>
-    
                   </ul>
                 </li>
               </ul>
@@ -57,7 +61,7 @@
                 <li><a href="/static/preview/about.html">About</a></li>
                 <li class="dropdown">
                   {% if g.user.is_authenticated() %}
-                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-user"></span> {{ g.user.username }}<b class="caret"></b></a>
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-user"></span> {{ g.user.name }}<b class="caret"></b></a>
                   <ul class="dropdown-menu">
                     <li><a href="{{ url_for('logout') }}">Sign Out</a></li>
                     <li><a href="#">Account Settings</a></li>
@@ -113,11 +117,16 @@
         <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
         <script src="/static/js/dynamic-list.js"></script>
         <script src="/static/js/edit-objective-modal.js"></script>        
-        <script src="/static/js/lib/bootstrap-tagsinput.js"></script>
-        <script src="/static/js/lib/tooltip.js"></script>
-        <script src="/static/js/lib/popover.js"></script>
-        <script src="/static/js/lib/collapse.js"></script>
-        <script src="/static/js/lib/transition.js"></script>
+        <script src="/static/js/lib/bootstrap/bootstrap-tagsinput.js"></script>
+        <script src="/static/js/lib/bootstrap/tooltip.js"></script>
+        <script src="/static/js/lib/bootstrap/popover.js"></script>
+        <script src="/static/js/lib/bootstrap/collapse.js"></script>
+        <script src="/static/js/lib/bootstrap/transition.js"></script>
+        <!-- DJG - don't think I'm using any of these
+        <script src="/static/js/lib/typeahead/bloodhound.js"></script>
+        <script src="/static/js/lib/typeahead/typeahead.jquery.js"></script>
+        <script src="/static/js/lib/typeahead/typeahead.bundle.js"></script>
+        -->
     </div>
     </body>
 </html>
