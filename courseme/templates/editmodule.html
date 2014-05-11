@@ -1,0 +1,70 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<script type='text/javascript'>
+$(document).ready(function () {
+    $(function() {
+
+        $('#define_objectives').find('.dynamic-list-new-item-label').text("Enter new objective for this module");
+        $('#define_objectives').find('.dynamic-list-heading').text("Objectives");        
+                
+        var availableTags = [];
+        {% for objective in objectives %}
+            availableTags.push('{{ objective.name }}')    
+        {% endfor %}    
+
+        $("#define_objectives").find(".dynamic-list-new-item").autocomplete({
+            source: availableTags
+        });
+        
+        $("#new_prerequisite_form_group").find(".dynamic-list-new-item").autocomplete({
+            source: availableTags
+        });
+    });
+});
+
+//DJG - the location.reload on completing the modal objective form wipes the create module form, need to explore work-arounds
+</script>
+
+<form enctype=multipart/form-data action="{{ url_for('editmodule') }}" class="form" method="POST">
+    {{edit_material_form.hidden_tag()}}   <!-- DJG - needed for cross-site request forgery prevention -->
+    
+    <div class="form-group {% if edit_material_form.name.errors %} has-error {% endif %}">
+        {{ edit_material_form.name.label }}
+        {{ edit_material_form.name(placeholder="E.g. Solving quadratic equations", class="form-control") }}
+        <p class="help-block">{{ edit_material_form.name.errors[0] }}</p>
+    </div>
+
+    <div class="form-group {% if edit_material_form.brief_description.errors %} has-error {% endif %}">
+        {{ edit_material_form.brief_description.label }}
+        {{ edit_material_form.brief_description(placeholder="Enter a brief description to sell your course to potential students", class="form-control") }}
+        <p class="help-block">{{ edit_material_form.brief_description.errors[0] }}</p>
+    </div>
+
+    <div class="form-group {% if edit_material_form.notes.errors %} has-error {% endif %}">
+        {{ edit_material_form.notes.label }}
+        {{ edit_material_form.notes(placeholder="Additional notes pointing to other material or describing how your material fits in to what your students are learning can be very helpful", class="form-control") }}
+        <p class="help-block">{{ edit_material_form.notes.errors[0] }}</p>
+    </div>
+    
+    <div class="form-group">
+        {{ edit_material_form.material.label }}
+        {{ edit_material_form.material }} 
+        <p class="help-block">{{ edit_material_form.material.errors[0] }}</p>
+    </div>
+
+    <div class="dynamic-list-container" id="define_objectives">
+        {% include "parts/dynamic-list.html" %}
+    </div>
+    
+    <button class="btn btn-success" type="submit">Save Module</button>    
+    
+</form>
+
+<br />
+
+{% include "parts/edit-objective-modal.html" %}
+
+<button class="btn btn-default btn-sm btn-success" id="create_objective">Create New Objective</button>
+
+{% endblock %}
