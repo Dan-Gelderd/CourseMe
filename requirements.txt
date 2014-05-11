@@ -13,3 +13,4 @@ flask-openid
 flask-mail
 flask-uploads
 flask-util-js
+flask-wtf
