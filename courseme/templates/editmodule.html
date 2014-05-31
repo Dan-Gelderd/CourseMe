@@ -21,49 +21,118 @@ $(document).ready(function () {
             source: availableTags
         });
     });
+
+    $('[name="material_source"]').change(function() {           //DJG - is there a better way of doing this? radio.data or radio.value? 
+        var choose_material_id = 'choose_material_' + this.value;
+        $(".choose-material").addClass("hidden");
+        $("#" + choose_material_id).removeClass("hidden");
+    });
+
+    $("#save_module").click(function(event){
+        event.preventDefault();     //DJG - don't want submit button to post the form as well as the ajax request or get 400 bad request error. Not sure if this is the right way to fix it.
+        var objectives = new Array();
+        $("#edit_module_form").find(".dynamic-list-item-data").each(function() {
+            objectives.push($(this).text());
+        });
+        
+        var data = $("#edit_module_form").serializeArray();     //DJG - http://stackoverflow.com/questions/6627936/jquery-post-with-serialize-and-extra-data
+        data.push({name: 'objectives', value: objectives});
+
+        console.log(objectives);
+        console.log(data);          //DJG - not sure why edit_objective_id is getting repeated in the data array
+        //console.log($(".dynamic-list-select").serialize());
+        //console.log($(".dynamic-list-select").options[0].selected);
+
+        //data_json = JSON.stringify(data)        //DJG - Played with alternatives to passing data back that allows the list of prerequisites to be parsed as a list object by the view function. This approach leaves the wtf form unpopulated so fails validation and no csrf, needs reviewing
+        //console.log(jQuery.isPlainObject( data ));
+        //console.log(typeof data);
+        //console.log(data_json);      
+        //console.log(jQuery.isPlainObject( data_json ));
+        //console.log(typeof data_json);        
+        
+        $.post(  
+            flask_util.url_for('editmodule'),  
+            data,  
+            function(json) {
+                
+                console.log(json);
+                
+                var result = $.parseJSON(json);
+                console.log(result);
+                console.log(result["savedsuccess"]);
+                console.log(result.savedsuccess);                
+
+                $("#edit_module_form").find(".help-block").text("");
+                            
+                if(result.savedsuccess)
+                {
+                    window.location.href = flask_util.url_for('index');     //DJG - need to redirect to new module page - result.module_id available
+                }
+                else
+                {       
+                    if(result.objectives!=undefined) {
+                        $("#edit_module_form").find(".dynamic-list-help").text(result.objectives[0]);
+                        $("#edit_module_form").find(".dynamic-list-form").addClass("has-error");
+                    }    
+                }
+                
+            }
+        );
+    });
 });
 
 //DJG - the location.reload on completing the modal objective form wipes the create module form, need to explore work-arounds
 </script>
 
-<form enctype=multipart/form-data action="{{ url_for('editmodule') }}" class="form" method="POST">
-    {{edit_material_form.hidden_tag()}}   <!-- DJG - needed for cross-site request forgery prevention -->
+<form id="edit_module_form" enctype=multipart/form-data action="{{ url_for('editmodule') }}" class="form" method="POST">
+    {{edit_module_form.hidden_tag()}}   <!-- DJG - needed for cross-site request forgery prevention -->
     
-    <div class="form-group {% if edit_material_form.name.errors %} has-error {% endif %}">
-        {{ edit_material_form.name.label }}
-        {{ edit_material_form.name(placeholder="E.g. Solving quadratic equations", class="form-control") }}
-        <p class="help-block">{{ edit_material_form.name.errors[0] }}</p>
+    <div class="form-group {% if edit_module_form.name.errors %} has-error {% endif %}">
+        {{ edit_module_form.name.label }}
+        {{ edit_module_form.name(placeholder="E.g. Solving quadratic equations", class="form-control") }}
+        <p class="help-block">{{ edit_module_form.name.errors[0] }}</p>
     </div>
 
-    <div class="form-group {% if edit_material_form.brief_description.errors %} has-error {% endif %}">
-        {{ edit_material_form.brief_description.label }}
-        {{ edit_material_form.brief_description(placeholder="Enter a brief description to sell your course to potential students", class="form-control") }}
-        <p class="help-block">{{ edit_material_form.brief_description.errors[0] }}</p>
+    <div class="form-group {% if edit_module_form.description.errors %} has-error {% endif %}">
+        {{ edit_module_form.description.label }}
+        {{ edit_module_form.description(placeholder="Enter a brief description to sell your course to potential students", class="form-control") }}
+        <p class="help-block">{{ edit_module_form.description.errors[0] }}</p>
     </div>
 
-    <div class="form-group {% if edit_material_form.notes.errors %} has-error {% endif %}">
-        {{ edit_material_form.notes.label }}
-        {{ edit_material_form.notes(placeholder="Additional notes pointing to other material or describing how your material fits in to what your students are learning can be very helpful", class="form-control") }}
-        <p class="help-block">{{ edit_material_form.notes.errors[0] }}</p>
+    <div class="form-group {% if edit_module_form.notes.errors %} has-error {% endif %}">
+        {{ edit_module_form.notes.label }}
+        {{ edit_module_form.notes(placeholder="Additional notes pointing to other material or describing how your material fits in to what your students are learning can be very helpful", class="form-control") }}
+        <p class="help-block">{{ edit_module_form.notes.errors[0] }}</p>
     </div>
     
-    <div class="form-group">
-        {{ edit_material_form.material.label }}
-        {{ edit_material_form.material }} 
-        <p class="help-block">{{ edit_material_form.material.errors[0] }}</p>
+    <div class="form-group {% if edit_module_form.material_source.errors %} has-error {% endif %}"> 
+        {{ edit_module_form.material_source }}
+        <p class="help-block">{{ edit_module_form.material_source.errors[0] }}</p>
     </div>
+    
+    <div id="choose_material_upload" class="form-group choose-material{% if edit_module_form.material_source.data != "upload" %} hidden{% endif %}{% if edit_module_form.material_upload.errors %} has-error {% endif %}">
+        {{ edit_module_form.material_upload.label }}
+        {{ edit_module_form.material_upload }} 
+        <p class="help-block">{% if edit_module_form.material_upload %}{{edit_module_form.material_upload.errors[0] }}{% endif %}</p>
+    </div>
+
+    <div id="choose_material_youtube" class="form-group choose-material{% if edit_module_form.material_source.data != "youtube" %} hidden{% endif %}{% if edit_module_form.material_youtube.errors %} has-error {% endif %}">
+        {{ edit_module_form.material_youtube.label }}
+        {{ edit_module_form.material_youtube }} 
+        <p class="help-block">{% if edit_module_form.material_youtube %}{{ edit_module_form.material_youtube.errors[0] }}{% endif %}</p>
+    </div>    
 
     <div class="dynamic-list-container" id="define_objectives">
         {% include "subplates/dynamic-list.html" %}
     </div>
     
-    <button class="btn btn-success" type="submit">Save Module</button>    
+    <button id="save_module" class="btn btn-success" type="submit">Save Module</button>    
     
 </form>
 
 <br />
 
-{% include "parts/edit-objective-modal.html" %}
+{% include "subplates/edit-objective-modal.html" %}
 
 <button class="btn btn-default btn-sm btn-success" id="create_objective">Create New Objective</button>
 

@@ -27,7 +27,8 @@ $(document).ready(function () {
 
         console.log(prerequisites);
         console.log(data);          //DJG - not sure why edit_objective_id is getting repeated in the data array
-
+        //console.log($(".dynamic-list-select").serialize());
+        //console.log($(".dynamic-list-select").options[0].selected);
 
         //data_json = JSON.stringify(data)        //DJG - Played with alternatives to passing data back that allows the list of prerequisites to be parsed as a list object by the view function. This approach leaves the wtf form unpopulated so fails validation and no csrf, needs reviewing
         //console.log(jQuery.isPlainObject( data ));
@@ -35,6 +36,8 @@ $(document).ready(function () {
         //console.log(data_json);      
         //console.log(jQuery.isPlainObject( data_json ));
         //console.log(typeof data_json);        
+
+        
         
         $.post(  
             flask_util.url_for('objective_add_update'),  
@@ -94,7 +97,7 @@ function loadEditObjectiveModal(objective) {
     $("#edit_objective_form").find(".dynamic-list-item").remove();
     var num_prerequisites = objective.prerequisites.length;
     for (var p = 0; p < num_prerequisites; p++) {
-        dynamicList_addNewItem(objective.prerequisites[p], $("#edit_objective_form").find(".dynamic-list")); 
+        dynamicList_addNewItem(objective.prerequisites[p], $("#edit_objective_form").find(".dynamic-list"), $("#edit_objective_form").find(".dynamic-list-select")); 
     }
     $("#edit_objective_modal").modal('show');
     return false;

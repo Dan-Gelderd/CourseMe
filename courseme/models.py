@@ -127,23 +127,38 @@ class Objective(db.Model):
         #return json.dumps(data, sort_keys=True, separators=(',',':'))      DJG - could convert to JSON in here
         return data
 
+    def top_modules(self, exclude=None, material_type="Lecture", num=3):
+        modules = self.modules.filter_by(material_type=material_type).order_by(Module.votes).limit(num+1).all()  #DJG - lookup modules for given objective sorted by votes of given type
+        if exclude and exclude in modules: modules.remove(exclude)
+        return modules[:num]
+
     @staticmethod
     def system_objectives():
         system_objectives_iterator = (set(u.objectives_created) for u in User.admin_users())
         system_objectives = set.union(*system_objectives_iterator)
         return system_objectives
     
+module_objectives = db.Table('module_objectives',
+    db.Column('module_id', db.Integer, db.ForeignKey('module.id')),
+    db.Column('objective_id', db.Integer, db.ForeignKey('objective.id'))
+)
     
 class Module(db.Model):
     id = db.Column(db.Integer, primary_key = True)      
     name = db.Column(db.String(120))
-    #type = db.Column(db.String(120), default = 'Lecture')      #DJG - need to bring these extra fields in
+    description = db.Column(db.String(400))
+    notes = db.Column(db.String(400))
+    material_type = db.Column(db.String(120), default = 'Lecture')      #DJG - need to bring these extra fields in
     time_created = db.Column(db.DateTime)
-    #last_updated = db.Column(db.DateTime)
+    last_updated = db.Column(db.DateTime)
+    material_source = db.Column(db.String(120), default = 'youtube')
     material_path = db.Column(db.String(400))
     votes = db.Column(db.Integer, default = 0)
     
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))     #DJG - why is user lower case in ForeignKey('user.id')
+    
+    objectives = db.relationship('Objective', secondary=module_objectives,
+        backref=db.backref('modules', lazy='dynamic'))
     
     def calculate_votes():
         pass #DJG - calculate the proper votes total by summing usermodules and store in this parameter, to be run periodically to keep votes count properly alligned; should print out a record if mismatched to developer log

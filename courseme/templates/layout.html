@@ -40,11 +40,13 @@
                     <li><a href="{{ url_for('editcourse', id=0) }}">Create a new course</a></li>     <!-- DJG: using course id 0 as no course or new course - is this good practice? -->
                     <li><a href="{{ url_for('objectives') }}">See all objectives</a></li>
                     <li role="presentation" class="divider"></li>                    
+                    {% if g.user.is_authenticated() %}
                     <li role="presentation" class="dropdown-header">Recent modules</li>
                     {% for module in g.user.recent_modules(5) %}
                         <li><a href="{{ url_for('module', id=module.id) }}"><span class="glyphicon glyphicon-list-alt"></span> {{module.name}}</a></li>
                     {% endfor %}
                     <li role="presentation" class="divider"></li>
+                    {% endif %} 
                     <li role="presentation" class="dropdown-header">My courses</li>
                     <li><a href="#"><span class="glyphicon glyphicon-list-alt"></span> Course name <span class="badge badge-info">13</span></a></li>
                   </ul>

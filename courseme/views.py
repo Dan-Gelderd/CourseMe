@@ -119,10 +119,12 @@ def objective_add_update():
     #form will be the fields of the html form with the csrf
     #request.form will be the data posted back through the ajax request
     #DJG - don't know why the request.form object seems to have a second empty edit_objective_id attribute
+    #if request.method == 'POST':
+    #    form.dynamic_list_select.choices = g.user.visible_objectives()     #DJG - this was part of an attempt to use a wtf selectmultiplefield to capture the prerequisite list in the hope this would be passed through the post request as an array of strings and so avoid using the comma delimited approach here. The coices need to be a list of tuples so this isn't in the right format.
     if form.validate():
         obj_id = form.edit_objective_id.data
         name = form.edit_objective_name.data
-        
+        #import pdb; pdb.set_trace()        #DJG - remove
         #Reading off the list of prerequisites
         unicode_list = request.form["prerequisites"]       #DJG - the data sent by the ajax request has the list converted into a unicode text string with commas
         python_list = filter(None, unicode_list.split(','))            #DJG - Dodgy string manipulation, means I can't have commas in objective names
@@ -216,31 +218,64 @@ def editmodule():
     title = 'CourseMe - Edit Module'
     moduleform = forms.EditModule()
     objectiveform = forms.EditObjective()
-    #DJG - need to test for validate
-    if moduleform.validate_on_submit() and 'material' in request.files:        #DJG - Does flask-uploads automatically check against the allowed extention types and make the filename safe? Believe so.
-        name = lectures.save(request.files['material'])                 #This saves the file and returns its name (including the folder)
 
-        #Reading off the list of objectives
-        unicode_list = request.form["objectives"]       #DJG - the data sent by the ajax request has the list converted into a unicode text string with commas
-        python_list = filter(None, unicode_list.split(','))            #DJG - Dodgy string manipulation, means I can't have commas in objective names
-        objectives = g.user.visible_objectives().filter(Objective.name.in_(python_list)).all()
-        undefined_objectives = list(set(python_list) - set(obj.name for obj in objectives))
+    #Both material upload types are required in the moduleform definition so need to remove the redundant field now to prevent validation errors
+    if request.method == 'POST':
+        material_source = moduleform.material_source.data
+        if material_source == 'upload':           #DJG - need a way to define the global list of sources so value means the same thing as database definitions 
+            del moduleform.material_youtube
+        elif material_source == 'youtube':
+            del moduleform.material_upload              
 
-        module = Module(name=moduleform.name.data,
-                        time_created=datetime.utcnow(),
-                        author_id=g.user.id,
-                        material_path=name)     
-        db.session.add(module)
-        db.session.commit()
-        #flash("Lecture saved as " + name)
-        return redirect(url_for('module', id=module.id))
+        #import pdb; pdb.set_trace()
+
+        if moduleform.validate():         
+            if material_source == 'upload' and 'material' in request.files:         #DJG - Does flask-uploads automatically check against the allowed extention types and make the filename safe? Believe so.
+                material_path = lectures.save(request.files['material'])                 #This saves the file and returns its name (including the folder)            
+            elif material_source == 'youtube':
+                material_path = moduleform.material_youtube.data
+                if not "?rel=0" in material_path: material_path=material_path+"?rel=0"      #DJG - Add this text string on to stop youtube videos showing followon videos directly in the iframe
+    
+            #Reading off the list of objectives
+            #DJG - try request.POST["objectives"] to see if data format is different
+            unicode_list = request.form["objectives"]       #DJG - the data sent by the ajax request has the list converted into a unicode text string with commas
+            python_list = filter(None, unicode_list.split(','))            #DJG - Dodgy string manipulation, means I can't have commas in objective names
+            objectives = []         #DJG - should this be a list or what?
+            if python_list: objectives = g.user.visible_objectives().filter(Objective.name.in_(python_list)).all()      #DJG - avoiding using the in_ operation when the list is empty as this is an inefficiency
+            undefined_objectives = list(set(python_list) - set(obj.name for obj in objectives))     #DJG - Need to trap undefined objectives and return savedsucess as json if failed
+            result = {}
+            result['savedsuccess'] = False
+    
+            if undefined_objectives:       #DJG - code repeat of above, how to avoid this
+                is_are = 'is' if len(undefined_objectives) == 1 else 'are'
+                result['objectives'] = ["'" + "', '".join(undefined_objectives) + "' " + is_are  + " not already defined as an objetive"]
+            else:
+                module = Module(name=moduleform.name.data,
+                                description = moduleform.description.data,
+                                notes = moduleform.notes.data,
+                                time_created=datetime.utcnow(),
+                                last_updated=datetime.utcnow(),
+                                author_id=g.user.id,
+                                material_source=material_source, 
+                                material_path=material_path,
+                                objectives=objectives)     
+                db.session.add(module)
+                db.session.commit()
+                result['savedsuccess'] = True
+                result['module_id'] = module.id
+                flash("Lecture saved as " + moduleform.name.data)
+            
+            return json.dumps(result, separators=(',',':'))
+        
+        moduleform.errors['savedsuccess'] = False
+        return json.dumps(moduleform.errors, separators=(',',':'))
 
     objectives = g.user.visible_objectives().all()
     objectives.sort(key=operator.methodcaller("score"))   #DJG - isn't there a way of doing this within the order_by of the query    
     return render_template('editmodule.html',
                            title=title,
                            objectives=objectives,
-                           edit_material_form=moduleform,
+                           edit_module_form=moduleform,
                            objectiveform=objectiveform)
 
 

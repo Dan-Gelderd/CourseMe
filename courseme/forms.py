@@ -1,6 +1,7 @@
 from flask.ext.wtf import Form
-from wtforms import TextField, TextAreaField, PasswordField, BooleanField, HiddenField, FileField, SelectMultipleField
-from wtforms.validators import Required, Length, Email, Regexp, EqualTo
+from wtforms import TextField, TextAreaField, PasswordField, BooleanField, HiddenField, FileField, SelectMultipleField, RadioField
+from wtforms.validators import Required, Length, Email, Regexp, EqualTo, url
+from wtforms.fields.html5 import URLField
 
 class SignupForm(Form):
     email = TextField('Email address', validators=[
@@ -31,14 +32,18 @@ class EditObjective(Form):
                 Regexp(r'\w'),                  #DJG - need to exclude commas in current implementation of ajax calls but this isn't working
                 Required('Enter a description of the objective'),
                 Length(min=4, message=(u'Description must be at least 4 characters'))])
-    new_prerequisite = TextField('Prerequisites', validators=[])
-                #Regexp(r'\w', message=(u'Can only use spaces, numbers and letters in the description'))])
+    dynamic_list_select = SelectMultipleField('Prerequisites', choices=[])
 
 class EditModule(Form):
     name = TextField('Module name', validators=[Required('Please enter a name for your module')])
-    brief_description = TextAreaField('Brief description')
+    description = TextAreaField('Brief description')
     notes = TextAreaField('Notes')
-    material = FileField('Material', validators=[Required()])
+    material_source = RadioField('Source',
+                                 choices=[('upload', 'Upload video'), ('youtube', 'youtube link')],
+                                 default='upload',
+                                 validators = [Required('Please specify how you are providing the material')])
+    material_upload = FileField('Material', validators=[Required('Please upload your material')])
+    material_youtube = URLField('Material', validators=[url, Required('Please provide a link to your material')])
 
 class EditCourse(Form):
     name = TextField('Course name', validators=[Required('Please enter a name for your course')])

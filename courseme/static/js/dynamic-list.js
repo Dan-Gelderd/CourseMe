@@ -7,16 +7,17 @@ $(document).ready(function () {
         //Select input field within this container which contains the new item to add
         var $input = $('.dynamic-list-new-item', $div);    //selector-context - http://api.jquery.com/jquery/#selector-context
         
-        //Select ul element within this container to append new item to
+        //Select ul and select elements within this container to append new item to
         var $list = $('.dynamic-list', $div);        
-        
+        var $select = $('.dynamic-list-select', $div);
+ 
         //Append new item to list and clear input field 
-        dynamicList_addNewItem($input.val(), $list);
+        dynamicList_addNewItem($input.val(), $list, $select);
         $input.val("");
     });   
 });
 
-function dynamicList_addNewItem(item, $list){
+function dynamicList_addNewItem(item, $list, $select){
     new_li = document.createElement('li');
     new_li.setAttribute('class', 'list-group-item dynamic-list-item');
     new_div = document.createElement('div');
@@ -38,4 +39,10 @@ function dynamicList_addNewItem(item, $list){
     new_div.appendChild(new_span_button);    
     new_li.appendChild(new_div);
     $($list).append(new_li);
+
+    var new_option = document.createElement("option");
+    new_option.text = item;
+    $select.append(new_option);
+    new_option.selected = false;        //DJG - Would be true. The validation fails if selecting things not defined in the choices attribute of the wtf selectmultiplefield object.
+    
 }
