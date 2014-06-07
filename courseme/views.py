@@ -7,6 +7,15 @@ from datetime import datetime
 import json, operator
 #import pdb; pdb.set_trace()        #DJG - remove
 
+class CustomEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            encoded_object = obj.isoformat()
+        else:
+            encoded_object =json.JSONEncoder.default(self, obj)
+        return encoded_object
+
+
 #admin
 @lm.user_loader
 def load_user(id):
@@ -34,21 +43,12 @@ def internal_error(error):
 #@login_required
 def index():
     title = "CourseMe"
-    user = g.user
-    posts = [
-        { 
-            'author': { 'nickname': 'John' }, 
-            'body': 'Beautiful day in Portland!' 
-        },
-        { 
-            'author': { 'nickname': 'Susan' }, 
-            'body': 'The Avengers movie was so cool!' 
-        }
-    ]
+    user = g.user                     
+    catalogue = [row.as_dict() for row in Module.query.all()]                #DJG - confused over best way to do this http://stackoverflow.com/questions/1958219/convert-sqlalchemy-row-object-to-python-dict
     return render_template('index.html',
         title = title,
         user = user,
-        posts = posts)
+        catalogue = json.dumps(catalogue, cls=CustomEncoder, separators=(',',':')))
 
 
 @app.route('/signup', methods = ['GET', 'POST'])

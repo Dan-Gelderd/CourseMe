@@ -18,7 +18,6 @@ class User(db.Model):
 
     objectives_created = db.relationship("Objective", backref="created_by")
     modules_authored = db.relationship("Module", backref="author")
-    courses_authored = db.relationship("Course", backref="author")
 
     def recent_modules(self, count):
         return UserModule.query.filter_by(user=self).order_by(UserModule.last_viewed).limit(count).all()
@@ -142,13 +141,18 @@ module_objectives = db.Table('module_objectives',
     db.Column('module_id', db.Integer, db.ForeignKey('module.id')),
     db.Column('objective_id', db.Integer, db.ForeignKey('objective.id'))
 )
+
+course_modules = db.Table('course_modules',
+    db.Column('course_id', db.Integer, db.ForeignKey('module.id')),
+    db.Column('module_id', db.Integer, db.ForeignKey('module.id'))
+)
     
-class Module(db.Model):
+class Module(db.Model):                                             #DJG - change this class to material as it now captures modules and courses
     id = db.Column(db.Integer, primary_key = True)      
     name = db.Column(db.String(120))
     description = db.Column(db.String(400))
     notes = db.Column(db.String(400))
-    material_type = db.Column(db.String(120), default = 'Lecture')      #DJG - need to bring these extra fields in
+    material_type = db.Column(db.String(120), default = 'Lecture')
     time_created = db.Column(db.DateTime)
     last_updated = db.Column(db.DateTime)
     material_source = db.Column(db.String(120), default = 'youtube')
@@ -159,13 +163,27 @@ class Module(db.Model):
     
     objectives = db.relationship('Objective', secondary=module_objectives,
         backref=db.backref('modules', lazy='dynamic'))
-    
+
+    modules = db.relationship("Module",
+                        secondary=course_modules,
+                        primaryjoin=(course_modules.c.course_id==id),
+                        secondaryjoin=(course_modules.c.module_id==id),
+                        backref = db.backref('courses', lazy = 'dynamic'),        #DJG - Does this need to be included to make the secondary table update when an objective is passed to session.delete()? 
+                        lazy = 'dynamic',                                           #DJG - not the default, don't know why I need it: the attribute will return a pre-configured Query object for all read operations, onto which further filtering operations can be applied before iterating the results.
+                        passive_updates=False)
+
     def calculate_votes():
         pass #DJG - calculate the proper votes total by summing usermodules and store in this parameter, to be run periodically to keep votes count properly alligned; should print out a record if mismatched to developer log
     
     def icon_class(self):
         return "glyphicon glyphicon-list-alt"       #DJG - this is just a placeholder, should probably define a css class based directly on the module.type
 
+    def as_dict(self):
+        result = self.__dict__
+        result['author'] = self.author.name
+        result['objectives'] = [o.name for o in self.objectives]
+        del result['_sa_instance_state']
+        return result
     
 class UserModule(db.Model):
     id = db.Column(db.Integer, primary_key = True)
@@ -213,25 +231,6 @@ class Recommendation(db.Model):     #DJG - probably need a separate one for modu
     user_to = db.relationship(User, foreign_keys=[id_user_to], backref='received_recommendations')
 
 
-course_modules = db.Table('course_modules',
-    db.Column('course_id', db.Integer, db.ForeignKey('course.id')),
-    db.Column('module_id', db.Integer, db.ForeignKey('module.id'))
-)
-
-class Course(db.Model):
-    id = db.Column(db.Integer, primary_key = True)      
-    name = db.Column(db.String(120))
-    time_created = db.Column(db.DateTime)
-    last_updated = db.Column(db.DateTime)
-    votes = db.Column(db.Integer, default = 0)
-    
-    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))     #DJG - why is user lower case in ForeignKey('user.id')
-
-    modules = db.relationship('Module', secondary=course_modules,
-        backref=db.backref('courses', lazy='dynamic'))
-    
-    def calculate_votes():
-        pass #DJG - calculate the proper votes total by summing usermodules and store in this parameter, to be run periodically to keep votes count properly alligned; should print out a record if mismatched to developer log
 
 
 

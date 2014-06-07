@@ -1,7 +1,121 @@
 {% extends "layout.html" %}
 {% block content %}
-    <h1>Hi, {{user.name}}!</h1>
-    {% for post in posts %}
-        <div><p>{{post.author.nickname}} says: <b>{{post.body}}</b></p></div>
-    {% endfor %}
+
+
+<!--
+<div class="input-group">
+   <label class="checkbox-inline">
+      <input type="checkbox" id="inlineCheckbox1" value="Lectures" checked> Lectures
+   </label>
+   <label class="checkbox-inline">
+          <input type="checkbox" id="inlineCheckbox2" value="Exercises"> Exercises
+   </label>
+   <label class="checkbox-inline">
+      <input type="checkbox" id="inlineCheckbox3" value="Tools"> Interactive Tools
+   </label>
+</div>
+   
+<div class="input-group">
+  <input type="text" class="form-control">
+  <div class="input-group-btn">
+    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">Search <span class="caret"></span></button>
+        <ul class="dropdown-menu">
+          <li><a href="#">Name</a></li>
+          <li><a href="#">Objectives</a></li>
+          <li><a href="#">Author</a></li>
+          <li><a href="#">Any</a></li>
+        </ul>
+  </div>
+</div> 
+-->
+
+<table id="table_id" class="table table-striped table-bordered" cellspacing="0" width="100%">
+    <thead></thead>
+    <tbody></tbody>
+    <tfoot></tfoot>
+</table>
+
+
+<script>
+    /* Formatting function for row details - modify as you need */
+    function format ( d ) {
+        // `d` is the original data object for the row
+        return '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
+            '<tr>'+
+                '<td>Full name:</td>'+
+                '<td>'+d.name+'</td>'+
+            '</tr>'+
+            '<tr>'+
+                '<td>Description:</td>'+
+                '<td>'+d.description+'</td>'+
+            '</tr>'+
+            '<tr>'+
+                '<td>Date modified:</td>'+
+                '<td>'+d.last_updated+'</td>'+
+            '</tr>'+
+        '</table>';
+    }
+
+    
+    $(document).ready( function () {                //DJG - https://datatables.net/manual/installation        
+        
+        console.log({{catalogue | safe}});        
+        var table = $('#table_id').DataTable( {
+            data: {{catalogue | safe}},
+            columns: [
+
+                { data: 'material_type', name: 'type' },                
+                { data: 'name', title: 'Name' },
+                { data: 'description', title: 'Description' },
+                { data: 'author', title: 'Author' },
+                { data: 'votes', title: 'Votes' },
+                { data: 'objectives', title: 'Objectives' },
+                {
+                    "title":          'Info',
+                    "class":          'details-control',
+                    "orderable":      false,
+                    "data":           null,
+                    "defaultContent": ''
+                }
+            ]
+        } );
+
+        // Add event listener for opening and closing details
+        $('#table_id tbody').on('click', 'td.details-control', function () {
+            var tr = $(this).closest('tr');
+            var row = table.row( tr );
+     
+            if ( row.child.isShown() ) {
+                // This row is already open - close it
+                row.child.hide();
+                tr.removeClass('shown');
+            }
+            else {
+                // Open this row
+                row.child( format(row.data()) ).show();
+                tr.addClass('shown');
+            }
+        } );
+        
+        console.log(table.column( 'type:name' ).data());
+        new_label = document.createElement('label');
+        new_label.innerHTML = "Type: ";
+        $('#table_id_filter').append(new_label);
+        var new_select = $('<select><option value="">Show all types</option><option value="test">Test Fail</option></select>')
+            .appendTo( new_label )
+            .on( 'change', function () {
+                table.column( 'type:name' )
+                    .search( $(this).val(), true, false )       //DJG - needed to remove the regex bit of this code or empty string search would return none not all data - http://datatables.net/forums/discussion/21355/regex-and-server-side-processing-not-really-working
+                    .draw();
+            } );
+ 
+        table.column( 'type:name' ).data().unique().sort().each( function ( d ) {
+            console.log(d);
+            new_select.append( '<option value="'+d+'">'+d+'</option>' )
+        } );     
+        
+        //$("#table_id").dataTable().columnFilter();     //DJG - https://code.google.com/p/jquery-datatables-column-filter/wiki/ColumnFilter
+    } );
+</script>
+
 {% endblock %}
