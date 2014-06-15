@@ -157,6 +157,9 @@ class Module(db.Model):                                             #DJG - chang
     last_updated = db.Column(db.DateTime)
     material_source = db.Column(db.String(120), default = 'youtube')
     material_path = db.Column(db.String(400))
+    submitted = db.Column(db.DateTime) 
+    published = db.Column(db.DateTime)
+    locked = db.Column(db.DateTime)
     votes = db.Column(db.Integer, default = 0)
     
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))     #DJG - why is user lower case in ForeignKey('user.id')

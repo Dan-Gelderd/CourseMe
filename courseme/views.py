@@ -212,25 +212,65 @@ def objective_get():
 
 
 #modules
-@app.route('/editmodule', methods = ["GET", "POST"])
+@app.route('/editmodule/<int:id>', methods = ["GET", "POST"])
 @login_required
-def editmodule():
+def editmodule(id = 0):
     title = 'CourseMe - Edit Module'
     moduleform = forms.EditModule()
     objectiveform = forms.EditObjective()
-
-    #Both material upload types are required in the moduleform definition so need to remove the redundant field now to prevent validation errors
-    if request.method == 'POST':
-        material_source = moduleform.material_source.data
-        if material_source == 'upload':           #DJG - need a way to define the global list of sources so value means the same thing as database definitions 
-            del moduleform.material_youtube
-        elif material_source == 'youtube':
-            del moduleform.material_upload              
-
+    module_objectives = []
+    
+    if id > 0:
+        module = Module.query.get(id)
         #import pdb; pdb.set_trace()
+        if module.author_id != g.user.id:
+            flash('You are not authorised to edit this module')
+            return redirect(url_for('login'))
+        elif request.method == 'GET':
+            material_source = module.material_source
+            if material_source == 'youtube':
+                material_path = module.material_path
+            else:
+                material_path = ''
+            moduleform = forms.EditModule(
+                name = module.name,
+                description = module.description,
+                notes = module.notes,
+                material_type = module.material_type,
+                material_source = material_source,
+                material_path = material_path
+            )
+            module_objectives = module.objectives
+    
+    if request.method == 'GET':       
+        objectives = g.user.visible_objectives().all()
+        objectives.sort(key=operator.methodcaller("score"))   #DJG - isn't there a way of doing this within the order_by of the query                 
+        
+        return render_template('editmodule.html',
+                    title=title,
+                    objectives=objectives,
+                    module_objectives=module_objectives,
+                    edit_module_form=moduleform,
+                    objectiveform=objectiveform)
+            
+    if request.method == 'POST':
+        
+        #Both material upload types are required in the moduleform definition so need to remove the redundant field now to prevent validation errors
+
+        #if material_source == 'upload':           #DJG - need a way to define the global list of sources so value means the same thing as database definitions 
+        #    del moduleform.material_youtube
+        #elif material_source == 'youtube':
+        #    del moduleform.material_upload              
+        #if moduleform.material_type.data == 'course':
+        #    del moduleform.material_upload
+        #    del moduleform.material_youtube
+
+        # import pdb; pdb.set_trace()
 
         if moduleform.validate():         
-            if material_source == 'upload' and 'material' in request.files:         #DJG - Does flask-uploads automatically check against the allowed extention types and make the filename safe? Believe so.
+            material_type = moduleform.material_type.data
+            material_source = moduleform.material_source.data
+            if material_source == 'upload' and 'material' in request.files:             #DJG - Does flask-uploads automatically check against the allowed extention types and make the filename safe? Believe so.
                 material_path = lectures.save(request.files['material'])                 #This saves the file and returns its name (including the folder)            
             elif material_source == 'youtube':
                 material_path = moduleform.material_youtube.data
@@ -247,19 +287,22 @@ def editmodule():
             result['savedsuccess'] = False
     
             if undefined_objectives:       #DJG - code repeat of above, how to avoid this
-                is_are = 'is' if len(undefined_objectives) == 1 else 'are'
-                result['objectives'] = ["'" + "', '".join(undefined_objectives) + "' " + is_are  + " not already defined as an objetive"]
+                is_are = 'is not already defined as an objetive' if len(undefined_objectives) == 1 else 'are not already defined as objetives'
+                result['objectives'] = ["'" + "', '".join(undefined_objectives) + "' " + is_are]
             else:
-                module = Module(name=moduleform.name.data,
-                                description = moduleform.description.data,
-                                notes = moduleform.notes.data,
-                                time_created=datetime.utcnow(),
-                                last_updated=datetime.utcnow(),
-                                author_id=g.user.id,
-                                material_source=material_source, 
-                                material_path=material_path,
-                                objectives=objectives)     
-                db.session.add(module)
+                if module:
+                    pass
+                else:
+                    module = Module(name=moduleform.name.data,
+                                    description = moduleform.description.data,
+                                    notes = moduleform.notes.data,
+                                    time_created=datetime.utcnow(),
+                                    last_updated=datetime.utcnow(),
+                                    author_id=g.user.id,
+                                    material_source=material_source, 
+                                    material_path=material_path,
+                                    objectives=objectives)     
+                    db.session.add(module)
                 db.session.commit()
                 result['savedsuccess'] = True
                 result['module_id'] = module.id
@@ -267,19 +310,12 @@ def editmodule():
             
             return json.dumps(result, separators=(',',':'))
         
-        moduleform.errors['savedsuccess'] = False
-        return json.dumps(moduleform.errors, separators=(',',':'))
-
-    objectives = g.user.visible_objectives().all()
-    objectives.sort(key=operator.methodcaller("score"))   #DJG - isn't there a way of doing this within the order_by of the query    
-    return render_template('editmodule.html',
-                           title=title,
-                           objectives=objectives,
-                           edit_module_form=moduleform,
-                           objectiveform=objectiveform)
+        else:
+            moduleform.errors['savedsuccess'] = False
+            return json.dumps(moduleform.errors, separators=(',',':'))
 
 
-@app.route('/module/<id>')
+@app.route('/module/<int:id>')
 @login_required
     #DJG - Login should not be required just temporary
 def module(id):
@@ -296,7 +332,7 @@ def module(id):
                            usermodule=usermodule)
 
 
-@app.route('/star/<id>')
+@app.route('/star/<int:id>')
 def starclick(id):
     
     module = Module.query.get(id)
@@ -311,7 +347,7 @@ def starclick(id):
     return usermodule.as_json()
 
 
-@app.route('/vote/<id>')
+@app.route('/vote/<int:id>')
 def voteclick(id):
     
     module = Module.query.get(id)

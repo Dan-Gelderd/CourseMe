@@ -20,8 +20,27 @@ $(document).ready(function () {
         $("#new_prerequisite_form_group").find(".dynamic-list-new-item").autocomplete({
             source: availableTags
         });
+        
+        moduleObjectives = [];
+        {% for objective in module_objectives %}
+            moduleObjectives.push('{{ objective.name }}')    
+        {% endfor %}    
+        dynamicList_addList(moduleObjectives, $("#define_objectives"));
+    
     });
-
+    
+    $('[name="material_type"]').change(function() {           //DJG - is there a better way of doing this? radio.data or radio.value? 
+        var material_type = this.value;
+        if (material_type = 'Course') {
+            $(".choose-source").addClass("hidden");    
+            $(".choose-material").addClass("hidden");
+        }
+        else {
+            $(".choose-source").removeClass("hidden");
+            $('[name="material_source"]').change()
+        }
+    });
+    
     $('[name="material_source"]').change(function() {           //DJG - is there a better way of doing this? radio.data or radio.value? 
         var choose_material_id = 'choose_material_' + this.value;
         $(".choose-material").addClass("hidden");
@@ -51,7 +70,7 @@ $(document).ready(function () {
         //console.log(typeof data_json);        
         
         $.post(  
-            flask_util.url_for('editmodule'),  
+            flask_util.url_for('editmodule', {id: 0 }),  
             data,  
             function(json) {
                 
@@ -66,7 +85,7 @@ $(document).ready(function () {
                             
                 if(result.savedsuccess)
                 {
-                    window.location.href = flask_util.url_for('index');     //DJG - need to redirect to new module page - result.module_id available
+                    window.location.href = flask_util.url_for('module', id=result.module_id);     //DJG - need to redirect to new module page - result.module_id available
                 }
                 else
                 {       
@@ -84,7 +103,7 @@ $(document).ready(function () {
 //DJG - the location.reload on completing the modal objective form wipes the create module form, need to explore work-arounds
 </script>
 
-<form id="edit_module_form" enctype=multipart/form-data action="{{ url_for('editmodule') }}" class="form" method="POST">
+<form id="edit_module_form" enctype=multipart/form-data action="" class="form" method="POST">      <!-- DJG - need to point to right module id -->
     {{edit_module_form.hidden_tag()}}   <!-- DJG - needed for cross-site request forgery prevention -->
     
     <div class="form-group {% if edit_module_form.name.errors %} has-error {% endif %}">
@@ -104,8 +123,15 @@ $(document).ready(function () {
         {{ edit_module_form.notes(placeholder="Additional notes pointing to other material or describing how your material fits in to what your students are learning can be very helpful", class="form-control") }}
         <p class="help-block">{{ edit_module_form.notes.errors[0] }}</p>
     </div>
+
+    <div class="form-group {% if edit_module_form.material_type.errors %} has-error {% endif %}"> 
+        {{ edit_module_form.material_type.label }}
+        {{ edit_module_form.material_type }}
+        <p class="help-block">{{ edit_module_form.material_type.errors[0] }}</p>
+    </div>
     
-    <div class="form-group {% if edit_module_form.material_source.errors %} has-error {% endif %}"> 
+    <div class="form-group choose-source{% if edit_module_form.material_source.errors %} has-error {% endif %}"> 
+        {{ edit_module_form.material_source.label }}
         {{ edit_module_form.material_source }}
         <p class="help-block">{{ edit_module_form.material_source.errors[0] }}</p>
     </div>

@@ -39,7 +39,7 @@
                 <li class="dropdown">
                   <a href="#" class="dropdown-toggle" data-toggle="dropdown">Quick Links<b class="caret"></b></a>
                   <ul class="dropdown-menu">
-                    <li><a href="{{ url_for('editmodule') }}">Create a new module</a></li>
+                    <li><a href="{{ url_for('editmodule', id=0) }}">Create a new module</a></li>
                     <li><a href="{{ url_for('editcourse', id=0) }}">Create a new course</a></li>     <!-- DJG: using course id 0 as no course or new course - is this good practice? -->
                     <li><a href="{{ url_for('objectives') }}">See all objectives</a></li>
                     <li role="presentation" class="divider"></li>                    

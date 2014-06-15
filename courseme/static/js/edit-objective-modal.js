@@ -95,10 +95,7 @@ function loadEditObjectiveModal(objective) {
     $("#edit_objective_form").find(".help-block").text("");
     $("#edit_objective_form").find(".has-error").removeClass("has-error");
     $("#edit_objective_form").find(".dynamic-list-item").remove();
-    var num_prerequisites = objective.prerequisites.length;
-    for (var p = 0; p < num_prerequisites; p++) {
-        dynamicList_addNewItem(objective.prerequisites[p], $("#edit_objective_form").find(".dynamic-list"), $("#edit_objective_form").find(".dynamic-list-select")); 
-    }
+    dynamicList_addList(objective.prerequisites, $("#edit_objective_form"));
     $("#edit_objective_modal").modal('show');
     return false;
 }

@@ -2,22 +2,22 @@ $(document).ready(function () {
     //When the Add button is pressed the selected item is appended to the end of the dynamic list
     $(".dynamic-list-add").click(function(){
         //Need to find closest container element
-        var $div = $(this).closest('div.dynamic-list-container');
+        var dynamicContainer = $(this).closest('div.dynamic-list-container');
         
         //Select input field within this container which contains the new item to add
-        var $input = $('.dynamic-list-new-item', $div);    //selector-context - http://api.jquery.com/jquery/#selector-context
+        var dynamicInput = $('.dynamic-list-new-item', dynamicContainer);     //selector-context - http://api.jquery.com/jquery/#selector-context
         
-        //Select ul and select elements within this container to append new item to
-        var $list = $('.dynamic-list', $div);        
-        var $select = $('.dynamic-list-select', $div);
- 
         //Append new item to list and clear input field 
-        dynamicList_addNewItem($input.val(), $list, $select);
-        $input.val("");
+        dynamicList_addNewItem(dynamicInput.val(), dynamicContainer);
+        dynamicInput.val("");
     });   
 });
 
-function dynamicList_addNewItem(item, $list, $select){
+function dynamicList_addNewItem(item, dynamicContainer){
+    dynamicList = dynamicContainer.find(".dynamic-list");
+    console.log(dynamicList)
+    dynamicSelect = dynamicContainer.find(".dynamic-list-select");
+    console.log(dynamicSelect)
     new_li = document.createElement('li');
     new_li.setAttribute('class', 'list-group-item dynamic-list-item');
     new_div = document.createElement('div');
@@ -38,11 +38,18 @@ function dynamicList_addNewItem(item, $list, $select){
     new_div.appendChild(new_span);
     new_div.appendChild(new_span_button);    
     new_li.appendChild(new_div);
-    $($list).append(new_li);
+    dynamicList.append(new_li);
 
     var new_option = document.createElement("option");
     new_option.text = item;
-    $select.append(new_option);
+    dynamicSelect.append(new_option);
     new_option.selected = false;        //DJG - Would be true. The validation fails if selecting things not defined in the choices attribute of the wtf selectmultiplefield object.
     
+}
+
+function dynamicList_addList(list, dynamicContainer) {
+    var num_items = list.length;
+    for (var i = 0; i < num_items; i++) {
+        dynamicList_addNewItem(list[i], dynamicContainer); 
+    }
 }

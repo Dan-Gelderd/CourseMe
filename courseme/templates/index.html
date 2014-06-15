@@ -37,7 +37,7 @@
 
 
 <script>
-    /* Formatting function for row details - modify as you need */
+    // Formatting function for row details
     function format ( d ) {
         // `d` is the original data object for the row
         return '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
@@ -56,14 +56,28 @@
         '</table>';
     }
 
+    //Add Class to column given heading
+    function addColumnClass(colName, className) {
+        col = $('#table_id th:contains(' + colName + ')');
+        col_index = col.index() + 1; // Get the index & increment by 1 to match nth-child indexing
+        $('#table_id tr td:nth-child(' + col_index + ')').addClass(className);
+    }
     
     $(document).ready( function () {                //DJG - https://datatables.net/manual/installation        
         
         console.log({{catalogue | safe}});        
         var table = $('#table_id').DataTable( {
+            //"dom": '<"toolbar">frtip',      //DJG - maybe a better way to add custom filter control       
+
+            "aoColumnDefs": [  // enables turning off sorting for the columns
+                {"bVisible": false, "aTargets": [0, 1]}  //DJG - targets grid columns to hide - just add the column to be disabled into the array
+            ],
+            
             data: {{catalogue | safe}},
+            
             columns: [
 
+                { data: 'id', name: 'id' },      
                 { data: 'material_type', name: 'type' },                
                 { data: 'name', title: 'Name' },
                 { data: 'description', title: 'Description' },
@@ -97,7 +111,7 @@
             }
         } );
         
-        console.log(table.column( 'type:name' ).data());
+        //Create Material Type Filter Control
         new_label = document.createElement('label');
         new_label.innerHTML = "Type: ";
         $('#table_id_filter').append(new_label);
@@ -108,14 +122,31 @@
                     .search( $(this).val(), true, false )       //DJG - needed to remove the regex bit of this code or empty string search would return none not all data - http://datatables.net/forums/discussion/21355/regex-and-server-side-processing-not-really-working
                     .draw();
             } );
- 
+        //Populate material type select control
         table.column( 'type:name' ).data().unique().sort().each( function ( d ) {
-            console.log(d);
             new_select.append( '<option value="'+d+'">'+d+'</option>' )
         } );     
         
         //$("#table_id").dataTable().columnFilter();     //DJG - https://code.google.com/p/jquery-datatables-column-filter/wiki/ColumnFilter
+
+        //Add classes to columns for event handling
+        addColumnClass("Name", 'module-name-column')
+        addColumnClass("Author", 'module-author-column')
+    
+        //display hand cursor on hover to let User know it's a clickable link
+        $('.module-name-column, .module-author-column').hover(function() {
+            $(this).css('cursor', 'pointer');
+        }, function() {
+            $(this).css('cursor', 'auto');
+        });    
+        
+        $('.module-name-column').click(function() {
+            module_id = table.row(this.parentNode).data().id;
+            window.location.href = flask_util.url_for('module', {id: module_id });
+        });
+    
     } );
+    
 </script>
 
 {% endblock %}

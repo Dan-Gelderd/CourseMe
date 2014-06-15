@@ -35,18 +35,16 @@ class EditObjective(Form):
     dynamic_list_select = SelectMultipleField('Prerequisites', choices=[])
 
 class EditModule(Form):
+    edit_module_id = HiddenField()                  #DJG - don't know if I need this
     name = TextField('Module name', validators=[Required('Please enter a name for your module')])
     description = TextAreaField('Brief description')
     notes = TextAreaField('Notes')
-    material_source = RadioField('Source',
+    material_type = RadioField('Material Type',
+                                 choices=[('lecture', 'Lecture'), ('exercise', 'Exercise'), ('course', 'Course (select individual modules to include later)')],
+                                 default='lecture',
+                                 validators = [Required('Please specify what type of material you are creating')])
+    material_source = RadioField('Material Source',
                                  choices=[('upload', 'Upload video'), ('youtube', 'youtube link')],
-                                 default='upload',
-                                 validators = [Required('Please specify how you are providing the material')])
-    material_upload = FileField('Material', validators=[Required('Please upload your material')])
-    material_youtube = URLField('Material', validators=[url, Required('Please provide a link to your material')])
-
-class EditCourse(Form):
-    name = TextField('Course name', validators=[Required('Please enter a name for your course')])
-    brief_description = TextAreaField('Brief description', validators=[Required('Please enter a brief description of your course')])
-    notes = TextAreaField('Notes')
-    
+                                 default='upload')     #validators = [Required('Please specify how you are providing the material')])
+    material_upload = FileField('Select File')         #DJG - would be nice to have these be required when they apply     #validators=[Required('Please upload your material')])
+    material_youtube = URLField('Enter URL')                            #validators=[url, Required('Please provide a link to your material')])
