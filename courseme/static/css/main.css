@@ -19,6 +19,10 @@
     
 }
 
+.unused-form-element-course {
+    display: none;
+}
+
 
 td.details-control {
     background: url('../images/details_open.png') no-repeat center center;

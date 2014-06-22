@@ -29,12 +29,7 @@ $(document).ready(function () {
       }
     );
   });
-});
-</script>
 
-
-<script type='text/javascript'>
-$(document).ready(function () {
   $("#up-vote").on('click', function( event ) {
     //console.log("Up Vote Click");
     var current_vote = parseInt($("#current-vote").text())
@@ -105,7 +100,21 @@ $(document).ready(function () {
               //DJG - all reformatting of buttons should happen at this stage after checking the usernodule vote value from the response                
               }
     )
-  }
+  };
+
+  $(".add-to-course").on('click', function( event ) {  
+    var module_id = {{module.id}};
+    var course_id = parseInt($(this).find('span')[0].innerText);
+    $.getJSON(
+              flask_util.url_for('add_module_to_course', {module_id: module_id, course_id: course_id}),
+              function(json) {
+                console.log(json);
+                if (json.savedsuccess = "False") {
+                  window.location.reload()
+                }
+              }
+    )
+  });
 });
 
 </script>
@@ -125,16 +134,27 @@ $(document).ready(function () {
                   <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-share-alt"></span></a>
                   <ul class="dropdown-menu">
                     <li><a href="#">Recommend</a></li>
-                    <li class="divider"></li>
-                    <li><a href="#">Add to course</a></li>
                   </ul> 
                 </span>
-                {% if usermodule.starred %}
-                <span class="star glyphicon glyphicon-star"></span>     <!--DJG - DRY class star>-->
-                {% else %}
-                <span class="star glyphicon glyphicon-star-empty"></span>                  
-                {% endif %}
+                <span class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-plus"></span></a>
+                  <ul class="dropdown-menu">
+                    <li role="presentation" class="dropdown-header">Add this to an existing course</li>
+                    {% for course in g.user.module_type_authored('Course') %}
+                    <li><button type="button" class="btn btn-link add-to-course">{{course.name}}<span hidden>{{course.id}}</span></button></li>  
+                    {% endfor %}
+                    <li role="presentation" class="divider"></li>
+                    <li role="presentation" class="dropdown-header">Create new material</li>
+                    <li><a href="#">Create a new course containing this module</a></li>
+                    <li><a href="#">Create a new module like this</a></li>
+                  </ul> 
+                </span>
                 <span id="voting" class="pull-right">
+                  {% if usermodule.starred %}
+                  <span class="star glyphicon glyphicon-star"></span>     <!--DJG - DRY class star>-->
+                  {% else %}
+                  <span class="star glyphicon glyphicon-star-empty"></span>                  
+                  {% endif %}                  
                   <span id="current-vote" style="display:none;">{{usermodule.vote}}</span> 
                   <span id="up-vote" class="vote glyphicon glyphicon-thumbs-up"></span> 
                   <span id="down-vote" class="vote glyphicon glyphicon-thumbs-down"></span>
@@ -202,7 +222,7 @@ $(document).ready(function () {
                       {% for lecture in objective.top_modules(module, "Lecture") %}
                       <li><a href="{{url_for("module", id=lecture.id)}}">{{lecture.name}}</a></li>
                       {% endfor %}
-                      <li><a href="#"><i>Search all...</i></a></li>  
+                      <li><a href="{{url_for("index")}}"><i>Search all...</i></a></li>  
                     </ul>
                   </dd>
                   <dt>Exercises</dt>
@@ -211,13 +231,13 @@ $(document).ready(function () {
                       {% for excercise in objective.top_modules(module, "Exercise") %}
                       <li><a href="{{url_for("module", id=exercise.id)}}">{{exercise.name}}</a></li>
                       {% endfor %}
-                      <li><a href="#"><i>Search all...</i></a></li>    
+                      <li><a href="{{url_for("index")}}"><i>Search all...</i></a></li>    
                     </ul>
                   </dd>
                   <dt>Interactive Tools</dt>
                   <dd>
                     <ul class="list-unstyled">
-                      <li><a href="#"><i>Search all...</i></a></li>  
+                      <li><a href="{{url_for("index")}}"><i>Search all...</i></a></li>  
                     </ul>
                   </dd>
                 </dl>
@@ -231,7 +251,7 @@ $(document).ready(function () {
             <div class="panel-heading">
               <span class="panel-title">
                 <a data-toggle="collapse" data-parent="#collapsable-course-navigation" href="#prerequisites">
-                  <i>see assumed knowledge</i>
+                  <i>assumed knowledge</i>
                 </a>
               </span>
             </div>

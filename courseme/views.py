@@ -142,8 +142,8 @@ def objective_add_update():
                 #A new objective can be created with the new name
                 #Need to check all the prerequisites exist already
                 if undefined_prerequisites:
-                    is_are = 'is' if len(undefined_prerequisites) == 1 else 'are'
-                    result['new_prerequisite'] = ["'" + "', '".join(undefined_prerequisites) + "' " + is_are + " not already defined"]
+                    is_are = 'is not already defined as an objective' if len(undefined_prerequisites) == 1 else 'are not already defined as objectives'
+                    result['new_prerequisite'] = ["'" + "', '".join(undefined_prerequisites) + "' " + is_are]
                 else:
                     #No need to check for cyclic prerequisites as the new objective cannot be a prerequisite to anything already
                     objective = Objective(name=name, prerequisites=prerequisites, created_by_id=g.user.id)
@@ -176,8 +176,8 @@ def objective_add_update():
             if proceed:
                 #Need to check all the prerequisites exist already            
                 if undefined_prerequisites:       #DJG - code repeat of above, how to avoid this
-                    is_are = 'is' if len(undefined_prerequisites) == 1 else 'are'
-                    result['new_prerequisite'] = ["'" + "', '".join(undefined_prerequisites) + "' " + is_are  + " not already defined"]
+                    is_are = 'is not already defined as an objective' if len(undefined_prerequisites) == 1 else 'are not already defined as objectives'
+                    result['new_prerequisite'] = ["'" + "', '".join(undefined_prerequisites) + "' " + is_are]
                 else:
                     #Need to check for cyclic prerequisites
                     cyclic_prerequisites = [p.name for p in prerequisites if p.is_required_indirect(objective)]
@@ -216,39 +216,47 @@ def objective_get():
 @login_required
 def editmodule(id = 0):
     title = 'CourseMe - Edit Module'
-    moduleform = forms.EditModule()
+    moduleform = forms.EditModule()         #DJG - need the arguement because using validate not validate_on_submit?
+    #import pdb; pdb.set_trace()            #DJG - remove
     objectiveform = forms.EditObjective()
     module_objectives = []
-    
+    module = None
+    form_header = "Create new module:"
     if id > 0:
         module = Module.query.get(id)
-        #import pdb; pdb.set_trace()
-        if module.author_id != g.user.id:
-            flash('You are not authorised to edit this module')
-            return redirect(url_for('login'))
-        elif request.method == 'GET':
-            material_source = module.material_source
-            if material_source == 'youtube':
-                material_path = module.material_path
-            else:
-                material_path = ''
-            moduleform = forms.EditModule(
-                name = module.name,
-                description = module.description,
-                notes = module.notes,
-                material_type = module.material_type,
-                material_source = material_source,
-                material_path = material_path
-            )
-            module_objectives = module.objectives
-    
+        if module:
+            if module.author_id != g.user.id:
+                flash('You are not authorised to edit this module')
+                return redirect(url_for('module', id=id))
+            elif request.method == 'GET':
+                material_type = module.material_type
+                form_header = "Edit " + material_type + ":"
+                material_source = module.material_source
+                material_path = module.material_path if material_source == 'youtube' else ''
+                #flash(material_path)
+                moduleform = forms.EditModule(
+                    name = module.name,
+                    description = module.description,
+                    notes = module.notes,
+                    material_type = module.material_type,
+                    material_source = material_source,
+                    material_path = material_path
+                )
+                module_objectives = module.objectives
+        else:
+            flash('There is no such module to edit')
+            return redirect(url_for('index'))            
+
     if request.method == 'GET':       
         objectives = g.user.visible_objectives().all()
         objectives.sort(key=operator.methodcaller("score"))   #DJG - isn't there a way of doing this within the order_by of the query                 
         
         return render_template('editmodule.html',
                     title=title,
+                    form_header = form_header,
+                    edit_id=id,
                     objectives=objectives,
+                    module = module,
                     module_objectives=module_objectives,
                     edit_module_form=moduleform,
                     objectiveform=objectiveform)
@@ -265,17 +273,9 @@ def editmodule(id = 0):
         #    del moduleform.material_upload
         #    del moduleform.material_youtube
 
-        # import pdb; pdb.set_trace()
 
+  
         if moduleform.validate():         
-            material_type = moduleform.material_type.data
-            material_source = moduleform.material_source.data
-            if material_source == 'upload' and 'material' in request.files:             #DJG - Does flask-uploads automatically check against the allowed extention types and make the filename safe? Believe so.
-                material_path = lectures.save(request.files['material'])                 #This saves the file and returns its name (including the folder)            
-            elif material_source == 'youtube':
-                material_path = moduleform.material_youtube.data
-                if not "?rel=0" in material_path: material_path=material_path+"?rel=0"      #DJG - Add this text string on to stop youtube videos showing followon videos directly in the iframe
-    
             #Reading off the list of objectives
             #DJG - try request.POST["objectives"] to see if data format is different
             unicode_list = request.form["objectives"]       #DJG - the data sent by the ajax request has the list converted into a unicode text string with commas
@@ -285,13 +285,49 @@ def editmodule(id = 0):
             undefined_objectives = list(set(python_list) - set(obj.name for obj in objectives))     #DJG - Need to trap undefined objectives and return savedsucess as json if failed
             result = {}
             result['savedsuccess'] = False
-    
             if undefined_objectives:       #DJG - code repeat of above, how to avoid this
                 is_are = 'is not already defined as an objetive' if len(undefined_objectives) == 1 else 'are not already defined as objetives'
                 result['objectives'] = ["'" + "', '".join(undefined_objectives) + "' " + is_are]
-            else:
+                return json.dumps(result, separators=(',',':'))
+
+            proceed = False
+            material_type = module.material_type if id > 0 else moduleform.material_type.data
+            material_source = ""
+            material_path = ""
+            if material_type != "Course":
+                course_modules = []
+                material_source = moduleform.material_source.data
                 if module:
-                    pass
+                    if module.material_source == material_source and material_source == "upload":    
+                        material_path = module.material_path
+                        
+                if material_source == 'upload' and 'material' in request.files:             #DJG - Does flask-uploads automatically check against the allowed extention types and make the filename safe? Believe so.
+                    material_path = lectures.save(request.files['material'])                 #This saves the file and returns its name (including the folder)            
+                elif material_source == 'youtube' and moduleform.material_youtube.data:
+                    material_path = moduleform.material_youtube.data
+                    if not "?rel=0" in material_path: material_path=material_path+"?rel=0"      #DJG - Add this text string on to stop youtube videos showing followon videos directly in the iframe
+                
+                if material_path:
+                    proceed = True
+                    result['material'] = [material_path]
+                else:
+                    result['material'] = ["No content provided"]
+                    
+            else:
+                
+                course_modules = [Module.query.get(1)]   #DJG - do something with modules
+                proceed = True
+                
+            if proceed:
+                if module:
+                    module.name = moduleform.name.data
+                    module.description = moduleform.description.data
+                    module.notes = moduleform.notes.data
+                    module.last_updated = datetime.utcnow()
+                    module.material_source = material_source 
+                    module.material_path = material_path
+                    module.objectives = objectives
+                    module.modules = course_modules
                 else:
                     module = Module(name=moduleform.name.data,
                                     description = moduleform.description.data,
@@ -299,14 +335,16 @@ def editmodule(id = 0):
                                     time_created=datetime.utcnow(),
                                     last_updated=datetime.utcnow(),
                                     author_id=g.user.id,
+                                    material_type = material_type,
                                     material_source=material_source, 
                                     material_path=material_path,
-                                    objectives=objectives)     
+                                    objectives=objectives,
+                                    modules = course_modules)     
                     db.session.add(module)
                 db.session.commit()
                 result['savedsuccess'] = True
                 result['module_id'] = module.id
-                flash("Lecture saved as " + moduleform.name.data)
+                flash(material_type + " saved as " + module.name)
             
             return json.dumps(result, separators=(',',':'))
         
@@ -317,7 +355,7 @@ def editmodule(id = 0):
 
 @app.route('/module/<int:id>')
 @login_required
-    #DJG - Login should not be required just temporary
+    #DJG - Login should not be required just temporary to stop user_module tracking breaking - need guest user
 def module(id):
        
     module = Module.query.get(id)
@@ -333,6 +371,7 @@ def module(id):
 
 
 @app.route('/star/<int:id>')
+@login_required
 def starclick(id):
     
     module = Module.query.get(id)
@@ -348,6 +387,7 @@ def starclick(id):
 
 
 @app.route('/vote/<int:id>')
+@login_required
 def voteclick(id):
     
     module = Module.query.get(id)
@@ -366,49 +406,38 @@ def voteclick(id):
     return ""   #DJG - What is best return value when I don't care about the return result? Only thing I found that worked
 
 
-
-
-#courses
-@app.route('/editcourse/<int:id>', methods = ["GET", "POST"])
+@app.route('/add-module-to-course/<int:module_id>/<int:course_id>')
 @login_required
-def editcourse(id):
-    title = 'CourseMe - Edit Course'
-    form = forms.EditCourse()
-
-    if form.validate_on_submit():
-        result = {}
-        result['savedsuccess'] = False
-        if id > 0:
-            course = Course.query.get(id)
-            if course:
-                course.name = form.name.data
-                course.last_updated = datetime.utcnow()
-            else:
-                result['error'] = "This course could not be found and so has not been edited"
+def add_module_to_course(module_id, course_id):
+    result = {}
+    result['savedsuccess'] = False
+    course = Module.query.get(course_id)
+    module = Module.query.get(module_id)
+    #import pdb; pdb.set_trace()        #DJG - remove
+    if module:
+        if module.material_type == "Course":
+            flash('You cannot embed a course within another course')
         else:
-            course = Course(name=form.name.data,
-                            time_created=datetime.utcnow(),
-                            last_updated = datetime.utcnow(),
-                            author_id=g.user.id)     
-        db.session.add(course)
-        db.session.commit()
-        result['savedsuccess'] = True
-        return redirect(url_for('course', id=course.id))
+            if course:
+                if course.author_id != g.user.id:
+                    flash('You are not authorised to edit this course')
+                elif course.material_type != "Course":
+                    flask('You cannot add modules to a ' + course.material_type)
+                else:
+                    course_modules = course.modules.all()
+                    course_modules.append(module)
+                    course.modules = course_modules
+                    course.last_updated=datetime.utcnow()
+                    db.session.commit()
+                    result['savedsuccess'] = True
+            else:
+                flash('No Course identified with id ' + course_id)
+    else:
+        flash('No Module identified with id ' + module_id)
 
-    return render_template('editcourse.html',
-                           title=title,
-                           edit_material_form=form)
-
-
-
-
+    return json.dumps(result, separators=(',',':'))
 
 
 @app.route('/test')
 def test():
-    objectiveform = forms.EditObjective()
-    objectives = Objective.query.all()
-    objectives.sort(key=operator.methodcaller("score"))
-    return render_template('test.html',
-                           objectives=objectives,
-                           objectiveform=objectiveform)
+    return render_template('test.html')

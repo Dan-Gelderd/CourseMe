@@ -26,23 +26,22 @@ $(document).ready(function () {
             moduleObjectives.push('{{ objective.name }}')    
         {% endfor %}    
         dynamicList_addList(moduleObjectives, $("#define_objectives"));
-    
     });
     
-    $('[name="material_type"]').change(function() {           //DJG - is there a better way of doing this? radio.data or radio.value? 
-        var material_type = this.value;
-        if (material_type = 'Course') {
-            $(".choose-source").addClass("hidden");    
-            $(".choose-material").addClass("hidden");
+    $('[name="material_type"]').change(function() {
+        var material_type = $('[name="material_type"]:checked' ).val();
+        if (material_type == 'Course') {
+            $(".choose-source").addClass("unused-form-element-course");    
+            $(".choose-material").addClass("unused-form-element-course");
         }
         else {
-            $(".choose-source").removeClass("hidden");
-            $('[name="material_source"]').change()
+            $(".choose-source").removeClass("unused-form-element-course");
+            $(".choose-material").removeClass("unused-form-element-course")
         }
     });
     
     $('[name="material_source"]').change(function() {           //DJG - is there a better way of doing this? radio.data or radio.value? 
-        var choose_material_id = 'choose_material_' + this.value;
+        var choose_material_id = 'choose_material_' + this.value;       //DJG - Not sure why this works here and not above
         $(".choose-material").addClass("hidden");
         $("#" + choose_material_id).removeClass("hidden");
     });
@@ -53,11 +52,17 @@ $(document).ready(function () {
         $("#edit_module_form").find(".dynamic-list-item-data").each(function() {
             objectives.push($(this).text());
         });
-        
+        var course_modules = new Array();
+        $("#course_modules").find(".course-module-id").each(function() {
+            course_modules.push($(this).text());
+        });        
+                
         var data = $("#edit_module_form").serializeArray();     //DJG - http://stackoverflow.com/questions/6627936/jquery-post-with-serialize-and-extra-data
         data.push({name: 'objectives', value: objectives});
+        data.push({name: 'course_modules', value: course_modules});        
 
         console.log(objectives);
+        console.log(course_modules);
         console.log(data);          //DJG - not sure why edit_objective_id is getting repeated in the data array
         //console.log($(".dynamic-list-select").serialize());
         //console.log($(".dynamic-list-select").options[0].selected);
@@ -70,7 +75,7 @@ $(document).ready(function () {
         //console.log(typeof data_json);        
         
         $.post(  
-            flask_util.url_for('editmodule', {id: 0 }),  
+            flask_util.url_for('editmodule', {id: {{edit_id}} }),  
             data,  
             function(json) {
                 
@@ -82,13 +87,24 @@ $(document).ready(function () {
                 console.log(result.savedsuccess);                
 
                 $("#edit_module_form").find(".help-block").text("");
+                $(".has-error").removeClass("has-error");
                             
                 if(result.savedsuccess)
                 {
-                    window.location.href = flask_util.url_for('module', id=result.module_id);     //DJG - need to redirect to new module page - result.module_id available
+                    window.location.href = flask_util.url_for('module', {id: result.module_id});     //DJG - need to redirect to new module page - result.module_id available
                 }
                 else
                 {       
+                    if(result.name!=undefined) {
+                        $("#error_edit_module_name").text(result.name[0]);
+                        $("#edit_module_name_form_group").addClass("has-error");
+                    };
+
+                    if(result.material!=undefined) {
+                        $(".error_edit_module_material").text(result.material[0]);
+                        $(".choose-material").addClass("has-error");
+                    };
+                    
                     if(result.objectives!=undefined) {
                         $("#edit_module_form").find(".dynamic-list-help").text(result.objectives[0]);
                         $("#edit_module_form").find(".dynamic-list-form").addClass("has-error");
@@ -98,54 +114,78 @@ $(document).ready(function () {
             }
         );
     });
+
+  $(function() {
+    $( "#course_modules" ).sortable();
+    $( "#course_modules" ).disableSelection();
+  });
 });
 
 //DJG - the location.reload on completing the modal objective form wipes the create module form, need to explore work-arounds
 </script>
 
+
+<h2>{{form_header}}</h2>
+
 <form id="edit_module_form" enctype=multipart/form-data action="" class="form" method="POST">      <!-- DJG - need to point to right module id -->
     {{edit_module_form.hidden_tag()}}   <!-- DJG - needed for cross-site request forgery prevention -->
     
-    <div class="form-group {% if edit_module_form.name.errors %} has-error {% endif %}">
+    <div id = "edit_module_name_form_group", class="form-group">
         {{ edit_module_form.name.label }}
         {{ edit_module_form.name(placeholder="E.g. Solving quadratic equations", class="form-control") }}
-        <p class="help-block">{{ edit_module_form.name.errors[0] }}</p>
+        <p class="help-block" id="error_edit_module_name"></p>
     </div>
 
-    <div class="form-group {% if edit_module_form.description.errors %} has-error {% endif %}">
+    <div class="form-group">
         {{ edit_module_form.description.label }}
         {{ edit_module_form.description(placeholder="Enter a brief description to sell your course to potential students", class="form-control") }}
-        <p class="help-block">{{ edit_module_form.description.errors[0] }}</p>
+        <p class="help-block"></p>
     </div>
 
-    <div class="form-group {% if edit_module_form.notes.errors %} has-error {% endif %}">
+    <div class="form-group">
         {{ edit_module_form.notes.label }}
         {{ edit_module_form.notes(placeholder="Additional notes pointing to other material or describing how your material fits in to what your students are learning can be very helpful", class="form-control") }}
-        <p class="help-block">{{ edit_module_form.notes.errors[0] }}</p>
+        <p class="help-block"></p>
     </div>
 
-    <div class="form-group {% if edit_module_form.material_type.errors %} has-error {% endif %}"> 
+    <div class="form-group{% if edit_id > 0 %} hidden{% endif %}"> 
         {{ edit_module_form.material_type.label }}
         {{ edit_module_form.material_type }}
-        <p class="help-block">{{ edit_module_form.material_type.errors[0] }}</p>
-    </div>
-    
-    <div class="form-group choose-source{% if edit_module_form.material_source.errors %} has-error {% endif %}"> 
-        {{ edit_module_form.material_source.label }}
-        {{ edit_module_form.material_source }}
-        <p class="help-block">{{ edit_module_form.material_source.errors[0] }}</p>
-    </div>
-    
-    <div id="choose_material_upload" class="form-group choose-material{% if edit_module_form.material_source.data != "upload" %} hidden{% endif %}{% if edit_module_form.material_upload.errors %} has-error {% endif %}">
-        {{ edit_module_form.material_upload.label }}
-        {{ edit_module_form.material_upload }} 
-        <p class="help-block">{% if edit_module_form.material_upload %}{{edit_module_form.material_upload.errors[0] }}{% endif %}</p>
+        <p class="help-block"></p>
     </div>
 
-    <div id="choose_material_youtube" class="form-group choose-material{% if edit_module_form.material_source.data != "youtube" %} hidden{% endif %}{% if edit_module_form.material_youtube.errors %} has-error {% endif %}">
+    <div class="panel panel-default{% if edit_module_form.material_type.data != "Course" %} hidden{% endif %}">
+        <div class="panel-heading dynamic-list-heading">Course Modules</div>
+        <div class="panel-body">
+            <ul class="list-group" id="course_modules">
+                {% for mod in module.modules %}
+                <li class="list-group-item">
+                    <span hidden class="course-module-id">{{mod.id}}</span>
+                    {{mod.name}}
+                    <span class="input-group-btn"><button class="btn btn-link" type="button" onclick="$(this).closest('li').remove()">&times;</button></span>
+                </li>    
+                {% endfor %}    
+            </ul>
+        </div>
+        <div class="panel-footer"><i>Add new modules to your course from the individual module pages</i></div>
+    </div>
+    
+    <div class="form-group choose-source{% if edit_module_form.material_type.data == "Course" %} hidden{% endif %}"> 
+        {{ edit_module_form.material_source.label }}
+        {{ edit_module_form.material_source }}
+        <p class="help-block"></p>
+    </div>
+    
+    <div id="choose_material_upload" class="form-group choose-material{% if edit_module_form.material_source.data != "upload" %} hidden{% endif %}">
+        {{ edit_module_form.material_upload.label }}
+        {{ edit_module_form.material_upload }} 
+        <p class="help-block error_edit_module_material"></p>
+    </div>
+
+    <div id="choose_material_youtube" class="form-group choose-material{% if edit_module_form.material_source.data != "youtube" %} hidden{% endif %}">
         {{ edit_module_form.material_youtube.label }}
         {{ edit_module_form.material_youtube }} 
-        <p class="help-block">{% if edit_module_form.material_youtube %}{{ edit_module_form.material_youtube.errors[0] }}{% endif %}</p>
+        <p class="help-block error_edit_module_material"></p>
     </div>    
 
     <div class="dynamic-list-container" id="define_objectives">

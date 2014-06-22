@@ -2,6 +2,7 @@ from courseme import db
 import json
 from datetime import datetime
 import md5
+from sqlalchemy import desc 
 
 ROLE_USER = 0
 ROLE_ADMIN = 1
@@ -17,10 +18,14 @@ class User(db.Model):
     time_registered = db.Column(db.DateTime)
 
     objectives_created = db.relationship("Objective", backref="created_by")
-    modules_authored = db.relationship("Module", backref="author")
+    modules_authored = db.relationship("Module", backref="author", lazy = 'dynamic')
 
+    def module_type_authored(self, type):
+        return self.modules_authored.filter_by(material_type = type).all()
+    
     def recent_modules(self, count):
-        return UserModule.query.filter_by(user=self).order_by(UserModule.last_viewed).limit(count).all()
+        #import pdb; pdb.set_trace()        #DJG - remove
+        return [Module.query.get(um.module_id) for um in UserModule.query.filter_by(user=self).order_by(desc(UserModule.last_viewed)).limit(count).all()]
 
     def visible_objectives(self):
         visible_objective_user_ids = [u.id for u in User.admin_users()]
@@ -160,6 +165,7 @@ class Module(db.Model):                                             #DJG - chang
     submitted = db.Column(db.DateTime) 
     published = db.Column(db.DateTime)
     locked = db.Column(db.DateTime)
+
     votes = db.Column(db.Integer, default = 0)
     
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))     #DJG - why is user lower case in ForeignKey('user.id')

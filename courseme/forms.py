@@ -40,8 +40,8 @@ class EditModule(Form):
     description = TextAreaField('Brief description')
     notes = TextAreaField('Notes')
     material_type = RadioField('Material Type',
-                                 choices=[('lecture', 'Lecture'), ('exercise', 'Exercise'), ('course', 'Course (select individual modules to include later)')],
-                                 default='lecture',
+                                 choices=[('Lecture', 'Lecture'), ('Exercise', 'Exercise'), ('Course', 'Course (select individual modules to include later)')],
+                                 default='Lecture',
                                  validators = [Required('Please specify what type of material you are creating')])
     material_source = RadioField('Material Source',
                                  choices=[('upload', 'Upload video'), ('youtube', 'youtube link')],
