@@ -1,0 +1,20 @@
+{% extends "module.html" %}
+{% block material %}
+
+<ul class="list-group">
+
+    
+</ul>
+
+<div class="list-group">
+    
+    {% for mod in module.modules %}
+    <a href="{{url_for("module", id=mod.id)}}" class="list-group-item">
+        <h4 class="list-group-item-heading">{{mod.name}}</h4>
+        <p class="list-group-item-text">{{mod.description}}</p>        
+        
+    </a>
+    {% endfor %}
+</div>
+
+{% endblock %}

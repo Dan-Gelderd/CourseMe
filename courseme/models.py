@@ -25,7 +25,15 @@ class User(db.Model):
     
     def recent_modules(self, count):
         #import pdb; pdb.set_trace()        #DJG - remove
-        return [Module.query.get(um.module_id) for um in UserModule.query.filter_by(user=self).order_by(desc(UserModule.last_viewed)).limit(count).all()]
+        #recent_modules = []
+        #for um in UserModule.query.filter_by(user=self).order_by(desc(UserModule.last_viewed)).limit(count).all():
+        #    mod = Module.query.get(um.module_id)
+        #    recent_modules.append(mod)
+        #return recent_modules
+        #return [Module.query.get(um.module_id) for um in UserModule.query.filter_by(user=self).order_by(desc(UserModule.last_viewed)).limit(count).all()]
+        #return Module.query.all()
+        return []
+
 
     def visible_objectives(self):
         visible_objective_user_ids = [u.id for u in User.admin_users()]
@@ -187,6 +195,9 @@ class Module(db.Model):                                             #DJG - chang
     def icon_class(self):
         return "glyphicon glyphicon-list-alt"       #DJG - this is just a placeholder, should probably define a css class based directly on the module.type
 
+    def is_courseable(self):
+        return self.material_type != "Course"
+
     def as_dict(self):
         result = self.__dict__
         result['author'] = self.author.name
@@ -203,6 +214,7 @@ class UserModule(db.Model):
     starred = db.Column(db.Boolean, default = False)
     vote = db.Column(db.Integer, default = 0)
     notes = db.Column(db.String(1000))
+    enrolled = db.Column(db.Boolean, default = False)
     
     user = db.relationship(User, backref='user_modules')
     module = db.relationship(Module, backref='user_modules')

@@ -1,0 +1,15 @@
+{% extends "module.html" %}
+{% block material %}
+
+{% if module.material_source == 'upload' %}
+<video width="100%" height="100%" controls>     <!-- DJG - poster attribute for video caption/logo, can also specift start and end times to play if say pointing to utube video -->
+  <source src="#" type="video/mp4" />
+  Your browser does not support the video element.
+</video>
+{% elif module.material_source == 'youtube' %} 
+<div class="embed-responsive embed-responsive-16by9" width="100%" height="100%">
+  <iframe class="embed-responsive-item" allowfullscreen src="{{module.material_path}}"></iframe>      <!-- DJG - how to size it properly http://flwebsites.biz/posts/proportional-responsive-iframes-youtube-videos     Attempt here is to use twitter bootstrap functionality directly-->
+</div>            
+{% endif %}
+
+{% endblock %}

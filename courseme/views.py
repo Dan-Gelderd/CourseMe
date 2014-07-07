@@ -42,12 +42,10 @@ def internal_error(error):
 @app.route('/index')
 #@login_required
 def index():
-    title = "CourseMe"
-    user = g.user                     
+    title = "CourseMe"                     
     catalogue = [row.as_dict() for row in Module.query.all()]                #DJG - confused over best way to do this http://stackoverflow.com/questions/1958219/convert-sqlalchemy-row-object-to-python-dict
     return render_template('index.html',
         title = title,
-        user = user,
         catalogue = json.dumps(catalogue, cls=CustomEncoder, separators=(',',':')))
 
 
@@ -223,7 +221,7 @@ def editmodule(id = 0):
     module = None
     form_header = "Create new module:"
     if id > 0:
-        module = Module.query.get(id)
+        module = Module.query.get_or_404(id)
         if module:
             if module.author_id != g.user.id:
                 flash('You are not authorised to edit this module')
@@ -273,29 +271,28 @@ def editmodule(id = 0):
         #    del moduleform.material_upload
         #    del moduleform.material_youtube
 
-
-  
         if moduleform.validate():         
-            #Reading off the list of objectives
-            #DJG - try request.POST["objectives"] to see if data format is different
-            unicode_list = request.form["objectives"]       #DJG - the data sent by the ajax request has the list converted into a unicode text string with commas
-            python_list = filter(None, unicode_list.split(','))            #DJG - Dodgy string manipulation, means I can't have commas in objective names
-            objectives = []         #DJG - should this be a list or what?
-            if python_list: objectives = g.user.visible_objectives().filter(Objective.name.in_(python_list)).all()      #DJG - avoiding using the in_ operation when the list is empty as this is an inefficiency
-            undefined_objectives = list(set(python_list) - set(obj.name for obj in objectives))     #DJG - Need to trap undefined objectives and return savedsucess as json if failed
+            objectives = []
+            course_modules = []
             result = {}
-            result['savedsuccess'] = False
-            if undefined_objectives:       #DJG - code repeat of above, how to avoid this
-                is_are = 'is not already defined as an objetive' if len(undefined_objectives) == 1 else 'are not already defined as objetives'
-                result['objectives'] = ["'" + "', '".join(undefined_objectives) + "' " + is_are]
-                return json.dumps(result, separators=(',',':'))
-
+            result['savedsuccess'] = False           
             proceed = False
             material_type = module.material_type if id > 0 else moduleform.material_type.data
             material_source = ""
             material_path = ""
             if material_type != "Course":
-                course_modules = []
+                #Reading off the list of objectives
+                #DJG - try request.POST["objectives"] to see if data format is different
+                unicode_list = request.form["objectives"]       #DJG - the data sent by the ajax request has the list converted into a unicode text string with commas
+                python_list = filter(None, unicode_list.split(','))            #DJG - Dodgy string manipulation, means I can't have commas in objective names     
+                if python_list: objectives = g.user.visible_objectives().filter(Objective.name.in_(python_list)).all()      #DJG - avoiding using the in_ operation when the list is empty as this is an inefficiency
+                undefined_objectives = list(set(python_list) - set(obj.name for obj in objectives))     #DJG - Need to trap undefined objectives and return savedsucess as json if failed
+
+                if undefined_objectives:       #DJG - code repeat of above, how to avoid this
+                    is_are = 'is not already defined as an objetive' if len(undefined_objectives) == 1 else 'are not already defined as objetives'
+                    result['objectives'] = ["'" + "', '".join(undefined_objectives) + "' " + is_are]
+                    return json.dumps(result, separators=(',',':'))
+              
                 material_source = moduleform.material_source.data
                 if module:
                     if module.material_source == material_source and material_source == "upload":    
@@ -314,8 +311,9 @@ def editmodule(id = 0):
                     result['material'] = ["No content provided"]
                     
             else:
-                
-                course_modules = [Module.query.get(1)]   #DJG - do something with modules
+                unicode_list = request.form["course_modules"]       #DJG - the data sent by the ajax request has the list converted into a unicode text string with commas
+                python_list = filter(None, unicode_list.split(','))  
+                if python_list: course_modules = [Module.query.get(mod) for mod in python_list]     #DJG - need some validation here to make sure modules exist and are not themselves courses etc.
                 proceed = True
                 
             if proceed:
@@ -327,7 +325,10 @@ def editmodule(id = 0):
                     module.material_source = material_source 
                     module.material_path = material_path
                     module.objectives = objectives
+                    module.modules = []                 #DJG - need this to make the order of modules editable - or else need an association object in sqlalchamy to capture order as extra data of the many to many relationship
+                    db.session.commit()
                     module.modules = course_modules
+
                 else:
                     module = Module(name=moduleform.name.data,
                                     description = moduleform.description.data,
@@ -359,13 +360,10 @@ def editmodule(id = 0):
 def module(id):
        
     module = Module.query.get(id)
-    user = g.user
-
-    usermodule = UserModule.FindOrCreate(user.id, id)
+    usermodule = UserModule.FindOrCreate(g.user.id, id) 
+    templates = {"Lecture": "lecture.html", "Course": "course.html"}
     
-    #import pdb; pdb.set_trace()        #DJG - remove 
-    
-    return render_template('module.html',
+    return render_template(templates[module.material_type],
                            module=module,
                            usermodule=usermodule)
 

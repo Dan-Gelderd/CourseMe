@@ -3,8 +3,6 @@
 
 <!-- DJG - Could use eager loading technique so users and module don't load all child data? -->
 
-<span class="starred">1</span>
-
 <script type='text/javascript'>
 $(document).ready(function () {
   $(".star").on('click', function( event ) {
@@ -115,89 +113,114 @@ $(document).ready(function () {
               }
     )
   });
+
+  $("#btn_find_courses").on('click', function ( event ) {
+    var module_id = {{module.id}};
+    window.location.href = flask_util.url_for('index')        //DJG - for full functionality need to actually filter courses containing this module on index page
+  });
+  
 });
 
 </script>
 
-
-  <div class="row" id="material-and-actions">
+  {% if g.user.id == module.author_id %}
+    <a href="{{url_for("editmodule", id=module.id)}}"><div class="well well-sm"><i>Edit material</i></div></a>
+  {% endif %}
+  
+  <div class="row" id="module_name_course_info">
     <div class="col-sm-9">
+      <header>
+        <h1>{{module.name}}</h1>
+        <p class="lead">{{module.description}}</p>     <!--DJG - move and format-->
+        <section id="social-actions">
+          <h1 style="display:none;">Social Actions</h1>
+          <!-- DJG need to make acessible to screen readers using <a class="sr-only" href="#content">Skip to main content</a> -->
+          <div style="font-size: large">
+            <span class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-share-alt"></span></a>
+              <ul class="dropdown-menu">
+                <li><a href="#">Recommend</a></li>
+              </ul> 
+            </span>
+            <span class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-plus"></span></a>
+              <ul class="dropdown-menu">
+                {% if module.is_courseable() %}
+                <li role="presentation" class="dropdown-header">Add this to an existing course</li>
+                {% for course in g.user.module_type_authored('Course') %}
+                <li><button type="button" class="btn btn-link add-to-course">{{course.name}}<span hidden>{{course.id}}</span></button></li>  
+                {% endfor %}
+                <li role="presentation" class="divider"></li>
+                {% endif %}
+                <li role="presentation" class="dropdown-header">Create new material</li>
+                {% if module.is_courseable() %}<li><a href="#">Create a new course containing this module</a></li>{% endif %}
+                <li><a href="#">Create new material like this</a></li>
+              </ul> 
+            </span>
+            <span id="voting" class="pull-right">
+              {% if usermodule.starred %}
+              <span class="star glyphicon glyphicon-star"></span>     <!--DJG - DRY class star-->
+              {% else %}
+              <span class="star glyphicon glyphicon-star-empty"></span>                  
+              {% endif %}                  
+              <span id="current-vote" style="display:none;">{{usermodule.vote}}</span> 
+              <span id="up-vote" class="vote glyphicon glyphicon-thumbs-up"></span> 
+              <span id="down-vote" class="vote glyphicon glyphicon-thumbs-down"></span>
+              <span id="total-votes">{{module.votes}}</span> votes          
+            </span>
+          </div>          
+        </section>
+      </header>
+    </div>
+    <div class="col-sm-3">
+      <aside id="course_information">
+        <header><h1 style="display:none;">Course Information</h1></header>
+        {% if module.material_type == "Course"%}
+          {% if usermodule.enrolled %}
+          <button type="button" class="btn btn-lg btn-block btn-default">Un-Enroll</button>
+          {% else %}
+          <button type="button" class="btn btn-lg btn-block btn-success">Enroll</button> 
+          {% endif %}
+        {% else %}  
+          {% if usermodule.part_of_course %}
+          <a href="/static/preview/course.html">  
+            <span class="lead"><span class="glyphicon glyphicon-list-alt"></span> Course Progress</span>
+            <!--DJG - could i use a progress element here?-->
+            <div class="progress">
+              <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;">
+                <span class="sr-only">60% Complete</span>
+              </div>
+            </div>        
+          </a>          
+          {% else %}
+          <button id="btn_find_courses" type="button" class="btn btn-lg btn-block btn-default" style="white-space: normal">Find courses containing this {{module.material_type}}</button>          
+          {% endif %}        
+
+        {% endif %}
+      </aside>      
+    </div>
+  </div>    
+  <div class="row" id="material_and_objectives">
+    <div class="col-sm-9">      
       <section>
         <main>
-          <header>
-            <h1>{{module.name}}</h1>  
-            <section id="social-actions">
-              <h1 style="display:none;">Social Actions</h1>
-              <!-- DJG need to make acessible to screen readers using <a class="sr-only" href="#content">Skip to main content</a> -->
-              <div style="font-size: large">
-                <span class="dropdown">
-                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-share-alt"></span></a>
-                  <ul class="dropdown-menu">
-                    <li><a href="#">Recommend</a></li>
-                  </ul> 
-                </span>
-                <span class="dropdown">
-                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-plus"></span></a>
-                  <ul class="dropdown-menu">
-                    <li role="presentation" class="dropdown-header">Add this to an existing course</li>
-                    {% for course in g.user.module_type_authored('Course') %}
-                    <li><button type="button" class="btn btn-link add-to-course">{{course.name}}<span hidden>{{course.id}}</span></button></li>  
-                    {% endfor %}
-                    <li role="presentation" class="divider"></li>
-                    <li role="presentation" class="dropdown-header">Create new material</li>
-                    <li><a href="#">Create a new course containing this module</a></li>
-                    <li><a href="#">Create a new module like this</a></li>
-                  </ul> 
-                </span>
-                <span id="voting" class="pull-right">
-                  {% if usermodule.starred %}
-                  <span class="star glyphicon glyphicon-star"></span>     <!--DJG - DRY class star>-->
-                  {% else %}
-                  <span class="star glyphicon glyphicon-star-empty"></span>                  
-                  {% endif %}                  
-                  <span id="current-vote" style="display:none;">{{usermodule.vote}}</span> 
-                  <span id="up-vote" class="vote glyphicon glyphicon-thumbs-up"></span> 
-                  <span id="down-vote" class="vote glyphicon glyphicon-thumbs-down"></span>
-                  <span id="total-votes">{{module.votes}}</span> votes          
-                </span>
-              </div>          
-            </section>
-          </header>
           <article id="main-module-material">
             <h1 style="display:none;">Main Content</h1>
-            {% if module.material_source == 'upload' %}
-            <video width="100%" height="100%" controls>     <!-- DJG - poster attribute for video caption/logo, can also specift start and end times to play if say pointing to utube video -->
-              <source src="#" type="video/mp4" />
-              Your browser does not support the video element.
-            </video>
-            {% elif module.material_source == 'youtube' %} 
-            <iframe width="100%" height="620" frameborder="0" allowfullscreen src="{{module.material_path}}">  <!-- DJG - how to size it properly http://flwebsites.biz/posts/proportional-responsive-iframes-youtube-videos-->
-            </iframe>
-            {% endif %}
+            {% block material %}
+
+            {% endblock %}
           </article>
           <footer>
             <ul class="pager">
-              <li class="previous"><a href="/static/preview/module.html">&larr; Previous Module HC</a></li>
-              <li class="next"><a href="/static/preview/module.html">Next Module HC &rarr;</a></li>
+              <li class="previous"><a href="#">&larr; Previous Module HC</a></li>
+              <li class="next"><a href="#">Next Module HC &rarr;</a></li>
             </ul>
-          </footer>
 
+          </footer>
         </main>
       </section>
     </div>
     <div class="col-sm-3">
-      <aside id="course-information">
-        <header><h1 style="display:none;">Course Information</h1></header>
-        <a href="/static/preview/course.html">  
-          <span class="lead"><span class="glyphicon glyphicon-list-alt"></span> Course Progress</span>
-          <!--DJG - could i use a progress element here?-->
-          <div class="progress">
-            <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;">
-              <span class="sr-only">60% Complete</span>
-            </div>
-          </div>        
-        </a>          
-      </aside>
       <section id="objectives-and-prerequisites">
 
         <h1 style="display:none;">Module Objectives and Prerequisites</h1>

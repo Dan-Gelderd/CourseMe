@@ -2,6 +2,7 @@ from flask.ext.wtf import Form
 from wtforms import TextField, TextAreaField, PasswordField, BooleanField, HiddenField, FileField, SelectMultipleField, RadioField
 from wtforms.validators import Required, Length, Email, Regexp, EqualTo, url
 from wtforms.fields.html5 import URLField
+from wtforms.fields import FieldList
 
 class SignupForm(Form):
     email = TextField('Email address', validators=[
@@ -33,6 +34,7 @@ class EditObjective(Form):
                 Required('Enter a description of the objective'),
                 Length(min=4, message=(u'Description must be at least 4 characters'))])
     dynamic_list_select = SelectMultipleField('Prerequisites', choices=[])
+    authors = FieldList(TextField('Name'))      #DJG - Try this as way of geting proper ordered list back from form
 
 class EditModule(Form):
     edit_module_id = HiddenField()                  #DJG - don't know if I need this
