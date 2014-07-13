@@ -118,7 +118,33 @@ $(document).ready(function () {
     var module_id = {{module.id}};
     window.location.href = flask_util.url_for('index')        //DJG - for full functionality need to actually filter courses containing this module on index page
   });
-  
+
+  $("#btn_enroll_course").on('click', function ( event ) {
+    var course_id = {{module.id}};
+    $.getJSON(
+              flask_util.url_for('course_enroll', {course_id: course_id}),
+              function(json) {
+                console.log(json);
+                if (json.savedsuccess = "False") {
+                  window.location.reload()
+                }
+                else {
+                  var btn = $("#btn_enroll_course")
+                  if (json.enrolled = "False") {
+                    btn.removeClass("btn-default")
+                    btn.addClass("btn-success")
+                    btn.innerHTML("Enroll")
+                  }
+                  else {
+                    btn.removeClass("btn-success")
+                    btn.addClass("btn-default")
+                    btn.innerHTML("Un-Enroll")                    
+                  }
+                }
+              }
+    )
+  });
+    
 });
 
 </script>
@@ -153,8 +179,10 @@ $(document).ready(function () {
                 <li role="presentation" class="divider"></li>
                 {% endif %}
                 <li role="presentation" class="dropdown-header">Create new material</li>
-                {% if module.is_courseable() %}<li><a href="#">Create a new course containing this module</a></li>{% endif %}
-                <li><a href="#">Create new material like this</a></li>
+                {% if module.is_courseable() %}
+                <li><button type="button" class="btn btn-link add-to-course">Create a new Course containing this {{module.material_type}}<span hidden>0</span></button></li>
+                {% endif %}
+                <li><a href="#">Create a new {{module.material_type}} like this</a></li>
               </ul> 
             </span>
             <span id="voting" class="pull-right">
@@ -176,26 +204,24 @@ $(document).ready(function () {
       <aside id="course_information">
         <header><h1 style="display:none;">Course Information</h1></header>
         {% if module.material_type == "Course"%}
-          {% if usermodule.enrolled %}
-          <button type="button" class="btn btn-lg btn-block btn-default">Un-Enroll</button>
-          {% else %}
-          <button type="button" class="btn btn-lg btn-block btn-success">Enroll</button> 
-          {% endif %}
+        <button id="btn_enroll_course" type="button" class="btn btn-lg btn-block {% if usermodule.enrolled %}btn-default{% else %}btn-success{% endif %}">
+          {% if usermodule.enrolled %}Un-Enroll{% else %}Enroll{% endif %}
+        </button>
         {% else %}  
-          {% if usermodule.part_of_course %}
-          <a href="/static/preview/course.html">  
+
+          {% if usermodule.part_of_course() %}
+          <a href="{{url_for("module", id=usermodule.part_of_course().id)}}">  
             <span class="lead"><span class="glyphicon glyphicon-list-alt"></span> Course Progress</span>
-            <!--DJG - could i use a progress element here?-->
+            <!--DJG - could I use a progress element here?-->
             <div class="progress">
-              <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;">
-                <span class="sr-only">60% Complete</span>
+              <div class="progress-bar" role="progressbar" aria-valuenow="{{usermodule.course_completed()*100}}" aria-valuemin="0" aria-valuemax="100" style="width: {{usermodule.course_completed()*100}}%;">
+                {{usermodule.course_completed()*100}}%
               </div>
             </div>        
           </a>          
           {% else %}
-          <button id="btn_find_courses" type="button" class="btn btn-lg btn-block btn-default" style="white-space: normal">Find courses containing this {{module.material_type}}</button>          
+          <button id="btn_find_courses" type="button" class="btn btn-lg btn-block btn-default" style="white-space: normal">Find Courses containing this {{module.material_type}}</button>          
           {% endif %}        
-
         {% endif %}
       </aside>      
     </div>
@@ -309,7 +335,7 @@ $(document).ready(function () {
         <div class="tab-content">
           <article class="tab-pane active" id="author-notes">
             <h1 style="display:none;">Author Notes</h1>
-            ""
+            {{module.notes}}
           </article>
           <article class="tab-pane" id="tutor-notes">
             <h1 style="display:none;">Tutor Notes</h1>

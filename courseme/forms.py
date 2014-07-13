@@ -50,3 +50,7 @@ class EditModule(Form):
                                  default='upload')     #validators = [Required('Please specify how you are providing the material')])
     material_upload = FileField('Select File')         #DJG - would be nice to have these be required when they apply     #validators=[Required('Please upload your material')])
     material_youtube = URLField('Enter URL')                            #validators=[url, Required('Please provide a link to your material')])
+    subtitles = BooleanField('Subtitles', default = False)
+    easy_language = BooleanField('Simple Language', default = False)
+    extension = BooleanField('Extension Material', default = False)
+    for_teachers = BooleanField('For Teachers', default = False)

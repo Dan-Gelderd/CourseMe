@@ -35,6 +35,7 @@
     <tfoot></tfoot>
 </table>
 
+<button id="clear_filters" type="Cancel" class="btn btn-default">Clear all filters</button>
 
 <script>
     // Formatting function for row details
@@ -146,6 +147,10 @@
         });
     
     } );
+    
+    $("#clear_filters").on( 'click', function( event ) {
+        window.location.reload()
+    });
     
 </script>
 

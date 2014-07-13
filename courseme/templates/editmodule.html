@@ -33,10 +33,14 @@ $(document).ready(function () {
         if (material_type == 'Course') {
             $(".choose-source").addClass("unused-form-element-course");    
             $(".choose-material").addClass("unused-form-element-course");
+            $("#specify_module_objectives").addClass("hidden");
+            $("#implied_course_objectives").removeClass("hidden");            
         }
         else {
             $(".choose-source").removeClass("unused-form-element-course");
-            $(".choose-material").removeClass("unused-form-element-course")
+            $(".choose-material").removeClass("unused-form-element-course");
+            $("#specify_module_objectives").removeClass("hidden");
+            $("#implied_course_objectives").addClass("hidden");            
         }
     });
     
@@ -91,7 +95,7 @@ $(document).ready(function () {
                             
                 if(result.savedsuccess)
                 {
-                    window.location.href = flask_util.url_for('module', {id: result.module_id});     //DJG - need to redirect to new module page - result.module_id available
+                    window.location.href = flask_util.url_for('module', {id: result.module_id});
                 }
                 else
                 {       
@@ -115,10 +119,44 @@ $(document).ready(function () {
         );
     });
 
-  $(function() {
-    $( "#course_modules" ).sortable();
-    $( "#course_modules" ).disableSelection();
-  });
+    $("#cancel").click(function(event){
+        event.preventDefault();     //DJG - don't want submit button to post the form as well as the ajax request or get 400 bad request error. Not sure if this is the right way to fix it.
+        if ({{edit_id}} > 0) {
+            window.location.href = flask_util.url_for('module', {id: {{edit_id}} }); 
+        }
+        else{
+            window.location.href = flask_util.url_for('index');
+        }
+    });
+
+
+    $("#delete").click(function(event){
+        event.preventDefault();     //DJG - don't want submit button to post the form as well as the ajax request or get 400 bad request error. Not sure if this is the right way to fix it.
+        if ({{edit_id}} > 0) {
+            $.getJSON(flask_util.url_for('delete_module', {id: {{edit_id}} }),
+                function(json) {
+                    if(result.savedsuccess)
+                    {
+                        window.location.href = flask_util.url_for('index');
+                    }
+                    else
+                    {       
+                        window.location.reload();
+                    }
+                }
+            )
+        }
+        else{
+            window.location.reload();
+        }
+    });
+    
+
+    //For the course module re-ordering    
+    $(function() {
+        $( "#course_modules" ).sortable();
+        $( "#course_modules" ).disableSelection();
+    });
 });
 
 //DJG - the location.reload on completing the modal objective form wipes the create module form, need to explore work-arounds
@@ -200,18 +238,38 @@ $(document).ready(function () {
         <p class="help-block error_edit_module_material"></p>
     </div>    
 
-    <div class="dynamic-list-container" id="define_objectives">
-        {% include "subplates/dynamic-list.html" %}
+    <div id="specify_module_objectives" class="form-group {% if edit_module_form.material_type.data == "Course" %} hidden{% endif %}">
+        <div class="dynamic-list-container" id="define_objectives">
+            {% include "subplates/dynamic-list.html" %}
+        </div>
+        {% include "subplates/edit-objective-modal.html" %}
+        <button class="btn btn-default btn-sm btn-success pull-right" id="create_objective">Create New Objective</button>
     </div>
+
+    <div id="implied_course_objectives" class="{% if edit_module_form.material_type.data != "Course" %}hidden{% endif %}">
+        {% if edit_id > 0 %}            
+        {% if module.course_objectives() %}    
+        <div class="panel panel-default">
+          <!-- Default panel contents -->
+          <div class="panel-heading">Objectives covered by this Course</div>
+          <ul class="list-group">
+            {% for obj in module.course_objectives() %}
+            <li class="list-group-item">{{ obj.name }}</li>
+            {% endfor %}
+          </ul>
+        </div>        
+        {% endif %}
+        {% endif %}
+    </div>    
     
-    <button id="save_module" class="btn btn-success" type="submit">Save Module</button>    
+    <button id="save_module" class="btn btn-success" type="submit">Save Module</button>
+    <button id="cancel" class="btn btn-success" type="cancel">Cancel</button>       <!--DJG - don't understand type attribute of buttons-->
+    {% if edit_id > 0 %}<button id="delete" class="btn btn-danger" type="cancel">Delete</button>{% endif %}    
     
 </form>
 
 <br />
 
-{% include "subplates/edit-objective-modal.html" %}
 
-<button class="btn btn-default btn-sm btn-success" id="create_objective">Create New Objective</button>
 
 {% endblock %}

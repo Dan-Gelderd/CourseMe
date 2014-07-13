@@ -389,9 +389,8 @@ def starclick(id):
 def voteclick(id):
     
     module = Module.query.get(id)
-    user = g.user
 
-    usermodule = UserModule.FindOrCreate(user.id, module.id)
+    usermodule = UserModule.FindOrCreate(g.user.id, module.id)
     
     newVote = int(request.args.get("vote"))
     module.votes = module.votes - usermodule.vote + newVote       #DJG - Almost certainly a better way
@@ -409,7 +408,15 @@ def voteclick(id):
 def add_module_to_course(module_id, course_id):
     result = {}
     result['savedsuccess'] = False
-    course = Module.query.get(course_id)
+    if course_id == 0:
+        course = Module(name="New Course",
+                        time_created=datetime.utcnow(),
+                        last_updated=datetime.utcnow(),
+                        author_id=g.user.id,
+                        material_type = "Course")
+        db.session.add(course)
+    else:
+        course = Module.query.get(course_id)
     module = Module.query.get(module_id)
     #import pdb; pdb.set_trace()        #DJG - remove
     if module:
@@ -434,6 +441,53 @@ def add_module_to_course(module_id, course_id):
         flash('No Module identified with id ' + module_id)
 
     return json.dumps(result, separators=(',',':'))
+
+
+@app.route('/course-enroll/<int:course_id>')
+@login_required
+def course_enroll(course_id):
+    result = {}
+    result['savedsuccess'] = False
+    course = Module.query.get(course_id)
+    
+    if course:
+        if course.material_type == "Course":
+            usermodule = UserModule.FindOrCreate(g.user.id, course.id)
+            usermodule.enrolled = not usermodule.enrolled
+            db.session.commit()
+            result['savedsuccess'] = True
+            result['enrolled'] = usermodule.enrolled
+        else:
+            flash("Cannot enroll to " + course.material_type)
+    else:
+        flash('No Course identified with id ' + course_id)
+
+    return json.dumps(result, separators=(',',':'))
+
+
+@app.route('/delete_module/<int:id>')
+@login_required
+def delete_module(module_id):
+    result = {}
+    result['savedsuccess'] = False
+    module = Module.query.get(id)
+    
+    if module:
+        if module.user == g.user:
+            module.delete()
+            result['savedsuccess'] = True
+        else:
+            flash("You are not authorised to delete this " + course.material_type)
+    else:
+        flash('No Module identified with id ' + id)
+
+    return json.dumps(result, separators=(',',':'))
+
+
+@app.route('/groups')
+@login_required
+def groups():
+    return render_template('groups.html')
 
 
 @app.route('/test')
