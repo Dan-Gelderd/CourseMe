@@ -34,13 +34,15 @@ $(document).ready(function () {
             $(".choose-source").addClass("unused-form-element-course");    
             $(".choose-material").addClass("unused-form-element-course");
             $("#specify_module_objectives").addClass("hidden");
-            $("#implied_course_objectives").removeClass("hidden");            
+            $("#implied_course_objectives").removeClass("hidden");
+            $("#special_features").addClass("hidden");
         }
         else {
             $(".choose-source").removeClass("unused-form-element-course");
             $(".choose-material").removeClass("unused-form-element-course");
             $("#specify_module_objectives").removeClass("hidden");
             $("#implied_course_objectives").addClass("hidden");            
+            $("#special_features").removeClass("hidden");
         }
     });
     
@@ -89,7 +91,7 @@ $(document).ready(function () {
                 console.log(result);
                 console.log(result["savedsuccess"]);
                 console.log(result.savedsuccess);                
-
+        
                 $("#edit_module_form").find(".help-block").text("");
                 $(".has-error").removeClass("has-error");
                             
@@ -103,7 +105,7 @@ $(document).ready(function () {
                         $("#error_edit_module_name").text(result.name[0]);
                         $("#edit_module_name_form_group").addClass("has-error");
                     };
-
+        
                     if(result.material!=undefined) {
                         $(".error_edit_module_material").text(result.material[0]);
                         $(".choose-material").addClass("has-error");
@@ -238,7 +240,38 @@ $(document).ready(function () {
         <p class="help-block error_edit_module_material"></p>
     </div>    
 
-    <div id="specify_module_objectives" class="form-group {% if edit_module_form.material_type.data == "Course" %} hidden{% endif %}">
+    <!--DJG - if this is below the implied objectives div the form doesn't serialise the data-->
+    <div id="special_features" class="form-group{% if edit_module_form.material_type.data == "Course" %} hidden{% endif %}">
+        <label>This material contains:</label>
+        <div class="row">
+            <div class="col-sm-3">
+                <label class="btn btn-info">
+                    {{ edit_module_form.subtitles.label }}
+                    {{ edit_module_form.subtitles }}
+                </label>
+            </div>
+            <div class="col-sm-3">
+                <label class="btn btn-info">
+                    {{ edit_module_form.easy_language.label }}
+                    {{ edit_module_form.easy_language }}        
+                </label>
+            </div>
+            <div class="col-sm-3">
+                <label class="btn btn-info">
+                    {{ edit_module_form.extension.label }}
+                    {{ edit_module_form.extension }}
+                </label>    
+            </div>
+            <div class="col-sm-3">    
+                <label class="btn btn-info">
+                    {{ edit_module_form.for_teachers.label }}
+                    {{ edit_module_form.for_teachers }}
+                </label>
+            </div>        
+        </div>    
+    </div>    
+    
+    <div id="specify_module_objectives" class="form-group{% if edit_module_form.material_type.data == "Course" %} hidden{% endif %}">
         <div class="dynamic-list-container" id="define_objectives">
             {% include "subplates/dynamic-list.html" %}
         </div>
@@ -262,6 +295,7 @@ $(document).ready(function () {
         {% endif %}
     </div>    
     
+
     <button id="save_module" class="btn btn-success" type="submit">Save Module</button>
     <button id="cancel" class="btn btn-success" type="cancel">Cancel</button>       <!--DJG - don't understand type attribute of buttons-->
     {% if edit_id > 0 %}<button id="delete" class="btn btn-danger" type="cancel">Delete</button>{% endif %}    

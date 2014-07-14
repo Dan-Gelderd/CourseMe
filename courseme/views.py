@@ -238,7 +238,11 @@ def editmodule(id = 0):
                     notes = module.notes,
                     material_type = module.material_type,
                     material_source = material_source,
-                    material_path = material_path
+                    material_path = material_path,
+                    subtitles = module.subtitles,
+                    easy_language = module.easy_language,
+                    extension = module.extension,
+                    for_teachers = module.for_teachers
                 )
                 module_objectives = module.objectives
         else:
@@ -270,7 +274,7 @@ def editmodule(id = 0):
         #if moduleform.material_type.data == 'course':
         #    del moduleform.material_upload
         #    del moduleform.material_youtube
-
+        #import pdb; pdb.set_trace()
         if moduleform.validate():         
             objectives = []
             course_modules = []
@@ -328,7 +332,10 @@ def editmodule(id = 0):
                     module.modules = []                 #DJG - need this to make the order of modules editable - or else need an association object in sqlalchamy to capture order as extra data of the many to many relationship
                     db.session.commit()
                     module.modules = course_modules
-
+                    module.subtitles = moduleform.subtitles.data
+                    module.easy_language = moduleform.easy_language.data
+                    module.extension = moduleform.extension.data
+                    module.for_teachers = moduleform.for_teachers.data
                 else:
                     module = Module(name=moduleform.name.data,
                                     description = moduleform.description.data,
@@ -340,7 +347,12 @@ def editmodule(id = 0):
                                     material_source=material_source, 
                                     material_path=material_path,
                                     objectives=objectives,
-                                    modules = course_modules)     
+                                    modules = course_modules,
+                                    subtitles = moduleform.subtitles.data,
+                                    easy_language = moduleform.easy_language.data,
+                                    extension = moduleform.extension.data,
+                                    for_teachers = moduleform.for_teachers.data
+                                    )     
                     db.session.add(module)
                 db.session.commit()
                 result['savedsuccess'] = True

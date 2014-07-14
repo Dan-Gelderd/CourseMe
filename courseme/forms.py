@@ -53,4 +53,4 @@ class EditModule(Form):
     subtitles = BooleanField('Subtitles', default = False)
     easy_language = BooleanField('Simple Language', default = False)
     extension = BooleanField('Extension Material', default = False)
-    for_teachers = BooleanField('For Teachers', default = False)
+    for_teachers = BooleanField('Ideas for Teachers', default = False)

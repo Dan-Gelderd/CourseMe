@@ -277,7 +277,7 @@ $(document).ready(function () {
                   <dt>Exercises</dt>
                   <dd>
                     <ul class="list-unstyled">
-                      {% for excercise in objective.top_modules(module, "Exercise") %}
+                      {% for exercise in objective.top_modules(module, "Exercise") %}
                       <li><a href="{{url_for("module", id=exercise.id)}}">{{exercise.name}}</a></li>
                       {% endfor %}
                       <li><a href="{{url_for("index")}}"><i>Search all...</i></a></li>    
@@ -317,7 +317,10 @@ $(document).ready(function () {
             </div>
           </div>
         </div>
-
+        {{ module.subtitles }}
+        {{ module.easy_language }}
+        {{ module.extension }}
+        {{ module.for_teachers }}
       </section>
     </div>
   </div>
