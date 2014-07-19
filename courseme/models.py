@@ -1,11 +1,17 @@
 from courseme import db
 import json, operator
-from datetime import datetime
+from datetime import datetime, timedelta
 import md5
-from sqlalchemy import desc 
+from sqlalchemy import desc
 
 ROLE_USER = 0
 ROLE_ADMIN = 1
+
+VIEW_ALL = 0
+VIEW_OWN = 1
+VIEW_SYSTEM = 2
+
+ENTERPRISE_LICENCE_DURATION = 1
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key = True)
@@ -16,32 +22,17 @@ class User(db.Model):
     role = db.Column(db.SmallInteger, default = ROLE_USER, nullable=False)
     last_seen =  db.Column(db.DateTime)
     time_registered = db.Column(db.DateTime)
-
-    objectives_created = db.relationship("Objective", backref="created_by")
-    modules_authored = db.relationship("Module", backref="author", lazy = 'dynamic')
-
-    def module_type_authored(self, type):
-        return self.modules_authored.filter_by(material_type = type).all()
+    enterprise_licence = db.Column(db.DateTime)
+    view_system_only = db.Column(db.Boolean, default = False)  
     
-    def recent_modules(self, count):
-        #import pdb; pdb.set_trace()        #DJG - remove
-        #recent_modules = []
-        #for um in UserModule.query.filter_by(user=self).order_by(desc(UserModule.last_viewed)).limit(count).all():
-        #    mod = Module.query.get(um.module_id)
-        #    recent_modules.append(mod)
-        #return recent_modules
-        #return [Module.query.get(um.module_id) for um in UserModule.query.filter_by(user=self).order_by(desc(UserModule.last_viewed)).limit(count).all()]
-        #return Module.query.all()
-        return []
+    view_institution_only_id = db.Column(db.Integer, db.ForeignKey('institution.id'))           
+    institution_student_id = db.Column(db.Integer, db.ForeignKey('institution.id'))
+    
+    view_institution_only = db.relationship("Institution", primaryjoin="Institution.id==User.view_institution_only_id", backref="users_viewing_approved")
+    objectives_created = db.relationship("Objective", backref="created_by", lazy='dynamic')
+    modules_authored = db.relationship("Module", backref="author", lazy = 'dynamic')
+    institutions_created = db.relationship("Institution", primaryjoin="Institution.creator_id==User.id", backref="creator", lazy='dynamic')
 
-    def enrolled_courses(self):
-        return [Module.query.get(um.module_id) for um in UserModule.query.filter_by(user=self).filter(UserModule.enrolled).order_by(desc(UserModule.last_viewed)).all()]        #DJG - can we do better with filter on boolean type?
-
-    def visible_objectives(self):
-        visible_objective_user_ids = [u.id for u in User.admin_users()]
-        visible_objective_user_ids.append(self.id)
-        return Objective.query.filter(Objective.created_by_id.in_(visible_objective_user_ids))   
-        
     def is_authenticated(self):
         return True
 
@@ -60,6 +51,75 @@ class User(db.Model):
     def avatar(self, size=50):
         return 'http://www.gravatar.com/avatar/' + md5(self.email).hexdigest() + '?d=mm&s=' + str(size)
 
+    def is_enterprise_licenced(self):
+        if self:
+            if self.role == ROLE_ADMIN:
+                return True
+            if self.enterprise_licence:
+                licence_expiry_date = self.enterprise_licence + timedelta(years = ENTERPRISE_LICENCE_DURATION)
+                if datetime.utcnow() <= licence_expiry_date :
+                    return True
+                else:
+                    Message.AdminMessage(
+                        to_id = self.id,
+                        subject = "Enterprise Licence Expired",
+                        body = "You have tried to perform an action requiring an enterprise licence. Your licence expired on " + licence_expiry_date + ". To renew your licence contact CourseMe at " + User.main_admin_user().email
+                    )
+                    return False
+            else:
+                Message.AdminMessage(
+                    to_id = self.id,
+                    subject = "Enterprise Licence Needed",
+                    body = "You have tried to perform an action requiring an enterprise licence. To purchase a licence contact CourseMe at " + User.main_admin_user().email
+                    )
+                return False                
+
+    def visible_objectives(self):
+        visible_objective_user_ids = [u.id for u in User.admin_users()]
+        visible_objective_user_ids.append(self.id)
+        return Objective.query.filter(Objective.created_by_id.in_(visible_objective_user_ids))      #DJG - what about visible courses?
+
+    def live_modules_authored(self):
+        return Module.LiveModules().filter_by(author_id = self.id)
+
+    def live_modules_authored_by_type(self, type):
+        return self.live_modules_authored().filter_by(material_type = type)
+
+    def live_modules_viewed(self):
+        #return Module.LiveModules().filter(Module.id.in_(UserModule.query.filter_by(user=self).all()))
+        return Module.LiveModules().join(UserModule).filter(UserModule.user == self)    
+
+    def visible_modules(self):
+        query_authored_modules = self.live_modules_authored()
+        query_viewed_modules = self.live_modules_viewed()
+        #institution = self.institution_student
+        #if institution:
+        #   institution_for_approved.approved_modules
+        if self.view_system_only:
+            query_approved_modules = Institution.main_courseme_institution().approved_modules
+        else:
+            query_approved_modules = Module.LiveModules()
+        return query_approved_modules.union(query_authored_modules, query_viewed_modules)
+        
+    def enrolled_courses(self):
+        #return [Module.query.get(um.module_id) for um in UserModule.query.filter_by(user=self).filter(UserModule.enrolled).order_by(desc(UserModule.last_viewed)).all()]        #DJG - can we do better with filter on boolean type?
+        return self.live_modules_viewed().filter(UserModule.enrolled).filter(Module.material_type=='Course').order_by(desc(UserModule.last_viewed))
+    
+    def recent_modules(self, count):
+        #import pdb; pdb.set_trace()        #DJG - remove
+        #return self.live_modules_viewed().order_by(desc(UserModule.last_viewed)).limit(count).all()     #DJG - working but not on index page
+        return []
+    
+    def relevant_institutions(self):
+        #DJG - must be able to do better than this!
+        relevant_institutions = [Institution.main_courseme_institution()]
+        relevant_institutions.extend(self.institutions_created.all())
+        relevant_institutions.extend(self.institutions_member.all())
+        if self.institution_student: relevant_institutions.append(self.institution_student)
+        relevant_institutions = list(set(relevant_institutions))
+        print relevant_institutions         #DJG - remove this
+        return relevant_institutions
+        
     @staticmethod
     def make_unique_username(username):
         if User.query.filter_by(name = username).first() == None:
@@ -239,6 +299,11 @@ class Module(db.Model):                                             #DJG - chang
         del result['_sa_instance_state']
         return result
 
+    def add_to_author_institutions(self):
+        for i in self.author.institutions:
+            i.approved_modules = i.approved_modules.append(self)
+        
+
     @staticmethod
     def LiveModules():
         return Module.query.filter(Module.live)
@@ -260,7 +325,7 @@ class UserModule(db.Model):
     
     
     def part_of_course(self):
-        for course in self.user.enrolled_courses():
+        for course in self.user.enrolled_courses().all():
             if course.material_type=="Course":
                 if self.module in course.modules:
                     return course
@@ -292,7 +357,7 @@ class UserModule(db.Model):
         if self.enrolled: return material_type + " you have enrolled in"
         if self.part_of_course(): return material_type + "within a Course you have enrolled in"
         if self.starred: return "Starred " + material_type  
-        if self.last_viewed >= datetime.date.today()-datetime.timedelta(days = recent): return "recently viewed " + material_type
+        if self.last_viewed >= datetime.now()-timedelta(days = recent): return "recently viewed " + material_type
 
     
     def delete(self, alternative=0):
@@ -351,7 +416,7 @@ group_members = db.Table('group_members',
 
 class Group(db.Model):
     id = db.Column(db.Integer, primary_key = True)
-    creator = db.Column(db.Integer, db.ForeignKey(User.id))
+    creator_id = db.Column(db.Integer, db.ForeignKey(User.id))
     name = db.Column(db.String(120))
 
     members = db.relationship('User', secondary=group_members,
@@ -374,7 +439,7 @@ class Message(db.Model):     #DJG - probably need a separate one for module and 
     
     @staticmethod
     def AdminMessage(to_id, subject, body="", recommended_material_id=0):
-        admin_message = Message(from_id=User.main_admin_user.id,
+        admin_message = Message(from_id=User.main_admin_user().id,
                 to_id=to_id,
                 subject=subject,
                 body=body,
@@ -382,3 +447,57 @@ class Message(db.Model):     #DJG - probably need a separate one for module and 
                 recommended_material_id=recommended_material_id)
         db.session.add(admin_message)
         db.session.commit()
+
+
+institution_members = db.Table('institution_members',
+    db.Column('institution_id', db.Integer, db.ForeignKey('institution.id')),
+    db.Column('member_id', db.Integer, db.ForeignKey('user.id'))
+)
+
+institution_approved_modules = db.Table('institution_approved_modules',
+    db.Column('institution_id', db.Integer, db.ForeignKey('institution.id')),
+    db.Column('module_id', db.Integer, db.ForeignKey('module.id'))
+)
+
+class Institution(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    name = db.Column(db.String(120))    
+    creator_id = db.Column(db.Integer, db.ForeignKey(User.id, use_alter=True, name='fk_institution_creator_id'), nullable=False)        #DJG - need , use_alter=True, name='fk_institution_creator_id' to avoid circular join references
+    student_settings_viewable_modules = db.Column(db.SmallInteger, default = VIEW_ALL, nullable=False) 
+
+    members = db.relationship(User, secondary=institution_members, lazy='dynamic',
+        backref=db.backref('institutions_member', lazy='dynamic'))
+    
+    students = db.relationship(User, primaryjoin="Institution.id==User.institution_student_id", backref=db.backref("institution_student"))
+    
+    approved_modules = db.relationship('Module', secondary=institution_approved_modules, backref='approving_institutions', lazy = 'dynamic')
+
+    def is_member(self, user):
+        return self.members.filter(institution_members.c.member_id == user.id).count() > 0
+
+    def is_approved(self, module):
+        return self.approved_modules.filter(institution_approved_modules.c.module_id == module.id).count() > 0
+
+    def add_member(self, user):
+        if user:
+            if not self.is_member(user):
+                self.members.append(user)
+                message = Message(
+                    from_id = self.creator_id,
+                    to_id = user.id,
+                    subject = "You have been added to the institution " + self.name,
+                    body = "You have been added to the institution " + self.name + ". All of your authored material will now appear on the approved list of modules for this institution and you can view the progress of all students of " + self.name + ". Your name will be listed on the institution profile page. If you want to leave this institution go to the institutions section of your profile page and click the button to leave.",
+                    sent = datetime.utcnow())
+                db.session.add(message)            
+            for module in user.live_modules_authored().all():
+                if not self.is_approved(module):
+                    self.approved_modules.append(module)
+            db.session.add(self)
+            db.session.commit()
+        else:
+            pass
+
+    @staticmethod 
+    def main_courseme_institution():
+        return Institution.query.get(1)
+        #DJG - Not robust. Need some way to return the main system institution

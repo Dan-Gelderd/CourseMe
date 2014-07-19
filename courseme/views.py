@@ -2,7 +2,7 @@ from flask import render_template, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from courseme import app, db, lm, hash_string, lectures
 import forms
-from models import User, ROLE_USER, ROLE_ADMIN, Objective, Module, UserModule
+from models import User, ROLE_USER, ROLE_ADMIN, Objective, Module, UserModule, Institution, Group, Message
 from datetime import datetime
 import json, operator
 #import pdb; pdb.set_trace()        #DJG - remove
@@ -14,7 +14,6 @@ class CustomEncoder(json.JSONEncoder):
         else:
             encoded_object =json.JSONEncoder.default(self, obj)
         return encoded_object
-
 
 #admin
 @lm.user_loader
@@ -40,12 +39,17 @@ def internal_error(error):
 
 @app.route('/')
 @app.route('/index')
-#@login_required
 def index():
     title = "CourseMe"                     
-    catalogue = [row.as_dict() for row in Module.query.all()]                #DJG - confused over best way to do this http://stackoverflow.com/questions/1958219/convert-sqlalchemy-row-object-to-python-dict
+    if g.user.is_authenticated():
+        modules = g.user.visible_modules().all()
+    else:
+        modules = Module.LiveModules().all()
+        
+    catalogue = [mod.as_dict() for mod in modules]                #DJG - confused over best way to do this http://stackoverflow.com/questions/1958219/convert-sqlalchemy-row-object-to-python-dict
     return render_template('index.html',
         title = title,
+        modules=modules,                                            #DJG - temporary; unless there is a way to pass datatables a list of objects
         catalogue = json.dumps(catalogue, cls=CustomEncoder, separators=(',',':')))
 
 
@@ -371,7 +375,7 @@ def editmodule(id = 0):
     #DJG - Login should not be required just temporary to stop user_module tracking breaking - need guest user
 def module(id):
        
-    module = Module.query.get(id)
+    module = Module.query.get_or_404(id)
     usermodule = UserModule.FindOrCreate(g.user.id, id) 
     templates = {"Lecture": "lecture.html", "Course": "course.html"}
     
@@ -384,7 +388,7 @@ def module(id):
 @login_required
 def starclick(id):
     
-    module = Module.query.get(id)
+    module = Module.query.get_or_404(id)
     user = g.user
 
     usermodule = UserModule.FindOrCreate(user.id, module.id)
@@ -400,7 +404,7 @@ def starclick(id):
 @login_required
 def voteclick(id):
     
-    module = Module.query.get(id)
+    module = Module.query.get_or_404(id)
 
     usermodule = UserModule.FindOrCreate(g.user.id, module.id)
     
@@ -479,13 +483,13 @@ def course_enroll(course_id):
 
 @app.route('/delete_module/<int:id>')
 @login_required
-def delete_module(module_id):
+def delete_module(id):
     result = {}
     result['savedsuccess'] = False
     module = Module.query.get(id)
     
     if module:
-        if module.user == g.user:
+        if module.author == g.user:
             module.delete()
             result['savedsuccess'] = True
         else:
@@ -501,6 +505,37 @@ def delete_module(module_id):
 def groups():
     return render_template('groups.html')
 
+@app.route('/profile/<int:id>')
+@login_required
+def profile(id):
+    return render_template('user_profile.html',
+                           profile_id=id)
+
+@app.route('/restrict_modules_viewed/<int:user_id>/<int:institution_id>')
+@login_required
+def restrict_modules_viewed(user_id, institution_id):
+    result = {}
+    result['savedsuccess'] = False
+    if user_id == g.user.id:
+        if institution_id==0:
+            g.user.view_institution_only_id = 0
+            db.session.add(g.user)
+            db.session.commit()
+            result['savedsuccess'] = True
+        else:
+            institution = Institution.query.get(institution_id)
+            if institution:
+                g.user.view_institution_only = institution
+                db.session.add(g.user)
+                db.session.commit()                
+            else:
+                flash('Institution not found with id ' + institution_id)
+                result["institution_error"] = True
+    else:
+        flash('You are not logged in as this user')
+        result["user_error"] = True
+
+    return json.dumps(result, separators=(',',':'))
 
 @app.route('/test')
 def test():

@@ -173,7 +173,7 @@ $(document).ready(function () {
               <ul class="dropdown-menu">
                 {% if module.is_courseable() %}
                 <li role="presentation" class="dropdown-header">Add this to an existing course</li>
-                {% for course in g.user.module_type_authored('Course') %}
+                {% for course in g.user.live_modules_authored_by_type('Course').all() %}
                 <li><button type="button" class="btn btn-link add-to-course">{{course.name}}<span hidden>{{course.id}}</span></button></li>  
                 {% endfor %}
                 <li role="presentation" class="divider"></li>

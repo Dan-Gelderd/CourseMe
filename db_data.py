@@ -1,15 +1,23 @@
 #!flask/bin/python
 from courseme import db, hash_string
-from courseme.models import Module, User, ROLE_USER, ROLE_ADMIN, Objective
+from courseme.models import Module, User, ROLE_USER, ROLE_ADMIN, Objective, Institution
 from datetime import datetime
 
 user = User(email="support@courseme.com",
             password=hash_string("111111"),
-            name="System",
+            name="CourseMe",
             time_registered=datetime.utcnow(),
             last_seen=datetime.utcnow(),
             role = ROLE_ADMIN)
 db.session.add(user)
+
+me = User(email="dan.gelderd@courseme.com",
+            password=hash_string("111111"),
+            name="Dan Gelderd",
+            time_registered=datetime.utcnow(),
+            last_seen=datetime.utcnow(),
+            role = ROLE_ADMIN)
+db.session.add(me)
 
 user = User(email="dan@server.fake",
             password=hash_string("111111"),
@@ -27,6 +35,13 @@ user = User(email="liz@server.fake",
             role = ROLE_USER)
 db.session.add(user)
 
+db.session.commit()
+
+institution = Institution(name = "CourseMe",
+                          creator_id = User.main_admin_user().id
+                          )
+
+db.session.add(institution)
 db.session.commit()
 
 objective = Objective(name="System Objective 1",
@@ -54,7 +69,7 @@ module = Module(
     notes = "This is just a placeholder",
     time_created=datetime.utcnow(),
     last_updated=datetime.utcnow(),
-    author_id=User.main_admin_user().id,
+    author_id=me.id,
     material_type = "Lecture",
     material_source="youtube", 
     material_path="//www.youtube.com/embed/lA6hE7NFIK0?list=UUOGeU-1Fig3rrDjhm9Zs_wg",
@@ -68,7 +83,7 @@ module = Module(
     notes = "This is just a placeholder",
     time_created=datetime.utcnow(),
     last_updated=datetime.utcnow(),
-    author_id=User.main_admin_user().id,
+    author_id=me.id,
     material_type = "Lecture",
     material_source="youtube", 
     material_path="//www.youtube.com/embed/VIVIegSt81k?rel=0",
@@ -82,7 +97,7 @@ module = Module(
     notes = "This is just a placeholder",
     time_created=datetime.utcnow(),
     last_updated=datetime.utcnow(),
-    author_id=User.main_admin_user().id,
+    author_id=me.id,
     material_type = "Lecture",
     material_source="youtube", 
     material_path="//www.youtube.com/embed/e4MSN6IImpI?list=PLF7CBA45AEBAD18B8",
@@ -91,3 +106,12 @@ module = Module(
 db.session.add(module)
 
 db.session.commit()
+
+institution.add_member(User.main_admin_user())
+institution.add_member(me)
+
+print me.live_modules_authored().all()
+
+print me.live_modules_viewed().all()
+
+print me.visible_modules().all()

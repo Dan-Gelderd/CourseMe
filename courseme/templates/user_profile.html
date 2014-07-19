@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<script type='text/javascript'>
+$(document).ready(function () {
+  $("#restrict_modules_select").change(function() {
+    //console.log("Select changed");
+
+    $.getJSON(
+      flask_util.url_for('restrict_modules_viewed', {user_id: g.user.id, institution_id: this.val}),
+      function(json) {
+        console.log(json); 
+      }
+    );
+  });
+});
+</script>
+
+{% if profile_id==g.user.id %}
+<label for="restrict_modules_select">Select the material you want to be visible to you</label>
+<select id="restrict_modules_select" class="form-control">
+    <option value="0">All material</option>
+    {% for inst in g.user.relevant_institutions() %}
+    <option value="{{inst.id}}">Only material approved by {{inst.name}}</option>
+    {% endfor %}
+</select>
+{% endif %}
+
+{% endblock %}

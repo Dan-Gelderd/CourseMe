@@ -2,6 +2,40 @@
 {% block content %}
 
 
+<div id="carousel_top_modules" class="carousel slide" data-ride="carousel">
+  <!-- Indicators -->
+  <ol class="carousel-indicators">
+    <li data-target="#carousel_top_modules" data-slide-to="0" class="active"></li>
+    <li data-target="#carousel_top_modules" data-slide-to="1"></li>
+    <li data-target="#carousel_top_modules" data-slide-to="2"></li>
+  </ol>
+
+  <!-- Wrapper for slides -->
+  <div class="carousel-inner">
+    <div class="item active">
+      <img src="..." alt="...">
+      <div class="carousel-caption">
+        ...
+      </div>
+    </div>
+    <div class="item">
+      <img src="..." alt="...">
+      <div class="carousel-caption">
+        ...
+      </div>
+    </div>
+    ...
+  </div>
+
+  <!-- Controls -->
+  <a class="left carousel-control" href="#carousel_top_modules" role="button" data-slide="prev">
+    <span class="glyphicon glyphicon-chevron-left"></span>
+  </a>
+  <a class="right carousel-control" href="#carousel_top_modules" role="button" data-slide="next">
+    <span class="glyphicon glyphicon-chevron-right"></span>
+  </a>
+</div>
+
 <!--
 <div class="input-group">
    <label class="checkbox-inline">
@@ -153,5 +187,15 @@
     });
     
 </script>
+
+<div class="list-group">
+    {% for mod in modules %}
+    <a href="{{url_for("module", id=mod.id)}}" class="list-group-item">
+        <h4 class="list-group-item-heading">{{mod.name}}</h4>
+        <p class="list-group-item-text">{{mod.description}}</p>        
+    </a>
+    {% endfor %}
+</div>
+
 
 {% endblock %}
