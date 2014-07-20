@@ -24,6 +24,7 @@ class User(db.Model):
     time_registered = db.Column(db.DateTime)
     enterprise_licence = db.Column(db.DateTime)
     view_system_only = db.Column(db.Boolean, default = False)  
+    time_deleted = db.Column(db.DateTime)
     
     view_institution_only_id = db.Column(db.Integer, db.ForeignKey('institution.id'))           
     institution_student_id = db.Column(db.Integer, db.ForeignKey('institution.id'))
@@ -32,6 +33,7 @@ class User(db.Model):
     objectives_created = db.relationship("Objective", backref="created_by", lazy='dynamic')
     modules_authored = db.relationship("Module", backref="author", lazy = 'dynamic')
     institutions_created = db.relationship("Institution", primaryjoin="Institution.creator_id==User.id", backref="creator", lazy='dynamic')
+    groups_created = db.relationship("Group", primaryjoin="Group.creator_id==User.id", backref="creator", lazy='dynamic')
 
     def is_authenticated(self):
         return True
@@ -258,7 +260,7 @@ class Module(db.Model):                                             #DJG - chang
                         primaryjoin=(course_modules.c.course_id==id),
                         secondaryjoin=(course_modules.c.module_id==id),
                         backref = db.backref('courses', lazy = 'dynamic'),        #DJG - Does this need to be included to make the secondary table update when an objective is passed to session.delete()? 
-                        lazy = 'dynamic',                                           #DJG - not the default, don't know why I need it: the attribute will return a pre-configured Query object for all read operations, onto which further filtering operations can be applied before iterating the results.
+                        lazy = 'dynamic',                                       
                         passive_updates=False)
 
     def calculate_votes():
@@ -275,10 +277,11 @@ class Module(db.Model):                                             #DJG - chang
     def is_courseable(self):
         return self.material_type != "Course"
 
-    
     def delete(self, alternative=0):
         self.deleted = datetime.utcnow()
         self.live = False
+        for course in self.courses.all():
+            course.modules.remove(self)
         for um in self.user_modules:
             um.delete(alternative)
         db.session.commit()
@@ -324,8 +327,13 @@ class UserModule(db.Model):
     module = db.relationship(Module, backref='user_modules')
     
     
-    def part_of_course(self):
-        for course in self.user.enrolled_courses().all():
+    def part_of_course(self, relevance="enrolled"):
+        courses = []
+        if relevance == "enrolled":
+            courses = self.user.enrolled_courses().all()
+        elif relevance == "authored":
+            courses = self.user.modules_authored.all()
+        for course in courses:
             if course.material_type=="Course":
                 if self.module in course.modules:
                     return course
@@ -354,8 +362,10 @@ class UserModule(db.Model):
     def important(self, recent=7):
         message = ""
         material_type = self.module.material_type
+        authored_course = self.part_of_course("authored")
+        if authored_course: return material_type + " you are using in your Course '" + authored_course.name + "'"
         if self.enrolled: return material_type + " you have enrolled in"
-        if self.part_of_course(): return material_type + "within a Course you have enrolled in"
+        if self.part_of_course(): return material_type + " within a Course you have enrolled in"
         if self.starred: return "Starred " + material_type  
         if self.last_viewed >= datetime.now()-timedelta(days = recent): return "recently viewed " + material_type
 
@@ -416,12 +426,30 @@ group_members = db.Table('group_members',
 
 class Group(db.Model):
     id = db.Column(db.Integer, primary_key = True)
-    creator_id = db.Column(db.Integer, db.ForeignKey(User.id))
-    name = db.Column(db.String(120))
+    name = db.Column(db.String(120))    
+    creator_id = db.Column(db.Integer, db.ForeignKey(User.id, use_alter=True, name='fk_group_creator_id'), nullable=False)        #DJG - need , use_alter=True, name='fk_institution_creator_id' to avoid circular join references
 
-    members = db.relationship('User', secondary=group_members,
-        backref=db.backref('groups'))
+    members = db.relationship(User, secondary=group_members, lazy='dynamic',
+        backref=db.backref('groups_member', lazy='dynamic'))
+    
+    def is_member(self, user):
+        return self.members.filter(group_members.c.member_id == user.id).count() > 0
 
+    def add_member(self, user):
+        if user:
+            if not self.is_member(user):
+                self.members.append(user)
+                message = Message(
+                    from_id = self.creator_id,
+                    to_id = user.id,
+                    subject = "You have been added to the group " + self.name,
+                    body = "You have been added to the group " + self.name + ". If you want to leave this group go to the groups section of your profile page and click the button to leave.",
+                    sent = datetime.utcnow())
+                db.session.add(message)            
+                db.session.add(self)
+                db.session.commit()
+        else:
+            pass
 
 class Message(db.Model):     #DJG - probably need a separate one for module and course recommendations, need to add the relationship to the material being recommended and all the permissions
     id = db.Column(db.Integer, primary_key = True)
@@ -463,6 +491,7 @@ class Institution(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     name = db.Column(db.String(120))    
     creator_id = db.Column(db.Integer, db.ForeignKey(User.id, use_alter=True, name='fk_institution_creator_id'), nullable=False)        #DJG - need , use_alter=True, name='fk_institution_creator_id' to avoid circular join references
+    blurb = db.Column(db.String(400), default = "This is some blurb")    
     student_settings_viewable_modules = db.Column(db.SmallInteger, default = VIEW_ALL, nullable=False) 
 
     members = db.relationship(User, secondary=institution_members, lazy='dynamic',
