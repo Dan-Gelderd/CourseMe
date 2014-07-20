@@ -527,7 +527,8 @@ def restrict_modules_viewed(user_id, institution_id):
             if institution:
                 g.user.view_institution_only = institution
                 db.session.add(g.user)
-                db.session.commit()                
+                db.session.commit()
+                result['savedsuccess'] = True
             else:
                 flash('Institution not found with id ' + institution_id)
                 result["institution_error"] = True

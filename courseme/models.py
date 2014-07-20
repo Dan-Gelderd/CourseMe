@@ -8,10 +8,16 @@ ROLE_USER = 0
 ROLE_ADMIN = 1
 
 VIEW_ALL = 0
-VIEW_OWN = 1
-VIEW_SYSTEM = 2
+VIEW_SYSTEM = 1
+VIEW_OWN = 2
+
 
 ENTERPRISE_LICENCE_DURATION = 1
+
+student_tutor = db.Table("student_tutor",
+    db.Column("tutor_id", db.Integer, db.ForeignKey("user.id")),
+    db.Column("student_id", db.Integer, db.ForeignKey("user.id"))
+)
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key = True)
@@ -34,6 +40,14 @@ class User(db.Model):
     modules_authored = db.relationship("Module", backref="author", lazy = 'dynamic')
     institutions_created = db.relationship("Institution", primaryjoin="Institution.creator_id==User.id", backref="creator", lazy='dynamic')
     groups_created = db.relationship("Group", primaryjoin="Group.creator_id==User.id", backref="creator", lazy='dynamic')
+
+    students = db.relationship("User",
+                    secondary=student_tutor,
+                    primaryjoin=(student_tutor.c.tutor_id==id),
+                    secondaryjoin=(student_tutor.c.student_id==id),
+                    backref = db.backref('tutors', lazy = 'dynamic'),           #DJG - Does this need to be included to make the secondary table update when an objective is passed to session.delete()? 
+                    lazy = 'dynamic',                                           #DJG - not the default, don't know why I need it: the attribute will return a pre-configured Query object for all read operations, onto which further filtering operations can be applied before iterating the results.
+                    passive_updates=False)  
 
     def is_authenticated(self):
         return True
@@ -92,15 +106,20 @@ class User(db.Model):
         return Module.LiveModules().join(UserModule).filter(UserModule.user == self)    
 
     def visible_modules(self):
+        #import pdb; pdb.set_trace()            #DJG - remove
         query_authored_modules = self.live_modules_authored()
         query_viewed_modules = self.live_modules_viewed()
-        #institution = self.institution_student
-        #if institution:
-        #   institution_for_approved.approved_modules
-        if self.view_system_only:
-            query_approved_modules = Institution.main_courseme_institution().approved_modules
+        institution_student = self.institution_student
+        query_student_modules = Module.LiveModules()
+        if institution_student:
+            if institution_student.view_institution_only:
+                query_student_modules = institution_student.view_institution_only.approved_modules
+        if self.view_institution_only:
+            query_select_modules = self.view_institution_only.approved_modules
         else:
-            query_approved_modules = Module.LiveModules()
+            query_select_modules = Module.LiveModules()
+        query_approved_modules = query_select_modules.intersect(query_student_modules)
+        
         return query_approved_modules.union(query_authored_modules, query_viewed_modules)
         
     def enrolled_courses(self):
@@ -406,23 +425,39 @@ class UserModule(db.Model):
         return usermodule
 
 
-class Recommendation(db.Model):     #DJG - probably need a separate one for module and course recommendations, need to add the relationship to the material being recommended and all the permissions
+class Message(db.Model):     #DJG - probably need a separate one for module and course recommendations, need to add the relationship to the material being recommended and all the permissions
     id = db.Column(db.Integer, primary_key = True)
-    id_user_from = db.Column(db.Integer, db.ForeignKey(User.id))
-    id_user_to = db.Column(db.Integer, db.ForeignKey(User.id))
+    from_id = db.Column(db.Integer, db.ForeignKey(User.id))
+    to_id = db.Column(db.Integer, db.ForeignKey(User.id))
     subject = db.Column(db.Text, nullable=False)
     body = db.Column(db.Text, nullable=True)
-    sent_date = db.Column(db.DateTime)
-    received_date = db.Column(db.DateTime)
+    sent = db.Column(db.DateTime)
+    read = db.Column(db.DateTime)
+    recommended_material_id = db.Column(db.Integer, db.ForeignKey(Module.id))
+    request_access = db.Column(db.Boolean, default = False)
 
-    user_from = db.relationship(User, foreign_keys=[id_user_from], backref='sent_recommendations')
-    user_to = db.relationship(User, foreign_keys=[id_user_to], backref='received_recommendations')
+    from_user = db.relationship(User, foreign_keys=[from_id], backref='sent_messages')
+    to_user = db.relationship(User, foreign_keys=[to_id], backref='received_messages')
+    recommended_material = db.relationship(Module, foreign_keys=[recommended_material_id], backref='recommendations')
+    
+    @staticmethod
+    def AdminMessage(to_id, subject, body="", recommended_material_id=0):
+        admin_message = Message(from_id=User.main_admin_user().id,
+                to_id=to_id,
+                subject=subject,
+                body=body,
+                sent=datetime.utcnow(),
+                recommended_material_id=recommended_material_id)
+        db.session.add(admin_message)
+        db.session.commit()
+
 
 
 group_members = db.Table('group_members',
     db.Column('group_id', db.Integer, db.ForeignKey('group.id')),
     db.Column('member_id', db.Integer, db.ForeignKey('user.id'))
 )
+
 
 class Group(db.Model):
     id = db.Column(db.Integer, primary_key = True)
@@ -439,42 +474,31 @@ class Group(db.Model):
         if user:
             if not self.is_member(user):
                 self.members.append(user)
-                message = Message(
-                    from_id = self.creator_id,
-                    to_id = user.id,
-                    subject = "You have been added to the group " + self.name,
-                    body = "You have been added to the group " + self.name + ". If you want to leave this group go to the groups section of your profile page and click the button to leave.",
-                    sent = datetime.utcnow())
-                db.session.add(message)            
+                #DJG - May not need to inform users if they are added to a group - purely an organisational tool for people to send messages and track proress
+                #message = Message(
+                #    from_id = self.creator_id,
+                #    to_id = user.id,
+                #    subject = "You have been added to the group " + self.name,
+                #    body = "You have been added to the group " + self.name + ". If you want to leave this group go to the groups section of your profile page and click the button to leave.",
+                #    sent = datetime.utcnow())
+                #db.session.add(message)            
                 db.session.add(self)
                 db.session.commit()
         else:
             pass
 
-class Message(db.Model):     #DJG - probably need a separate one for module and course recommendations, need to add the relationship to the material being recommended and all the permissions
-    id = db.Column(db.Integer, primary_key = True)
-    from_id = db.Column(db.Integer, db.ForeignKey(User.id))
-    to_id = db.Column(db.Integer, db.ForeignKey(User.id))
-    subject = db.Column(db.Text, nullable=False)
-    body = db.Column(db.Text, nullable=True)
-    sent = db.Column(db.DateTime)
-    read = db.Column(db.DateTime)
-    recommended_material_id = db.Column(db.Integer, db.ForeignKey(Module.id))
-
-    from_user = db.relationship(User, foreign_keys=[from_id], backref='sent_messages')
-    to_user = db.relationship(User, foreign_keys=[to_id], backref='received_messages')
-    recommended_material = db.relationship(Module, foreign_keys=[recommended_material_id], backref='recommendations')
-    
-    @staticmethod
-    def AdminMessage(to_id, subject, body="", recommended_material_id=0):
-        admin_message = Message(from_id=User.main_admin_user().id,
-                to_id=to_id,
-                subject=subject,
-                body=body,
+    def message(self, subject, recommended_material_id):
+        for memeber in self.members:
+            message = Message(
+                from_id = self.creator_id,
+                to_id = member.id,
+                subject = subject,            
+                body = body,
                 sent=datetime.utcnow(),
-                recommended_material_id=recommended_material_id)
-        db.session.add(admin_message)
-        db.session.commit()
+                recommended_material_id=recommended_material_id
+                )
+            db.session.add(message)
+            db.session.commit()
 
 
 institution_members = db.Table('institution_members',
@@ -493,6 +517,9 @@ class Institution(db.Model):
     creator_id = db.Column(db.Integer, db.ForeignKey(User.id, use_alter=True, name='fk_institution_creator_id'), nullable=False)        #DJG - need , use_alter=True, name='fk_institution_creator_id' to avoid circular join references
     blurb = db.Column(db.String(400), default = "This is some blurb")    
     student_settings_viewable_modules = db.Column(db.SmallInteger, default = VIEW_ALL, nullable=False) 
+    view_institution_only_id = db.Column(db.Integer, db.ForeignKey('institution.id'))    
+
+    view_institution_only = db.relationship("Institution", remote_side=[id], backref="institutions_viewing_approved")
 
     members = db.relationship(User, secondary=institution_members, lazy='dynamic',
         backref=db.backref('institutions_member', lazy='dynamic'))

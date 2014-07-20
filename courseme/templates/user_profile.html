@@ -3,13 +3,17 @@
 
 <script type='text/javascript'>
 $(document).ready(function () {
+  
+  //console.log("Select already - " + {{g.user.view_institution_only_id}});
+  //$("#restrict_modules_select").val = {{g.user.view_institution_only_id}}.toString();
+  
   $("#restrict_modules_select").change(function() {
-    //console.log("Select changed");
-
+    console.log("Select changed - " + this.value);
     $.getJSON(
-      flask_util.url_for('restrict_modules_viewed', {user_id: g.user.id, institution_id: this.val}),
+      flask_util.url_for('restrict_modules_viewed', {user_id: {{g.user.id}}, institution_id: this.value}),
       function(json) {
-        console.log(json); 
+        console.log(json);
+        //DJG - need to handle cases
       }
     );
   });
