@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h1>Received Messages</h1>
+<ul class="media-list">
+  {% for message in g.user.live_messages().all() %}
+  <li class="media">
+    <a class="pull-left" href="{{ url_for('profile', id=message.from_id) }}">
+      <img class="media-object" src="#" alt="...">
+    </a>
+    <div class="media-body">
+      <h4 class="media-heading">{{ message.subject }}<small> {{ message.from_user.name }}</small></h4>
+      <p>{{ message.body }}</p>
+      {% if message.recommended_material %}
+      <h5 class="media-heading">Reccommendation:</h5>
+      <p>{{ message.from_user.name }} has recommended <a href={{ url_for('module', id=message.recommended_material.id) }}>{{ message.recommended_material.name }}</a> for you</p>
+      {% endif %}
+      {% if message.request_access %}
+      <h5 class="media-heading">Access Request:</h5>
+      <p>{{ message.from_user.name }} has has requested to view you progress on CourseMe
+        <form class="form-inline" role="form">
+          <div class="form-group">
+            <button type="submit" class="allow_access btn btn-sm btn-success">Allow</button>
+            <button type="submit" class="deny_access btn btn-sm btn-danger">Deny</button>
+          </div>
+        </form>  
+      </p>
+      {% endif %}          
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+
+
+{% endblock %}

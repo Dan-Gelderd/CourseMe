@@ -508,7 +508,25 @@ def groups():
 @app.route('/profile/<int:id>')
 @login_required
 def profile(id):
-    return render_template('user_profile.html',
+    if g.user.id != id:
+        flash('You are not logged in as this user')
+        return redirect(url_for('logout'))
+    else:
+        title = "Profile - " + g.user.name
+        return render_template('user_profile.html',
+                           title=title,
+                           profile_id=id)
+
+@app.route('/messages/<int:id>')
+@login_required
+def messages(id):
+    if g.user.id != id:
+        flash('You are not logged in as this user')
+        return redirect(url_for('logout'))
+    else:
+        title = "Messages - " + g.user.name
+        return render_template('messages.html',
+                           title=title,
                            profile_id=id)
 
 @app.route('/restrict_modules_viewed/<int:user_id>/<int:institution_id>')

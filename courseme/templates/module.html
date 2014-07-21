@@ -150,7 +150,7 @@ $(document).ready(function () {
 </script>
 
   {% if g.user.id == module.author_id %}
-    <a href="{{url_for("editmodule", id=module.id)}}"><div class="well well-sm"><i>Edit material</i></div></a>
+    <a href="{{url_for("editmodule", id=module.id)}}"><div class="well well-sm"><em>Edit material</em></div></a>
   {% endif %}
   
   <div class="row" id="module_name_course_info">

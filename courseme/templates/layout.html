@@ -67,8 +67,8 @@
                   <ul class="dropdown-menu">
                     <li><a href="{{ url_for('logout') }}">Sign Out</a></li>
                     <li><a href="{{ url_for('profile', id=g.user.id) }}">Profile</a></li>
+                    <li><a href="{{ url_for('messages', id=g.user.id) }}">Messages</a></li>
                     <li><a href="#">Groups</a></li>
-                    <li><a href="#">Messages</a></li>                    
                     <li class="divider"></li>
                     <li role="presentation" class="dropdown-header">My Material</li>
                     {% for mod in [] %}   <!--g.user.modules_authored %}-->

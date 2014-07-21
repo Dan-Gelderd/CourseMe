@@ -140,6 +140,9 @@ class User(db.Model):
         relevant_institutions = list(set(relevant_institutions))
         print relevant_institutions         #DJG - remove this
         return relevant_institutions
+    
+    def live_messages(self):
+        return self.received_messages.filter(bool(Message.deleted)).order_by(desc(Message.sent))
         
     @staticmethod
     def make_unique_username(username):
@@ -433,12 +436,21 @@ class Message(db.Model):     #DJG - probably need a separate one for module and 
     body = db.Column(db.Text, nullable=True)
     sent = db.Column(db.DateTime)
     read = db.Column(db.DateTime)
-    recommended_material_id = db.Column(db.Integer, db.ForeignKey(Module.id))
+    reported = db.Column(db.DateTime)
+    deleted = db.Column(db.DateTime)
     request_access = db.Column(db.Boolean, default = False)
+    
+    recommended_material_id = db.Column(db.Integer, db.ForeignKey(Module.id))   
 
-    from_user = db.relationship(User, foreign_keys=[from_id], backref='sent_messages')
-    to_user = db.relationship(User, foreign_keys=[to_id], backref='received_messages')
+    from_user = db.relationship(User, foreign_keys=[from_id], backref=db.backref('sent_messages', lazy="dynamic"))
+    to_user = db.relationship(User, foreign_keys=[to_id], backref=db.backref('received_messages', lazy="dynamic"))
     recommended_material = db.relationship(Module, foreign_keys=[recommended_material_id], backref='recommendations')
+    
+    def report(self):
+        self.reported = datetime.utcnow()
+        db.session.add(self)
+        db.session.commit()
+        #DJG - do some kind of notification process
     
     @staticmethod
     def AdminMessage(to_id, subject, body="", recommended_material_id=0):
