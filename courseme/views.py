@@ -508,14 +508,17 @@ def groups():
 @app.route('/profile/<int:id>')
 @login_required
 def profile(id):
-    if g.user.id != id:
-        flash('You are not logged in as this user')
-        return redirect(url_for('logout'))
+    profile = User.query.get(id)
+    if not profile:
+        flash("This user does not exist")
+        return redirect(url_for('profile', id=g.user.id))      
     else:
-        title = "Profile - " + g.user.name
+        title = "CourseMe - Profile"
+        permission = profile.permission(g.user)
         return render_template('user_profile.html',
                            title=title,
-                           profile_id=id)
+                           profile=profile,
+                           permission=permission)
 
 @app.route('/messages/<int:id>')
 @login_required

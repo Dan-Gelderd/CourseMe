@@ -143,6 +143,12 @@ class User(db.Model):
     
     def live_messages(self):
         return self.received_messages.filter(bool(Message.deleted)).order_by(desc(Message.sent))
+
+    def institution_tutors(self):       #DJG - not really needed as a separate method as creator is always added to list of members when institution created by create method
+        return self.institution_student.members
+
+    def permission(self, viewer):
+        return self == viewer or viewer in self.tutors.all() or (self.institution_student and viewer in self.institution_tutors().all())
         
     @staticmethod
     def make_unique_username(username):
@@ -528,7 +534,6 @@ class Institution(db.Model):
     name = db.Column(db.String(120))    
     creator_id = db.Column(db.Integer, db.ForeignKey(User.id, use_alter=True, name='fk_institution_creator_id'), nullable=False)        #DJG - need , use_alter=True, name='fk_institution_creator_id' to avoid circular join references
     blurb = db.Column(db.String(400), default = "This is some blurb")    
-    student_settings_viewable_modules = db.Column(db.SmallInteger, default = VIEW_ALL, nullable=False) 
     view_institution_only_id = db.Column(db.Integer, db.ForeignKey('institution.id'))    
 
     view_institution_only = db.relationship("Institution", remote_side=[id], backref="institutions_viewing_approved")
@@ -536,13 +541,16 @@ class Institution(db.Model):
     members = db.relationship(User, secondary=institution_members, lazy='dynamic',
         backref=db.backref('institutions_member', lazy='dynamic'))
     
-    students = db.relationship(User, primaryjoin="Institution.id==User.institution_student_id", backref=db.backref("institution_student"))
+    students = db.relationship(User, primaryjoin="Institution.id==User.institution_student_id", backref="institution_student", lazy = 'dynamic')
     
     approved_modules = db.relationship('Module', secondary=institution_approved_modules, backref='approving_institutions', lazy = 'dynamic')
 
     def is_member(self, user):
         return self.members.filter(institution_members.c.member_id == user.id).count() > 0
 
+    def is_student(self, user):         #DJG - think there is an exist query that checks for existence
+        return self.students.filter(User.id == user.id).count() > 0    
+    
     def is_approved(self, module):
         return self.approved_modules.filter(institution_approved_modules.c.module_id == module.id).count() > 0
 
@@ -565,7 +573,34 @@ class Institution(db.Model):
         else:
             pass
 
+    def add_student(self, user, send_message=True):
+        if user:
+            if not self.is_student(user):
+                self.students.append(user)
+                if send_message:
+                    message = Message.AdminMessage(
+                        to_id = self.creator_id,
+                        subject = "New student - " + user.name + " - added to institution " + self.name,
+                        body = "A new student, " + user.name + ", has been added to your institution " + self.name + ". You can review the student list and remove students on the institution profile page."
+                        )           
+                db.session.add(self)
+                db.session.commit()
+        else:
+            pass
+
     @staticmethod 
     def main_courseme_institution():
         return Institution.query.get(1)
         #DJG - Not robust. Need some way to return the main system institution
+    
+    @staticmethod     
+    def create(name, creator, blurb=""):
+        institution = Institution(
+            name = name,
+            creator_id = creator.id,    
+            blurb = blurb,
+            members = [creator]             #DJG - This whole method currently only exists to make sure the creator is always a member
+            )
+        db.session.add(institution)
+        db.session.commit()
+        return institution

@@ -35,14 +35,21 @@ user = User(email="liz@server.fake",
             role = ROLE_USER)
 db.session.add(user)
 
+student = User(email="student@server.fake",
+            password=hash_string("111111"),
+            name="Student",
+            time_registered=datetime.utcnow(),
+            last_seen=datetime.utcnow(),
+            role = ROLE_USER)
+db.session.add(student)
+
 db.session.commit()
 
-institution = Institution(name = "CourseMe",
-                          creator_id = User.main_admin_user().id
-                          )
-
-db.session.add(institution)
-db.session.commit()
+institution = Institution.create(
+    name = "CourseMe",
+    creator = User.main_admin_user(),
+    blurb = "This is the main CourseMe institution"
+    )
 
 objective = Objective(name="System Objective 1",
                       created_by_id=User.main_admin_user().id)
@@ -107,8 +114,9 @@ db.session.add(module)
 
 db.session.commit()
 
-institution.add_member(User.main_admin_user())
 institution.add_member(me)
+
+institution.add_student(student)
 
 print me.live_modules_authored().all()
 

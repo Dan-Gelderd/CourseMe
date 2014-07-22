@@ -20,14 +20,71 @@ $(document).ready(function () {
 });
 </script>
 
-{% if profile_id==g.user.id %}
-<label for="restrict_modules_select">Select the material you want to be visible to you</label>
-<select id="restrict_modules_select" class="form-control">
+<h1>{% if profile==g.user %}Public Profile{% else %}{{profile.name}}{% endif %}</h1>
+<div class="thumbnail">
+      <img data-src="holder.js/300x300" alt="...">
+      <div class="caption">
+        <h3>Thumbnail label</h3>
+        <p>...</p>
+      </div>
+</div>
+
+
+{% if permission %}
+<hr>  
+<h1>Private Profile</h1>
+{% if profile==g.user %}
+<p>This part of your profile page is private and can only be seen by you and people you grant access to</p>
+{% else %}
+<p>You are able to view this private profile because...</p> 
+{% endif %}
+<article id="users_with_access">
+  <h2>Who can see this private profile?</h2>
+  {% if profile.tutors.first() or profile.institution_student %}
+  {% else %}
+  <p>Currently only you are authorised to see this part of your profile page</p>
+  {% endif %}
+  
+  <div class="row">  
+    {% if profile.tutors.first() %}
+    <div class="col-md-6">  
+      <div class="panel panel-default">
+        <div class="panel-heading">People you have granted access to</div>
+        <ul class="list-group">
+        {% for u in profile.tutors.all() %}
+          <li class="list-group-item"><a href="{{url_for("profile", id=u.id)}}">{{u.name}}</a></li>
+        {% endfor %}
+        </ul>
+      </div>
+    </div>
+    {% endif %}
+    
+    {% if profile.institution_student %}
+    <div class="col-md-6">
+      <div class="panel panel-default">
+        <div class="panel-heading">Members of {{profile.institution_student.name}}</div>
+        <ul class="list-group">
+        {% for u in profile.institution_tutors().all() %}
+          <li class="list-group-item"><a href="{{url_for("profile", id=u.id)}}">{{u.name}}</a></li>
+        {% endfor %}
+        </ul>
+      </div>  
+    </div>
+    {% endif %}
+  </div>
+</article>
+
+
+<article id="settings">
+  <h2>Settings</h2>
+  <label for="restrict_modules_select">Select the material you want to be visible to you</label>
+  <select id="restrict_modules_select" class="form-control">
     <option value="0">All material</option>
     {% for inst in g.user.relevant_institutions() %}
     <option value="{{inst.id}}">Only material approved by {{inst.name}}</option>
     {% endfor %}
-</select>
+  </select>
+</article>
 {% endif %}
 
 {% endblock %}
