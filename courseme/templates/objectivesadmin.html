@@ -45,12 +45,25 @@ $(document).ready(function () {
 })
 </script>
 
-<h1>{{profile.name}} Progress</h1>
+
 
 {% for objective in objectives %}
 <span class="row">
     <div class="col-sm-3"><b>{{ objective.name }}<b></div>
+    <div class="col-sm-3">
+        {{ objective.score() }}
 
+        <ul>
+            {% for prerequisite in objective.prerequisites %}
+            <li>{{ prerequisite.name }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="col-sm-3">{{ objective.created_by.name }}</div>    
+    <div class="col-sm-3">
+        <button class="delete-objective" id="{{ objective.id ~ "_delete" }}">Delete</button>     <!-- ~ is a jinja2 function that works like + but first converting everything to strings -->
+        <button class="edit-objective" id="{{ objective.id ~ "_edit" }}">Edit</button>
+    </div>
 </span>
 {% endfor %}
 

@@ -102,17 +102,40 @@ def logout():
 
 
 #objectives
-@app.route('/objectives')
+@app.route('/objectives-admin')
 @login_required
-def objectives():
+def objectives_admin():
     title = "CourseMe - Objectives"
     objectiveform = forms.EditObjective()
     objectives = g.user.visible_objectives().all()
     objectives.sort(key=operator.methodcaller("score"))   #DJG - isn't there a way of doing this within the order_by of the query
-    return render_template('objectives.html',
+    return render_template('objectivesadmin.html',
                            title=title,
                            objectiveform=objectiveform,
                            objectives=objectives)
+
+@app.route('/objectives/<int:id>')
+@login_required
+def objectives(id):
+    profile = User.query.get(id)
+    if not profile:
+        flash("This user does not exist")
+        return redirect(url_for('objectives', id=g.user.id))      
+    elif not profile.permission(g.user):
+        flash("You do not have permission to view this user's learning objectives")
+        return redirect(url_for('objectives', id=g.user.id)) 
+    else:
+        title = "CourseMe - Objectives"
+        objectiveform = forms.EditObjective()
+        objectives = g.user.visible_objectives().all()
+        objectives.sort(key=operator.methodcaller("score"))   #DJG - isn't there a way of doing this within the order_by of the query
+        return render_template(
+            'objectives.html',
+            title=title,
+            objectiveform=objectiveform,
+            objectives=objectives,
+            profile=profile)
+
 
 @app.route('/objective-add-update', methods = ['POST'])
 def objective_add_update():

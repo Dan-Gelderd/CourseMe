@@ -255,6 +255,21 @@ course_modules = db.Table('course_modules',
     db.Column('course_id', db.Integer, db.ForeignKey('module.id')),
     db.Column('module_id', db.Integer, db.ForeignKey('module.id'))
 )
+
+
+
+class UserObjective(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    user_id = db.Column(db.Integer, db.ForeignKey(User.id))
+    assessor_id = db.Column(db.Integer, db.ForeignKey(User.id))
+    objective_id = db.Column(db.Integer, db.ForeignKey(Objective.id))
+    completed = db.Column(db.DateTime)
+
+    user = db.relationship(User, primaryjoin="User.id==UserObjective.user_id", backref='user_objectives')
+    assessor = db.relationship(User, primaryjoin="User.id==UserObjective.assessor_id", backref='assessed_objectives')
+    objective = db.relationship(Objective, backref='user_objectives')
+    
+    
     
 class Module(db.Model):                                             #DJG - change this class to material as it now captures modules and courses
     id = db.Column(db.Integer, primary_key = True)      
