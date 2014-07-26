@@ -2,7 +2,7 @@ from flask import render_template, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from courseme import app, db, lm, hash_string, lectures
 import forms
-from models import User, ROLE_USER, ROLE_ADMIN, Objective, Module, UserModule, Institution, Group, Message
+from models import User, ROLE_USER, ROLE_ADMIN, Objective, UserObjective, Module, UserModule, Institution, Group, Message
 from datetime import datetime
 import json, operator
 #import pdb; pdb.set_trace()        #DJG - remove
@@ -234,6 +234,25 @@ def objective_delete():
 def objective_get():
     objective = Objective.query.filter_by(id = request.args.get("objective_id")).first()    #DJG - could replace with get as we are looking up a primary key
     return json.dumps(objective.as_dict(), sort_keys=True, separators=(',',':'))
+
+
+@app.route('/objective-assess/<int:profile_id>/<int:objective_id>')
+@login_required
+def objective_assess(profile_id, objective_id):
+    objective = Objective.query.get(objective_id)       #DJG - may restrict search to just some set of visisble objectives
+    if not objective:
+        flash("This objective does not exist")
+        return redirect(url_for('objectives', id=g.user.id))        
+    profile = User.query.get(profile_id)
+    if not profile:
+        flash("This user does not exist")
+        return redirect(url_for('objectives', id=g.user.id))          
+    elif not profile.permission(g.user):
+        flash("You do not have permission to view this user's learning objectives")
+        return redirect(url_for('objectives', id=g.user.id)) 
+    else:
+        completed = UserObjective.FindOrCreate(profile_id, g.user.id, objective_id).completed
+        return json.dumps({'completed':completed})
 
 
 #modules

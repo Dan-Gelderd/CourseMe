@@ -239,6 +239,7 @@ class Objective(db.Model):
         modules = self.modules.filter_by(material_type=material_type).order_by(Module.votes).limit(num+1).all()  #DJG - lookup modules for given objective sorted by votes of given type
         if exclude and exclude in modules: modules.remove(exclude)
         return modules[:num]
+    
 
     @staticmethod
     def system_objectives():
@@ -269,7 +270,18 @@ class UserObjective(db.Model):
     assessor = db.relationship(User, primaryjoin="User.id==UserObjective.assessor_id", backref='assessed_objectives')
     objective = db.relationship(Objective, backref='user_objectives')
     
-    
+    @staticmethod
+    def FindOrCreate(user_id, assessor_id, objective_id):
+        userobjective = UserObjective.query.filter_by(user_id=user_id, assessor_id=assessor_id, objective_id=objective_id).first()
+        if userobjective is None:
+            userobjective = UserObjective(
+                user_id=user_id,
+                assessor_id=assessor_id,
+                objective_id=objective_id
+                )
+            db.session.add(userobjective)
+            db.session.commit()
+            return userobjective
     
 class Module(db.Model):                                             #DJG - change this class to material as it now captures modules and courses
     id = db.Column(db.Integer, primary_key = True)      

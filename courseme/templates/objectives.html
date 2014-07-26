@@ -4,55 +4,81 @@
 <script type='text/javascript'>
 $(document).ready(function () {
 
-    //Button per objective to bring up prepopulated form modal to edit the corresponding objective
-    $(".edit-objective").on('click', function ( event ) {
+    ////Button per objective to bring up prepopulated form modal to edit the corresponding objective
+    //$(".edit-objective").on('click', function ( event ) {
+    //    var objective_id = this.id.split('_')[0]
+    //    //console.log("edit button " + objective_id + " clicked")       //DJG - testing click event
+    //    $.getJSON(                                      //DJG - as we are bringing all the objectives in anyway with jinja2 could we make this purely server side? Maybe not now we move to a separate js file which can't access the objectives variable passed to the template?
+    //        flask_util.url_for('objective_get'),
+    //        {objective_id: objective_id}, 
+    //        function(json) {
+    //            //console.log(json);        //DJG - test returned data
+    //            //console.log(json.prerequisites.length);
+    //            loadEditObjectiveModal(json)
+    //        }
+    //    );
+    //});
+    //
+    ////Button per objective to delete the corresponding objective
+    //$(".delete-objective").on('click', function ( event ) {
+    //    var objective_id = this.id.split('_')[0]
+    //    console.log("delete button " + objective_id + " clicked")
+    //    $.get(
+    //        flask_util.url_for('objective_delete'),
+    //        {objective_id: objective_id}, 
+    //        function(data) {
+    //            location.reload(true)
+    //    });
+    //});
+    //
+    ////jQuery extention used to autocomplete objective names
+    //$(function() {
+    //    var availableTags = [];
+    //    {% for objective in objectives %}
+    //        availableTags.push('{{ objective.name }}')    
+    //    {% endfor %}    
+    //
+    //    $("#new_prerequisite_form_group").find(".dynamic-list-new-item").autocomplete({
+    //        source: availableTags
+    //    });
+    //});
+
+    //Button per objective to mark the corresponding objective as assessed
+    $(".mark_assessed").on('click', function () {
         var objective_id = this.id.split('_')[0]
-        //console.log("edit button " + objective_id + " clicked")       //DJG - testing click event
-        $.getJSON(                                      //DJG - as we are bringing all the objectives in anyway with jinja2 could we make this purely server side? Maybe not now we move to a separate js file which can't access the objectives variable passed to the template?
-            flask_util.url_for('objective_get'),
-            {objective_id: objective_id}, 
-            function(json) {
-                //console.log(json);        //DJG - test returned data
-                //console.log(json.prerequisites.length);
-                loadEditObjectiveModal(json)
+        console.log("assess objective " + objective_id + " clicked")
+        $.getJSON(
+            flask_util.url_for('objective_assess', {profile_id: {{profile.id}}, objective_id: objective_id}), 
+            function(result) {
+                console.log(result)
             }
         );
     });
 
-    //Button per objective to delete the corresponding objective
-    $(".delete-objective").on('click', function ( event ) {
-        var objective_id = this.id.split('_')[0]
-        console.log("delete button " + objective_id + " clicked")
-        $.get(
-            flask_util.url_for('objective_delete'),
-            {objective_id: objective_id}, 
-            function(data) {
-                location.reload(true)
-        });
-    });
 
-    //jQuery extention used to autocomplete objective names
-    $(function() {
-        var availableTags = [];
-        {% for objective in objectives %}
-            availableTags.push('{{ objective.name }}')    
-        {% endfor %}    
-
-        $("#new_prerequisite_form_group").find(".dynamic-list-new-item").autocomplete({
-            source: availableTags
-        });
-    });
 })
 </script>
 
 <h1>{{profile.name}} Progress</h1>
 
+<table class="table table-condensed">
+    <tr>
+      <th></th>
+      <th>Self Assess</th> 
+      <th>CourseMe Assess</th>
+      <th>Institution Assess</th>
+    </tr>
 {% for objective in objectives %}
-<span class="row">
-    <div class="col-sm-3"><b>{{ objective.name }}<b></div>
-
-</span>
+    
+    <tr>
+        <td>{{objective.name}}</td>
+        <td id="{{ objective.id ~ '_assess' }}" class="mark_assessed success"></td>
+        <td></td>
+        <td></td>
+    </tr>
 {% endfor %}
+    
+</table>
 
 {% include "subplates/edit-objective-modal.html" %}
 
