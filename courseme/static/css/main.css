@@ -23,7 +23,7 @@
     display: none;
 }
 
-
+/* Used by datatables */
 td.details-control {
     background: url('../images/details_open.png') no-repeat center center;
     cursor: pointer;
@@ -37,3 +37,8 @@ tfoot input {
         padding: 3px;
         box-sizing: border-box;
     }
+
+.mark_assessed{
+    cursor: pointer;
+}
+

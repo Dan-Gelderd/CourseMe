@@ -7,6 +7,7 @@ $(document).ready(function () {
     $("#create_objective").click(function(){
             $("#edit_objective_id").val("");
             $("#edit_objective_name").val("");
+            $("#edit_objective_subject").attr("disabled", false);            
             $("#edit_objective_form").find(".dynamic-list-new-item").val("");
             $("#edit_objective_form").find(".help-block").text("");
             $("#edit_objective_form").find(".has-error").removeClass("has-error");
@@ -64,6 +65,10 @@ $(document).ready(function () {
                         $("#error_edit_objective_name").text(result.edit_objective_name[0]);
                         $("#edit_objective_name_form_group").addClass("has-error");
                     }
+                    if(result.edit_objective_subject!=undefined) {
+                        $("#error_edit_objective_subject").text(result.edit_objective_subject[0]);
+                        $("#edit_objective_subject_form_group").addClass("has-error");
+                    }
                     if(result.new_prerequisite!=undefined) {
                         $("#edit_objective_form").find(".dynamic-list-help").text(result.new_prerequisite[0]);
                         $("#edit_objective_form").find(".dynamic-list-form").addClass("has-error");
@@ -91,6 +96,8 @@ $(document).ready(function () {
 function loadEditObjectiveModal(objective) {
     $("#edit_objective_id").val(objective.id);
     $("#edit_objective_name").val(objective.name);
+    $("#edit_objective_subject").val(objective.subject);
+    $("#edit_objective_subject").attr("disabled", true);
     $("#edit_objective_form").find(".dynamic-list-new-item").val("");
     $("#edit_objective_form").find(".help-block").text("");
     $("#edit_objective_form").find(".has-error").removeClass("has-error");

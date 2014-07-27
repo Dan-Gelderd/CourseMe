@@ -179,7 +179,8 @@ objective_heirarchy = db.Table("objective_heirarchy",
 
 class Objective(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50))
+    name = db.Column(db.String(50), unique = True, nullable=False)
+    subject = db.Column(db.String(50), default="Mathematics")
 
     created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))     #DJG - why is user lower case in ForeignKey('user.id')    
 
@@ -240,7 +241,14 @@ class Objective(db.Model):
         if exclude and exclude in modules: modules.remove(exclude)
         return modules[:num]
     
-
+    def assessed(self, user, assessor):     #DJG - could probably do in one line
+        userobjective = UserObjective.query.filter_by(user_id=user.id, assessor_id=assessor.id, objective_id=self.id).first()
+        if userobjective:
+            return userobjective.completed
+        else:
+            return False
+        
+        
     @staticmethod
     def system_objectives():
         system_objectives_iterator = (set(u.objectives_created) for u in User.admin_users())
@@ -258,17 +266,29 @@ course_modules = db.Table('course_modules',
 )
 
 
-
 class UserObjective(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     user_id = db.Column(db.Integer, db.ForeignKey(User.id))
     assessor_id = db.Column(db.Integer, db.ForeignKey(User.id))
     objective_id = db.Column(db.Integer, db.ForeignKey(Objective.id))
-    completed = db.Column(db.DateTime)
+    completed = db.Column(db.Boolean, default = False)
 
     user = db.relationship(User, primaryjoin="User.id==UserObjective.user_id", backref='user_objectives')
     assessor = db.relationship(User, primaryjoin="User.id==UserObjective.assessor_id", backref='assessed_objectives')
     objective = db.relationship(Objective, backref='user_objectives')
+    
+    def assess(self):
+        completed = not self.completed
+        self.completed = completed
+        db.session.add(self)
+        institution = self.user.institution_student
+        if institution:
+            if institution.is_member(self.assessor):
+                for member in institution.members:
+                    userobjective = UserObjective.FindOrCreate(user_id=self.user_id, assessor_id=member.id, objective_id=self.objective_id)
+                    userobjective.completed = completed
+                    db.session.add(userobjective)
+        db.session.commit()
     
     @staticmethod
     def FindOrCreate(user_id, assessor_id, objective_id):
@@ -281,7 +301,7 @@ class UserObjective(db.Model):
                 )
             db.session.add(userobjective)
             db.session.commit()
-            return userobjective
+        return userobjective
     
 class Module(db.Model):                                             #DJG - change this class to material as it now captures modules and courses
     id = db.Column(db.Integer, primary_key = True)      
@@ -558,11 +578,13 @@ institution_approved_modules = db.Table('institution_approved_modules',
 
 class Institution(db.Model):
     id = db.Column(db.Integer, primary_key = True)
-    name = db.Column(db.String(120))    
+    name = db.Column(db.String(120), index = True, unique = True, nullable=False)    
     creator_id = db.Column(db.Integer, db.ForeignKey(User.id, use_alter=True, name='fk_institution_creator_id'), nullable=False)        #DJG - need , use_alter=True, name='fk_institution_creator_id' to avoid circular join references
+    #generic_user_id = db.Column(db.Integer, db.ForeignKey(User.id, use_alter=True, name='fk_institution_creator_id'), nullable=False)        #DJG - need , use_alter=True, name='fk_institution_creator_id' to avoid circular join references    
     blurb = db.Column(db.String(400), default = "This is some blurb")    
     view_institution_only_id = db.Column(db.Integer, db.ForeignKey('institution.id'))    
 
+    #generic_user = db.relationship(User, primaryjoin="Institution.generic_user_id==User.id", backref=db.backref("institution_generic", uselist=False))
     view_institution_only = db.relationship("Institution", remote_side=[id], backref="institutions_viewing_approved")
 
     members = db.relationship(User, secondary=institution_members, lazy='dynamic',
@@ -622,12 +644,15 @@ class Institution(db.Model):
     
     @staticmethod     
     def create(name, creator, blurb=""):
-        institution = Institution(
-            name = name,
-            creator_id = creator.id,    
-            blurb = blurb,
-            members = [creator]             #DJG - This whole method currently only exists to make sure the creator is always a member
-            )
-        db.session.add(institution)
-        db.session.commit()
-        return institution
+        if Institution.query.filter_by(name=name).first():
+            return False
+        else:
+            institution = Institution(
+                name = name,
+                creator_id = creator.id,    
+                blurb = blurb,
+                members = [creator]
+                )
+            db.session.add(institution)
+            db.session.commit()
+            return institution

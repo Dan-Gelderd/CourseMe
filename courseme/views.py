@@ -149,6 +149,7 @@ def objective_add_update():
     if form.validate():
         obj_id = form.edit_objective_id.data
         name = form.edit_objective_name.data
+        subject=form.edit_objective_subject.data
         #import pdb; pdb.set_trace()        #DJG - remove
         #Reading off the list of prerequisites
         unicode_list = request.form["prerequisites"]       #DJG - the data sent by the ajax request has the list converted into a unicode text string with commas
@@ -163,21 +164,23 @@ def objective_add_update():
             if check_obj is not None:
                 #The new objective name is already taken
                 result['edit_objective_name'] = ["Objective '" + name + "' already exists"]     #Need to make the new result attributes the same as the form.errors attributes which will be the form input field ids
-            else:
+            elif undefined_prerequisites:
                 #A new objective can be created with the new name
-                #Need to check all the prerequisites exist already
-                if undefined_prerequisites:
-                    is_are = 'is not already defined as an objective' if len(undefined_prerequisites) == 1 else 'are not already defined as objectives'
-                    result['new_prerequisite'] = ["'" + "', '".join(undefined_prerequisites) + "' " + is_are]
-                else:
-                    #No need to check for cyclic prerequisites as the new objective cannot be a prerequisite to anything already
-                    objective = Objective(name=name, prerequisites=prerequisites, created_by_id=g.user.id)
-                    db.session.add(objective)
-                    db.session.commit()
-                    result['savedsuccess'] = True
+                #Need to check all the prerequisites exist already                
+                is_are = 'is not already defined as an objective' if len(undefined_prerequisites) == 1 else 'are not already defined as objectives'
+                result['new_prerequisite'] = ["'" + "', '".join(undefined_prerequisites) + "' " + is_are]
+                #No need to check for cyclic prerequisites as the new objective cannot be a prerequisite to anything already
+            elif subject not in ["Mathematics", "Biology"]:
+                result['edit_objective_subject'] = ["Not allowed to define objectives for subject " + subject]
+            else:
+                objective = Objective(name=name, subject=subject, prerequisites=prerequisites, created_by_id=g.user.id)
+                db.session.add(objective)
+                db.session.commit()
+                result['savedsuccess'] = True
 
         else:
             #The objective id is found on the form so this is an update objective case
+            #No need for any checks around the subject because this cannot be edited for an existing objective
             objective = Objective.query.get(obj_id)
             #DJG - should handle the case where no objective matches the id on the form request
             proceed = True
@@ -251,8 +254,9 @@ def objective_assess(profile_id, objective_id):
         flash("You do not have permission to view this user's learning objectives")
         return redirect(url_for('objectives', id=g.user.id)) 
     else:
-        completed = UserObjective.FindOrCreate(profile_id, g.user.id, objective_id).completed
-        return json.dumps({'completed':completed})
+        userobjective = UserObjective.FindOrCreate(profile_id, g.user.id, objective_id)
+        userobjective.assess()
+        return json.dumps({'completed': userobjective.completed})
 
 
 #modules

@@ -1,5 +1,5 @@
 from flask.ext.wtf import Form
-from wtforms import TextField, TextAreaField, PasswordField, BooleanField, HiddenField, FileField, SelectMultipleField, RadioField
+from wtforms import TextField, TextAreaField, PasswordField, BooleanField, HiddenField, FileField, SelectMultipleField, SelectField, RadioField
 from wtforms.validators import Required, Length, Email, Regexp, EqualTo, url
 from wtforms.fields.html5 import URLField
 from wtforms.fields import FieldList
@@ -33,6 +33,7 @@ class EditObjective(Form):
                 Regexp(r'\w'),                  #DJG - need to exclude commas in current implementation of ajax calls but this isn't working
                 Required('Enter a description of the objective'),
                 Length(min=4, message=(u'Description must be at least 4 characters'))])
+    edit_objective_subject = SelectField('Subject', choices=[('Mathematics','Mathematics'),('Biology','Biology')])
     dynamic_list_select = SelectMultipleField('Prerequisites', choices=[])
     authors = FieldList(TextField('Name'))      #DJG - Try this as way of geting proper ordered list back from form
 

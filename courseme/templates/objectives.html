@@ -4,53 +4,20 @@
 <script type='text/javascript'>
 $(document).ready(function () {
 
-    ////Button per objective to bring up prepopulated form modal to edit the corresponding objective
-    //$(".edit-objective").on('click', function ( event ) {
-    //    var objective_id = this.id.split('_')[0]
-    //    //console.log("edit button " + objective_id + " clicked")       //DJG - testing click event
-    //    $.getJSON(                                      //DJG - as we are bringing all the objectives in anyway with jinja2 could we make this purely server side? Maybe not now we move to a separate js file which can't access the objectives variable passed to the template?
-    //        flask_util.url_for('objective_get'),
-    //        {objective_id: objective_id}, 
-    //        function(json) {
-    //            //console.log(json);        //DJG - test returned data
-    //            //console.log(json.prerequisites.length);
-    //            loadEditObjectiveModal(json)
-    //        }
-    //    );
-    //});
-    //
-    ////Button per objective to delete the corresponding objective
-    //$(".delete-objective").on('click', function ( event ) {
-    //    var objective_id = this.id.split('_')[0]
-    //    console.log("delete button " + objective_id + " clicked")
-    //    $.get(
-    //        flask_util.url_for('objective_delete'),
-    //        {objective_id: objective_id}, 
-    //        function(data) {
-    //            location.reload(true)
-    //    });
-    //});
-    //
-    ////jQuery extention used to autocomplete objective names
-    //$(function() {
-    //    var availableTags = [];
-    //    {% for objective in objectives %}
-    //        availableTags.push('{{ objective.name }}')    
-    //    {% endfor %}    
-    //
-    //    $("#new_prerequisite_form_group").find(".dynamic-list-new-item").autocomplete({
-    //        source: availableTags
-    //    });
-    //});
-
     //Button per objective to mark the corresponding objective as assessed
     $(".mark_assessed").on('click', function () {
-        var objective_id = this.id.split('_')[0]
+        cell = this
+        var objective_id = cell.id.split('_')[0]
         console.log("assess objective " + objective_id + " clicked")
         $.getJSON(
             flask_util.url_for('objective_assess', {profile_id: {{profile.id}}, objective_id: objective_id}), 
             function(result) {
-                console.log(result)
+                if (result.completed) {
+                    $(cell).addClass("success")
+                }
+                else {
+                    $(cell).removeClass("success")
+                } 
             }
         );
     });
@@ -64,24 +31,20 @@ $(document).ready(function () {
 <table class="table table-condensed">
     <tr>
       <th></th>
-      <th>Self Assess</th> 
-      <th>CourseMe Assess</th>
-      <th>Institution Assess</th>
+      <th class="DJG_rotate_headers">{% if profile == g.user %}Self Assessment{% elif profile.institution_student and profile.institution_student.is_member(g.user) %}{{profile.institution_student.name}} Assessment{% else %}Your Assessment{% endif %}</th> 
+      <th class="hidden">CourseMe Assessment</th>
+      <th class="{% if profile == g.user and not profile.institution_student %}hidden{% endif %}">{% if profile == g.user and profile.institution_student %}{{profile.institution_student.name}} Assessment{% else %}Self Assessment{% endif %}</th>
     </tr>
-{% for objective in objectives %}
-    
+{% for objective in objectives %}    
     <tr>
         <td>{{objective.name}}</td>
-        <td id="{{ objective.id ~ '_assess' }}" class="mark_assessed success"></td>
-        <td></td>
-        <td></td>
+        <td id="{{ objective.id ~ '_assess' }}" class="mark_assessed{% if objective.assessed(profile, g.user) %} success{% endif %}"></td>
+        <td class="hidden"></td>
+        <td class="{% if profile == g.user and not profile.institution_student %}hidden{% elif profile == g.user and objective.assessed(profile, profile.institution_student.creator) %} success{% elif profile != g.user and objective.assessed(profile, profile) %} success{% endif %}"></td>
     </tr>
 {% endfor %}
     
 </table>
 
-{% include "subplates/edit-objective-modal.html" %}
-
-<button class="btn btn-default btn-sm btn-success" id="create_objective">Create New Objective</button>
 
 {% endblock %}
