@@ -181,6 +181,7 @@ class Objective(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique = True, nullable=False)
     subject = db.Column(db.String(50), default="Mathematics")
+    description = db.Column(db.String(50), nullable=True)
 
     created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))     #DJG - why is user lower case in ForeignKey('user.id')    
 
@@ -232,6 +233,7 @@ class Objective(db.Model):
         data = {}
         data['id'] = self.id
         data['name'] = self.name
+        data['subject'] = self.subject
         data['prerequisites'] = [p.name for p in self.prerequisites.all()]
         #return json.dumps(data, sort_keys=True, separators=(',',':'))      DJG - could convert to JSON in here
         return data

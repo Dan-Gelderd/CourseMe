@@ -405,6 +405,7 @@ def editmodule(id = 0):
                                     )     
                     db.session.add(module)
                 db.session.commit()
+                #DJG - need some way that newly published material is added to institution approved list
                 result['savedsuccess'] = True
                 result['module_id'] = module.id
                 flash(material_type + " saved as " + module.name)

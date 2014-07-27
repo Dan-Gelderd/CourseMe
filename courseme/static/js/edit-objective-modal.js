@@ -19,6 +19,7 @@ $(document).ready(function () {
     //Button to post the new or updated objective data to the server for validation and storage
     $("#save_objective").click(function(){
         var prerequisites = new Array();
+        $("#edit_objective_form").find("#edit_objective_subject").attr("disabled", false);              //Serialize array won't include disabled elements
         $("#edit_objective_form").find(".dynamic-list-item-data").each(function() {
             prerequisites.push($(this).text());
         });

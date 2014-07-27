@@ -11,12 +11,12 @@
                     {{ objectiveform.edit_objective_id }}     <!-- This has the id objective_id as that is the attribute name defined on the form, this is populated with the id of the objective if editiong or left blank if not so the server knows whether this was an update or a new creation -->
                     <div class="form-group" id="edit_objective_name_form_group">
                         {{ objectiveform.edit_objective_name.label }}
-                        {{ objectiveform.edit_objective_name(class="form-control", placeholder="The objective should be clear, separable and testable.")}}
+                        {{ objectiveform.edit_objective_name(class="form-control", placeholder="The objective should be clear, separable and testable.") }}
                         <p class="help-block" id="error_edit_objective_name"></p>
                     </div>
                     <div class="form-group" id="edit_objective_subject_form_group">
                         {{ objectiveform.edit_objective_subject.label }}
-                        {{ objectiveform.edit_objective_subject(class="form-control")}}
+                        {{ objectiveform.edit_objective_subject(class="form-control") }}
                         <p class="help-block" id="error_edit_objective_subject"></p>
                     </div>
                     

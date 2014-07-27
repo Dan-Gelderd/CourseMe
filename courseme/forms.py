@@ -1,4 +1,4 @@
-from flask.ext.wtf import Form
+from flask.ext.wtf import Form, RecaptchaField
 from wtforms import TextField, TextAreaField, PasswordField, BooleanField, HiddenField, FileField, SelectMultipleField, SelectField, RadioField
 from wtforms.validators import Required, Length, Email, Regexp, EqualTo, url
 from wtforms.fields.html5 import URLField
@@ -17,6 +17,7 @@ class SignupForm(Form):
     agree = BooleanField('By signing up your agree to follow our <a href="#">Terms and Conditions</a>',
                 validators=[Required(u'You must agree the Terms of Service')])    
     remember_me = BooleanField('remember_me', default = False)
+    recaptcha = RecaptchaField()
 
 class LoginForm(Form):
     email = TextField('Email address', validators=[

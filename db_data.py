@@ -101,29 +101,96 @@ db.session.commit()
 
 
 
-
-objective = Objective(name="System Objective 1",
+objective = Objective(name="Rationalise the denominator of fractions with surds",
                       subject="Mathematics",
-                      created_by_id=User.main_admin_user().id)
-db.session.add(objective)
-db.session.commit()
-
-objective = Objective(name="System Objective 2",
-                      subject="Mathematics",
-                      created_by_id=User.main_admin_user().id,
-                      prerequisites=[Objective.query.get(1)]
+                      created_by_id=User.main_admin_user().id
+                      #prerequisites=[Objective.query.get(2)]
                       )
 db.session.add(objective)
 db.session.commit()
 
-objective = Objective(name="System Objective 3",
+objective = Objective(name="Estimate powers and roots of any given positive",
                       subject="Mathematics",
-                      created_by_id=User.main_admin_user().id,
-                      prerequisites=[Objective.query.get(2)]
+                      created_by_id=User.main_admin_user().id
+                      #prerequisites=[Objective.query.get(2)]
                       )
 db.session.add(objective)
-
 db.session.commit()
+
+objective = Objective(name="Convert terminating decimals to their corresponding fractions",
+                      subject="Mathematics",
+                      created_by_id=User.main_admin_user().id
+                      #prerequisites=[Objective.query.get(2)]
+                      )
+db.session.add(objective)
+db.session.commit()
+
+objective = Objective(name="Identify and work with fractions in ratio problems",
+                      subject="Mathematics",
+                      created_by_id=User.main_admin_user().id
+                      #prerequisites=[Objective.query.get(2)]
+                      )
+db.session.add(objective)
+db.session.commit()
+
+objective = Objective(name="Use and interpret algebraic notation",
+                      subject="Mathematics",
+                      created_by_id=User.main_admin_user().id
+                      #prerequisites=[Objective.query.get(2)]
+                      )
+db.session.add(objective)
+db.session.commit()
+
+objective = Objective(name="Substitute numerical values into formulae and expressions, including scientific formulae",
+                      subject="Mathematics",
+                      created_by_id=User.main_admin_user().id
+                      #prerequisites=[Objective.query.get(2)]
+                      )
+db.session.add(objective)
+db.session.commit()
+
+objective2 = Objective(name="Substitute algebraic expressions into formulae and expressions, including scientific formulae",
+                      subject="Mathematics",
+                      created_by_id=User.main_admin_user().id,
+                      prerequisites=[objective]
+                      )
+db.session.add(objective2)
+db.session.commit()
+
+objective = Objective(name="Round numbers and measures to an appropriate degree of accuracy",
+                      subject="Mathematics",
+                      created_by_id=User.main_admin_user().id
+                      #prerequisites=[Objective.query.get(2)]
+                      )
+db.session.add(objective)
+db.session.commit()
+
+objective2 = Objective(name="Use inequality notation to specify simple error intervals due to truncation or rounding",
+                      subject="Mathematics",
+                      created_by_id=User.main_admin_user().id,
+                      prerequisites=[objective]
+                      )
+db.session.add(objective2)
+db.session.commit()
+
+objective = Objective(name="Apply and interpret limits of accuracy",
+                      subject="Mathematics",
+                      created_by_id=User.main_admin_user().id
+                      #prerequisites=[Objective.query.get(2)]
+                      )
+db.session.add(objective)
+db.session.commit()
+
+objective = Objective(name="Rearrange formulae to change the subject",
+                      subject="Mathematics",
+                      created_by_id=User.main_admin_user().id
+                      #prerequisites=[Objective.query.get(2)]
+                      )
+db.session.add(objective)
+db.session.commit()
+
+
+
 
 module = Module(
     name="Different sized infinities",
@@ -195,7 +262,21 @@ module = Module(
     author_id=teacher.id,
     material_type = "Lecture",
     material_source="youtube", 
-    material_path="//www.youtube.com/embed/e4MSN6IImpI?list=PLF7CBA45AEBAD18B8",
+    material_path="//www.youtube-nocookie.com/embed/0BsoWvWXOMM?rel=0",
+    objectives=[Objective.query.get(3)]
+    )
+db.session.add(module)  
+
+module = Module(
+    name="Solving Linear Equations",
+    description = "An easy introduction to solving simple equations with one unknown",
+    notes = "Here are some notes about this lecture",
+    time_created=datetime.utcnow(),
+    last_updated=datetime.utcnow(),
+    author_id=head.id,
+    material_type = "Lecture",
+    material_source="youtube", 
+    material_path="//www.youtube-nocookie.com/embed/GmMX3-nTWbE?rel=0",
     objectives=[Objective.query.get(3)]
     )
 db.session.add(module)  
