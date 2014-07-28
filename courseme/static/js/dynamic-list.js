@@ -43,7 +43,7 @@ function dynamicList_addNewItem(item, dynamicContainer){
     var new_option = document.createElement("option");
     new_option.text = item;
     dynamicSelect.append(new_option);
-    new_option.selected = false;        //DJG - Would be true. The validation fails if selecting things not defined in the choices attribute of the wtf selectmultiplefield object.
+    new_option.selected = true;        //DJG - Works as long as you edit the choices of the select multiple form element in the view function before validating.
     
 }
 

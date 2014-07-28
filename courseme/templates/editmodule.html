@@ -54,6 +54,7 @@ $(document).ready(function () {
 
     $("#save_module").click(function(event){
         event.preventDefault();     //DJG - don't want submit button to post the form as well as the ajax request or get 400 bad request error. Not sure if this is the right way to fix it.
+        
         var objectives = new Array();
         $("#edit_module_form").find(".dynamic-list-item-data").each(function() {
             objectives.push($(this).text());
@@ -273,7 +274,9 @@ $(document).ready(function () {
     
     <div id="specify_module_objectives" class="form-group{% if edit_module_form.material_type.data == "Course" %} hidden{% endif %}">
         <div class="dynamic-list-container" id="define_objectives">
+            {% with dynamic_list_select=edit_module_form.objs %}
             {% include "subplates/dynamic-list.html" %}
+            {% endwith %}
         </div>
         {% include "subplates/edit-objective-modal.html" %}
         <button class="btn btn-default btn-sm btn-success pull-right" id="create_objective">Create New Objective</button>

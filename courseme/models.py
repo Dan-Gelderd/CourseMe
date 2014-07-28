@@ -21,9 +21,9 @@ student_tutor = db.Table("student_tutor",
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key = True)
-    password = db.Column(db.String(120), index = True, nullable=False)      #DJG - What does index=True do?
+    password = db.Column(db.String(120), nullable=False)      #DJG - What does index=True do?
     email = db.Column(db.String(120), index = True, unique = True, nullable=False)
-    name = db.Column(db.String(64), index = True, nullable=False)
+    name = db.Column(db.String(64), nullable=False)
     blurb = db.Column(db.String(240), default = "This is some blurb")
     role = db.Column(db.SmallInteger, default = ROLE_USER, nullable=False)
     last_seen =  db.Column(db.DateTime)
@@ -144,11 +144,18 @@ class User(db.Model):
     def live_messages(self):
         return self.received_messages.filter(bool(Message.deleted)).order_by(desc(Message.sent))
 
-    def institution_tutors(self):       #DJG - not really needed as a separate method as creator is always added to list of members when institution created by create method
+    def institution_tutors(self):       #DJG - not really needed as a separate method means as creator is always added to list of members when institution created by create method
         return self.institution_student.members
 
     def permission(self, viewer):
         return self == viewer or viewer in self.tutors.all() or (self.institution_student and viewer in self.institution_tutors().all())
+    
+    def has_students(self):
+        has_students = bool(self.students.first())
+        for i in self.institutions_member:
+            has_students = has_students or bool(i.students.first())
+        return has_students
+        
         
     @staticmethod
     def make_unique_username(username):

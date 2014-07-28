@@ -139,7 +139,8 @@ def objectives(id):
 
 @app.route('/objective-add-update', methods = ['POST'])
 def objective_add_update():
-    form = forms.EditObjective()   
+    form = forms.EditObjective()
+    form.edit_objective_prerequisites.choices = [(i, i) for i in form.edit_objective_prerequisites.data]
     #import pdb; pdb.set_trace()
     #form will be the fields of the html form with the csrf
     #request.form will be the data posted back through the ajax request
@@ -314,7 +315,8 @@ def editmodule(id = 0):
                     objectiveform=objectiveform)
             
     if request.method == 'POST':
-        
+        #import pdb; pdb.set_trace()
+        moduleform.objs.choices = [(i, i) for i in moduleform.objs.data]
         #Both material upload types are required in the moduleform definition so need to remove the redundant field now to prevent validation errors
 
         #if material_source == 'upload':           #DJG - need a way to define the global list of sources so value means the same thing as database definitions 
@@ -547,10 +549,6 @@ def delete_module(id):
     return json.dumps(result, separators=(',',':'))
 
 
-@app.route('/groups')
-@login_required
-def groups():
-    return render_template('groups.html')
 
 @app.route('/profile/<int:id>')
 @login_required
@@ -567,17 +565,30 @@ def profile(id):
                            profile=profile,
                            permission=permission)
 
-@app.route('/messages/<int:id>')
+@app.route('/students')
 @login_required
-def messages(id):
-    if g.user.id != id:
-        flash('You are not logged in as this user')
-        return redirect(url_for('logout'))
-    else:
-        title = "Messages - " + g.user.name
-        return render_template('messages.html',
-                           title=title,
-                           profile_id=id)
+def students():
+    title = "CourseMe - Students"
+    return render_template('students.html',
+                       title=title) 
+
+@app.route('/messages')
+@login_required
+def messages():
+    title = "CourseMe - Messages"
+    return render_template('messages.html',
+                       title=title)
+
+@app.route('/groups')
+@login_required
+def groups():
+    title = "CourseMe - Groups"
+    form = forms.EditGroup()
+    return render_template(
+        'groups.html',
+        form=form,
+        title=title
+        )
 
 @app.route('/restrict_modules_viewed/<int:user_id>/<int:institution_id>')
 @login_required

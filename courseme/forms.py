@@ -35,7 +35,7 @@ class EditObjective(Form):
                 Required('Enter a description of the objective'),
                 Length(min=4, message=(u'Description must be at least 4 characters'))])
     edit_objective_subject = SelectField('Subject', choices=[('Mathematics','Mathematics'),('Biology','Biology')])
-    dynamic_list_select = SelectMultipleField('Prerequisites', choices=[])
+    edit_objective_prerequisites = SelectMultipleField('Prerequisites', choices=[])
     authors = FieldList(TextField('Name'))      #DJG - Try this as way of geting proper ordered list back from form
 
 class EditModule(Form):
@@ -43,6 +43,7 @@ class EditModule(Form):
     name = TextField('Module name', validators=[Required('Please enter a name for your module')])
     description = TextAreaField('Brief description')
     notes = TextAreaField('Notes')
+    objs = SelectMultipleField('Objectives', choices=[])
     material_type = RadioField('Material Type',
                                  choices=[('Lecture', 'Lecture'), ('Exercise', 'Exercise'), ('Course', 'Course (select individual modules to include later)')],
                                  default='Lecture',
@@ -56,3 +57,8 @@ class EditModule(Form):
     easy_language = BooleanField('Simple Language', default = False)
     extension = BooleanField('Extension Material', default = False)
     for_teachers = BooleanField('Ideas for Teachers', default = False)
+
+class EditGroup(Form):
+    edit_group_id = HiddenField()
+    edit_group_name = TextField('Group Name', validators = [Required('Enter a group name')])
+    edit_group_members = SelectMultipleField('Members', choices=[])

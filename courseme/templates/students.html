@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h1>Students</h1>
+
+private students
+<ul>
+  {% for student in g.user.students %}
+  <li>{{student.name}}</li>
+  {% endfor %}
+</ul>
+
+
+{% for institution in g.user.institutions_member %}
+{{institution.name}} students
+<ul>
+  {% for student in institution.students %}
+  <li>{{student.name}}</li>
+  {% endfor %}
+</ul>
+{% endfor %}
+
+<a href="{{url_for("groups")}}" class="btn btn-primary btn-lg active" role="button">Define Groups</a>
+
+{% endblock %}

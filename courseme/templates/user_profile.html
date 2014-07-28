@@ -4,8 +4,9 @@
 <script type='text/javascript'>
 $(document).ready(function () {
   
-  //console.log("Select already - " + {{g.user.view_institution_only_id}});
-  //$("#restrict_modules_select").val = {{g.user.view_institution_only_id}}.toString();
+  {% if g.user.view_institution_only %}
+  $("#restrict_modules_select").val({{g.user.view_institution_only_id}});
+  {% endif %}
   
   $("#restrict_modules_select").change(function() {
     console.log("Select changed - " + this.value);
@@ -20,7 +21,7 @@ $(document).ready(function () {
 });
 </script>
 
-<h1>{% if profile==g.user %}Public Profile{% else %}{{profile.name}}{% endif %}</h1>
+<h1>{% if profile==g.user %}Public Profile<small>{{profile.name}}</small>{% else %}{{profile.name}}<small>Public Profile</small>{% endif %}</h1>
 <div class="thumbnail">
       <img data-src="holder.js/300x300" alt="...">
       <div class="caption">

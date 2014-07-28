@@ -40,7 +40,7 @@ $(document).ready(function () {
         <td>{{objective.name}}</td>
         <td id="{{ objective.id ~ '_assess' }}" class="mark_assessed{% if objective.assessed(profile, g.user) %} success{% endif %}"></td>
         <td class="hidden"></td>
-        <td class="{% if profile == g.user and not profile.institution_student %}hidden{% elif profile == g.user and objective.assessed(profile, profile.institution_student.creator) %} success{% elif profile != g.user and objective.assessed(profile, profile) %} success{% endif %}"></td>
+        <td class="{% if profile == g.user and not profile.institution_student %}hidden{% elif profile == g.user and objective.assessed(profile, profile.institution_student.creator) %} info{% elif profile != g.user and objective.assessed(profile, profile) %} info{% endif %}"></td>
     </tr>
 {% endfor %}
     

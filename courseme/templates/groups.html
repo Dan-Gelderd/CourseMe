@@ -1,6 +1,56 @@
 {% extends "layout.html" %}
 {% block content %}
 
-placeholder
+<script type='text/javascript'>
+$(document).ready(function () {
+    $("#create_group").click(function(){
+
+            return false;
+    });
+});
+</script>
+
+<h1>Groups</h1>
+<p>Define groups of other users to make it easier to share material and collaborate. These could be groups of students, for example a class, who you want to set and review objectives for as a whole. Or you could define groups of colleagues or fellow students you want to share great material recommendations with.</p>
+
+<button class="btn btn-default btn-sm btn-success" id="create_group">Create New Group</button>
+
+<hr/>
+
+<div class="row">
+    <div class="col-md-7">
+        <ul>
+            <li>Create new group</li>
+            {% for group in g.user.groups_created %}
+            <li>{{group.name}}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="col-md-5">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <form class="form" action="" method="POST" id="edit_group_form">
+                    {{ form.hidden_tag() }}
+                    {{ form.edit_group_id }}
+                    <div class="form-group" id="edit_group_name_form_group">
+                        {{ form.edit_group_name.label }}
+                        {{ form.edit_group_name}}
+                        <p class="help-block" id="error_edit_group_name"></p>
+                    </div>
+                    <div class="form-group" id="edit_group_members_form_group">
+                        {{ form.edit_group_members.label }}
+                        {{ form.edit_group_members }}
+                        <p class="help-block" id="error_edit_group_members"></p>
+                    </div>
+                    <div class="dynamic-list-container" id="edit_members_form_group">
+                        {% with dynamic_list_select=form.edit_group_members %}
+                        {% include "subplates/dynamic-list.html" %}
+                        {% endwith %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>    
+</div>
 
 {% endblock %}

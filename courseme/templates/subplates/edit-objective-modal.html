@@ -21,7 +21,9 @@
                     </div>
                     
                     <div class="dynamic-list-container" id="new_prerequisite_form_group">
-                    {% include "subplates/dynamic-list.html" %}
+                        {% with dynamic_list_select=objectiveform.edit_objective_prerequisites %}
+                        {% include "subplates/dynamic-list.html" %}
+                        {% endwith %}
                     </div>
                     
                 </form>
