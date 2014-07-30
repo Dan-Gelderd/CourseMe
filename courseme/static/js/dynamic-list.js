@@ -33,7 +33,8 @@ function dynamicList_addNewItem(item, dynamicContainer){
     new_button.innerHTML = "&times;";
     new_button.onclick = function() {
         $(this).closest('.dynamic-list-item').remove();      //DJG - passing jquery object as function parameter - http://forum.jquery.com/topic/jquery-passing-a-jquery-object-as-a-function-parameter
-    };            
+        dynamicSelect.find("option[value='" + item + "']").remove();
+    }; 
     new_span_button.appendChild(new_button);
     new_div.appendChild(new_span);
     new_div.appendChild(new_span_button);    
@@ -42,10 +43,12 @@ function dynamicList_addNewItem(item, dynamicContainer){
 
     var new_option = document.createElement("option");
     new_option.text = item;
+    new_option.value = item;
     dynamicSelect.append(new_option);
     new_option.selected = true;        //DJG - Works as long as you edit the choices of the select multiple form element in the view function before validating.
     
 }
+
 
 function dynamicList_addList(list, dynamicContainer) {
     var num_items = list.length;

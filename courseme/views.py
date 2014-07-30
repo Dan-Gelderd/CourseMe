@@ -150,13 +150,15 @@ def objective_add_update():
     if form.validate():
         obj_id = form.edit_objective_id.data
         name = form.edit_objective_name.data
-        subject=form.edit_objective_subject.data
+        subject = form.edit_objective_subject.data
+        prerequisites = []
         #import pdb; pdb.set_trace()        #DJG - remove
         #Reading off the list of prerequisites
-        unicode_list = request.form["prerequisites"]       #DJG - the data sent by the ajax request has the list converted into a unicode text string with commas
-        python_list = filter(None, unicode_list.split(','))            #DJG - Dodgy string manipulation, means I can't have commas in objective names
-        prerequisites = g.user.visible_objectives().filter(Objective.name.in_(python_list)).all()
-        undefined_prerequisites = list(set(python_list) - set(obj.name for obj in prerequisites))
+        #unicode_list = request.form["prerequisites"]                    #DJG - the data sent by the ajax request has the list converted into a unicode text string with commas
+        #python_list = filter(None, unicode_list.split(','))             #DJG - Dodgy string manipulation, means I can't have commas in objective names
+        select_list = form.edit_objective_prerequisites.data
+        if select_list: prerequisites = g.user.visible_objectives().filter(Objective.name.in_(select_list)).all()
+        undefined_prerequisites = list(set(select_list) - set(obj.name for obj in prerequisites))
         result = {}
         result['savedsuccess'] = False
         if not obj_id:
@@ -316,7 +318,7 @@ def editmodule(id = 0):
             
     if request.method == 'POST':
         #import pdb; pdb.set_trace()
-        moduleform.objs.choices = [(i, i) for i in moduleform.objs.data]
+        moduleform.module_objectives.choices = [(i, i) for i in moduleform.module_objectives.data]
         #Both material upload types are required in the moduleform definition so need to remove the redundant field now to prevent validation errors
 
         #if material_source == 'upload':           #DJG - need a way to define the global list of sources so value means the same thing as database definitions 
@@ -339,10 +341,11 @@ def editmodule(id = 0):
             if material_type != "Course":
                 #Reading off the list of objectives
                 #DJG - try request.POST["objectives"] to see if data format is different
-                unicode_list = request.form["objectives"]       #DJG - the data sent by the ajax request has the list converted into a unicode text string with commas
-                python_list = filter(None, unicode_list.split(','))            #DJG - Dodgy string manipulation, means I can't have commas in objective names     
-                if python_list: objectives = g.user.visible_objectives().filter(Objective.name.in_(python_list)).all()      #DJG - avoiding using the in_ operation when the list is empty as this is an inefficiency
-                undefined_objectives = list(set(python_list) - set(obj.name for obj in objectives))     #DJG - Need to trap undefined objectives and return savedsucess as json if failed
+                #unicode_list = request.form["objectives"]       #DJG - the data sent by the ajax request has the list converted into a unicode text string with commas
+                #python_list = filter(None, unicode_list.split(','))            #DJG - Dodgy string manipulation, means I can't have commas in objective names     
+                select_list = moduleform.module_objectives.data
+                if select_list: objectives = g.user.visible_objectives().filter(Objective.name.in_(select_list)).all()      #DJG - avoiding using the in_ operation when the list is empty as this is an inefficiency
+                undefined_objectives = list(set(select_list) - set(obj.name for obj in objectives))     #DJG - Need to trap undefined objectives and return savedsucess as json if failed
 
                 if undefined_objectives:       #DJG - code repeat of above, how to avoid this
                     is_are = 'is not already defined as an objetive' if len(undefined_objectives) == 1 else 'are not already defined as objetives'

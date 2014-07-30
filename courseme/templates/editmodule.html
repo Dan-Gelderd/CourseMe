@@ -71,15 +71,7 @@ $(document).ready(function () {
         console.log(objectives);
         console.log(course_modules);
         console.log(data);          //DJG - not sure why edit_objective_id is getting repeated in the data array
-        //console.log($(".dynamic-list-select").serialize());
-        //console.log($(".dynamic-list-select").options[0].selected);
 
-        //data_json = JSON.stringify(data)        //DJG - Played with alternatives to passing data back that allows the list of prerequisites to be parsed as a list object by the view function. This approach leaves the wtf form unpopulated so fails validation and no csrf, needs reviewing
-        //console.log(jQuery.isPlainObject( data ));
-        //console.log(typeof data);
-        //console.log(data_json);      
-        //console.log(jQuery.isPlainObject( data_json ));
-        //console.log(typeof data_json);        
         
         $.post(  
             flask_util.url_for('editmodule', {id: {{edit_id}} }),  
@@ -274,7 +266,7 @@ $(document).ready(function () {
     
     <div id="specify_module_objectives" class="form-group{% if edit_module_form.material_type.data == "Course" %} hidden{% endif %}">
         <div class="dynamic-list-container" id="define_objectives">
-            {% with dynamic_list_select=edit_module_form.objs %}
+            {% with dynamic_list_select=edit_module_form.module_objectives %}
             {% include "subplates/dynamic-list.html" %}
             {% endwith %}
         </div>

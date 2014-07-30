@@ -31,19 +31,18 @@ class LoginForm(Form):
 class EditObjective(Form):
     edit_objective_id = HiddenField()
     edit_objective_name = TextField('Objective', validators = [
-                Regexp(r'\w'),                  #DJG - need to exclude commas in current implementation of ajax calls but this isn't working
                 Required('Enter a description of the objective'),
                 Length(min=4, message=(u'Description must be at least 4 characters'))])
     edit_objective_subject = SelectField('Subject', choices=[('Mathematics','Mathematics'),('Biology','Biology')])
     edit_objective_prerequisites = SelectMultipleField('Prerequisites', choices=[])
-    authors = FieldList(TextField('Name'))      #DJG - Try this as way of geting proper ordered list back from form
+    #authors = FieldList(TextField('Name'))      #DJG - Try this as way of geting proper ordered list back from form
 
 class EditModule(Form):
     edit_module_id = HiddenField()                  #DJG - don't know if I need this
     name = TextField('Module name', validators=[Required('Please enter a name for your module')])
     description = TextAreaField('Brief description')
     notes = TextAreaField('Notes')
-    objs = SelectMultipleField('Objectives', choices=[])
+    module_objectives = SelectMultipleField('Objectives', choices=[])
     material_type = RadioField('Material Type',
                                  choices=[('Lecture', 'Lecture'), ('Exercise', 'Exercise'), ('Course', 'Course (select individual modules to include later)')],
                                  default='Lecture',
