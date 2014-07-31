@@ -372,7 +372,7 @@ def editmodule(id = 0):
             else:
                 unicode_list = request.form["course_modules"]       #DJG - the data sent by the ajax request has the list converted into a unicode text string with commas
                 python_list = filter(None, unicode_list.split(','))  
-                if python_list: course_modules = [Module.query.get(mod) for mod in python_list]     #DJG - need some validation here to make sure modules exist and are not themselves courses etc.
+                if python_list: course_modules = [Module.query.get(mod_id) for mod_id in python_list]     #DJG - need some validation here to make sure modules exist and are not themselves courses etc.
                 proceed = True
                 
             if proceed:
@@ -592,6 +592,49 @@ def groups():
         form=form,
         title=title
         )
+
+@app.route('/group_get/<int:id>')
+@login_required
+def group_get(id):
+    group = Group.query.get(id)
+    if group:
+        if group.creator == g.user:
+            return json.dumps(group.as_dict(), separators=(',',':'))
+        else:
+            flash('Not authorised to view this group')
+            return json.dumps({'error': 'unauthorised'})
+    else:
+        flash('This group does not exist')
+        return json.dumps({'error': 'not found'})
+
+@app.route('/group_save/<int:id>')
+@login_required
+def group_save(id):
+    if id>0:
+        group = Group.query.get(id)
+        if group:
+            if group.creator == g.user:
+                group.name = 
+            else:
+                flash('Not authorised to edit this group')
+                return json.dumps({'error': 'unauthorised'})
+        else:
+            flash('This group does not exist')
+            return json.dumps({'error': 'not found'})
+    
+@app.route('/group_delete/<int:id>')
+@login_required
+def group_delete(id):
+    group = Group.query.get(id)
+    if group:
+        if group.creator == g.user:
+            return json.dumps(group.as_dict(), separators=(',',':'))
+        else:
+            flash('Not authorised to delete this group')
+            return json.dumps({'error': 'unauthorised'})
+    else:
+        flash('This group does not exist')
+        return json.dumps({'error': 'not found'})
 
 @app.route('/restrict_modules_viewed/<int:user_id>/<int:institution_id>')
 @login_required

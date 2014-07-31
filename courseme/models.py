@@ -574,6 +574,11 @@ class Group(db.Model):
             db.session.add(message)
             db.session.commit()
 
+    def as_dict(self):
+        result = {}
+        result[name] = self.name
+        result['members'] = [user.name for user in self.members]
+        return result
 
 institution_members = db.Table('institution_members',
     db.Column('institution_id', db.Integer, db.ForeignKey('institution.id')),

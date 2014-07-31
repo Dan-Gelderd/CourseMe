@@ -3,31 +3,73 @@
 
 <script type='text/javascript'>
 $(document).ready(function () {
-    $("#create_group").click(function(){
-
-            return false;
+    
+    $('#edit_members_form_group').find('.dynamic-list-new-item-label').text("Enter new user email");
+    $('#edit_members_form_group').find('.dynamic-list-heading').text("Members");    
+    //$('#edit_members_form_group').find('.dynamic-list-new-item').setAttribute('placeholder', '')      
+    
+    $(".edit-group").click(function(){
+        //$("#edit_group_panel").removeClass("hidden")
+        var group_id = this.id.split('_')[0];
+        console.log(group_id);
+        if (group_id == 0) {
+            console.log("clear");
+            $("#edit_group_name").val("")
+            $("#edit_group_form").find(".dynamic-list-new-item").val("");
+            $("#edit_group_form").find(".help-block").text("");
+            $("#edit_group_form").find(".has-error").removeClass("has-error");
+            $("#edit_group_form").find(".dynamic-list-item").remove(); 
+            $("#delete_group").addClass("hidden")
+        }
+        else {
+            $.getJSON(
+                flask_util.url_for('group_get', {id: group_id }),
+                function(json) {
+                    console.log(json);        //DJG - test returned data
+                    if(json.error!=undefined) {
+                        location.reload(true)
+                    }
+                    else {
+                        $("#edit_group_name").val(json.name)
+                        $("#edit_group_form").find(".dynamic-list-new-item").val("");
+                        $("#edit_group_form").find(".help-block").text("");
+                        $("#edit_group_form").find(".has-error").removeClass("has-error");
+                        $("#delete_group").removeClass("hidden")
+                        dynamicList_addList(json.members, $("#edit_group_form"));
+                    }
+                }
+            );                    
+        }
     });
+    
+    $("#save_group").click(function(){
+        event.preventDefault();
+        console.log('save')
+    });
+
+    $("#delete_group").click(function(){
+        event.preventDefault();
+        console.log('delete')
+    });
+    
 });
 </script>
 
 <h1>Groups</h1>
 <p>Define groups of other users to make it easier to share material and collaborate. These could be groups of students, for example a class, who you want to set and review objectives for as a whole. Or you could define groups of colleagues or fellow students you want to share great material recommendations with.</p>
 
-<button class="btn btn-default btn-sm btn-success" id="create_group">Create New Group</button>
-
-<hr/>
 
 <div class="row">
-    <div class="col-md-7">
-        <ul>
-            <li>Create new group</li>
+    <div class="col-md-6">
+        <ul class="list-unstyled">
+            <li><button id="0_group" type="button" class="btn btn-link edit-group">Create new group</button></li>
             {% for group in g.user.groups_created %}
-            <li>{{group.name}}</li>
+            <li><button id={{group.id ~ "_group"}} type="button" class="btn btn-link edit-group">{{group.name}}</button></li>
             {% endfor %}
         </ul>
     </div>
-    <div class="col-md-5">
-        <div class="panel panel-default">
+    <div class="col-md-6">
+        <div id="edit_group_panel" class="panel panel-default">
             <div class="panel-body">
                 <form class="form" action="" method="POST" id="edit_group_form">
                     {{ form.hidden_tag() }}
@@ -37,16 +79,14 @@ $(document).ready(function () {
                         {{ form.edit_group_name}}
                         <p class="help-block" id="error_edit_group_name"></p>
                     </div>
-                    <div class="form-group" id="edit_group_members_form_group">
-                        {{ form.edit_group_members.label }}
-                        {{ form.edit_group_members }}
-                        <p class="help-block" id="error_edit_group_members"></p>
-                    </div>
                     <div class="dynamic-list-container" id="edit_members_form_group">
                         {% with dynamic_list_select=form.edit_group_members %}
                         {% include "subplates/dynamic-list.html" %}
                         {% endwith %}
                     </div>
+                
+                    <button id="save_group" class="btn btn-success" type="submit">Save</button>
+                    <button id="delete_group" class="btn btn-danger hidden" type="cancel">Delete</button>
                 </form>
             </div>
         </div>
