@@ -576,8 +576,9 @@ class Group(db.Model):
 
     def as_dict(self):
         result = {}
-        result[name] = self.name
-        result['members'] = [user.name for user in self.members]
+        result['id'] = self.id
+        result['name'] = self.name
+        result['members'] = [user.email for user in self.members]
         return result
 
 institution_members = db.Table('institution_members',

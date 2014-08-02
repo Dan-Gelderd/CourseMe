@@ -9,11 +9,12 @@ $(document).ready(function () {
     //$('#edit_members_form_group').find('.dynamic-list-new-item').setAttribute('placeholder', '')      
     
     $(".edit-group").click(function(){
-        //$("#edit_group_panel").removeClass("hidden")
+        $("#edit_group_panel").removeClass("hidden")
         var group_id = this.id.split('_')[0];
         console.log(group_id);
         if (group_id == 0) {
             console.log("clear");
+            $("#edit_group_id").val(0)
             $("#edit_group_name").val("")
             $("#edit_group_form").find(".dynamic-list-new-item").val("");
             $("#edit_group_form").find(".help-block").text("");
@@ -24,18 +25,19 @@ $(document).ready(function () {
         else {
             $.getJSON(
                 flask_util.url_for('group_get', {id: group_id }),
-                function(json) {
-                    console.log(json);        //DJG - test returned data
-                    if(json.error!=undefined) {
+                function(result) {
+                    console.log(result);        //DJG - test returned data
+                    if(result.error!=undefined) {
                         location.reload(true)
                     }
                     else {
-                        $("#edit_group_name").val(json.name)
+                        $("#edit_group_id").val(result.id)
+                        $("#edit_group_name").val(result.name)
                         $("#edit_group_form").find(".dynamic-list-new-item").val("");
                         $("#edit_group_form").find(".help-block").text("");
                         $("#edit_group_form").find(".has-error").removeClass("has-error");
                         $("#delete_group").removeClass("hidden")
-                        dynamicList_addList(json.members, $("#edit_group_form"));
+                        dynamicList_addList(result.members, $("#edit_group_form"));
                     }
                 }
             );                    
@@ -44,7 +46,26 @@ $(document).ready(function () {
     
     $("#save_group").click(function(){
         event.preventDefault();
-        console.log('save')
+        console.log('save');
+        var data = $("#edit_group_form").serializeArray(); 
+        $.post(  
+            flask_util.url_for('group_save'),
+            data, 
+            function(json) {
+                var result = $.parseJSON(json);
+                console.log(result);
+                if(result.error!=undefined || result.savedsuccess) {
+                    console.log('reload');
+                    location.reload(true);
+                }
+                else {
+                    if(result.edit_group_name!=undefined) {
+                        $("#error_edit_group_name").text(result.edit_group_name[0]);
+                        $("#edit_group_name_form_group").addClass("has-error");
+                    };                
+                }
+            }
+        );
     });
 
     $("#delete_group").click(function(){
@@ -69,14 +90,14 @@ $(document).ready(function () {
         </ul>
     </div>
     <div class="col-md-6">
-        <div id="edit_group_panel" class="panel panel-default">
+        <div id="edit_group_panel" class="panel panel-default hidden">
             <div class="panel-body">
                 <form class="form" action="" method="POST" id="edit_group_form">
                     {{ form.hidden_tag() }}
                     {{ form.edit_group_id }}
                     <div class="form-group" id="edit_group_name_form_group">
                         {{ form.edit_group_name.label }}
-                        {{ form.edit_group_name}}
+                        {{ form.edit_group_name(placeholder="Enter Group Name", class="form-control") }}
                         <p class="help-block" id="error_edit_group_name"></p>
                     </div>
                     <div class="dynamic-list-container" id="edit_members_form_group">

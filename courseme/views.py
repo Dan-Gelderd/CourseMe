@@ -511,7 +511,7 @@ def add_module_to_course(module_id, course_id):
     return json.dumps(result, separators=(',',':'))
 
 
-@app.route('/course-enroll/<int:course_id>')
+@app.route('/course-enroll/<int:course_id>', methods = ['POST'])
 @login_required
 def course_enroll(course_id):
     result = {}
@@ -601,26 +601,54 @@ def group_get(id):
         if group.creator == g.user:
             return json.dumps(group.as_dict(), separators=(',',':'))
         else:
-            flash('Not authorised to view this group')
+            flash('You are not authorised to view this group')
             return json.dumps({'error': 'unauthorised'})
     else:
         flash('This group does not exist')
         return json.dumps({'error': 'not found'})
 
-@app.route('/group_save/<int:id>')
+@app.route('/group_save', methods = ['POST'])
 @login_required
-def group_save(id):
-    if id>0:
-        group = Group.query.get(id)
-        if group:
-            if group.creator == g.user:
-                group.name = 
+def group_save():
+    form = forms.EditGroup()
+    form.edit_group_members.choices = [(i, i) for i in form.edit_group_members.data]        #DJG - could put some actual validation here
+    
+    if form.validate():
+        result = {}
+        result['savedsuccess'] = False
+        id = int(form.edit_group_id.data)
+        #import pdb; pdb.set_trace()
+        group_members = [User.query.filter_by(email=e).first() for e in form.edit_group_members.data]
+        if id>0:
+            group = Group.query.get(id)
+            if group:
+                if group.creator == g.user:
+                    group.name = form.edit_group_name.data
+                    group.members = group_members
+                    db.session.add(group)
+                    db.session.commit()
+                    result['savedsuccess'] = True
+                    flash('Group saved as ' + group.name)
+                else:
+                    flash('You are not authorised to edit this group')
+                    result['error'] = "unauthorised"
             else:
-                flash('Not authorised to edit this group')
-                return json.dumps({'error': 'unauthorised'})
+                flash('This group does not exist')
+                result['error'] = "not found"
         else:
-            flash('This group does not exist')
-            return json.dumps({'error': 'not found'})
+            group = Group(
+                name = form.edit_group_name.data,
+                creator = g.user,
+                members = group_members
+            )
+            db.session.add(group)
+            db.session.commit()
+            result['savedsuccess'] = True
+            flash('New Group saved as ' + group.name)
+        return json.dumps(result, separators=(',',':'))
+    else:
+        form.errors['savedsuccess'] = False
+        return json.dumps(form.errors, separators=(',',':'))
     
 @app.route('/group_delete/<int:id>')
 @login_required
@@ -630,7 +658,7 @@ def group_delete(id):
         if group.creator == g.user:
             return json.dumps(group.as_dict(), separators=(',',':'))
         else:
-            flash('Not authorised to delete this group')
+            flash('You are not authorised to delete this group')
             return json.dumps({'error': 'unauthorised'})
     else:
         flash('This group does not exist')
