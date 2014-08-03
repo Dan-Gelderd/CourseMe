@@ -2,7 +2,7 @@ from flask import render_template, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from courseme import app, db, lm, hash_string, lectures
 import forms
-from models import User, ROLE_USER, ROLE_ADMIN, Objective, UserObjective, Module, UserModule, Institution, Group, Message
+from models import User, ROLE_USER, ROLE_ADMIN, Objective, SchemeOfWork, UserObjective, Module, UserModule, Institution, Group, Message
 from datetime import datetime
 import json, operator
 #import pdb; pdb.set_trace()        #DJG - remove
@@ -428,10 +428,12 @@ def editmodule(id = 0):
 def module(id):
        
     module = Module.query.get_or_404(id)
+    messageform = forms.SendMessage()
     usermodule = UserModule.FindOrCreate(g.user.id, id) 
     templates = {"Lecture": "lecture.html", "Course": "course.html"}
     
     return render_template(templates[module.material_type],
+                           messageform=messageform,
                            module=module,
                            usermodule=usermodule)
 
@@ -653,16 +655,110 @@ def group_save():
 @app.route('/group_delete/<int:id>')
 @login_required
 def group_delete(id):
+    result = {}
+    result['savedsuccess'] = False
     group = Group.query.get(id)
     if group:
         if group.creator == g.user:
-            return json.dumps(group.as_dict(), separators=(',',':'))
+            db.session.delete(group)
+            db.session.commit()
+            result['savedsuccess'] = True
         else:
             flash('You are not authorised to delete this group')
-            return json.dumps({'error': 'unauthorised'})
+            result['error'] = "unauthorised"
     else:
         flash('This group does not exist')
+        result['error'] = "not found"
+    return json.dumps(result, separators=(',',':'))
+
+
+@app.route('/schemes')
+@login_required
+def schemes():
+    title = "CourseMe - Schemes of Work"
+    form = forms.EditScheme()
+    return render_template(
+        'schemes.html',
+        form=form,
+        title=title
+        )
+
+@app.route('/scheme_get/<int:id>')
+@login_required
+def scheme_get(id):
+    scheme = SchemeOfWork.query.get(id)
+    if scheme:
+        if scheme.creator == g.user:
+            return json.dumps(scheme.as_dict(), separators=(',',':'))
+        else:
+            flash('You are not authorised to view this scheme of work')
+            return json.dumps({'error': 'unauthorised'})
+    else:
+        flash('This scheme of work does not exist')
         return json.dumps({'error': 'not found'})
+
+@app.route('/scheme_save', methods = ['POST'])
+@login_required
+def scheme_save():
+    form = forms.EditScheme()
+    form.edit_scheme_objectives.choices = [(i, i) for i in form.edit_scheme_objectives.data]        #DJG - could put some actual validation here
+    
+    if form.validate():
+        result = {}
+        result['savedsuccess'] = False
+        id = int(form.edit_scheme_id.data)
+        #import pdb; pdb.set_trace()
+        scheme_objectives = [Objective.query.filter_by(name=o).first() for o in form.edit_scheme_objectives.data]
+        if id>0:
+            scheme = SchemeOfWork.query.get(id)
+            if scheme:
+                if scheme.creator == g.user:
+                    scheme.name = form.edit_scheme_name.data
+                    scheme.objectives = scheme_objectives
+                    db.session.add(scheme)
+                    db.session.commit()
+                    result['savedsuccess'] = True
+                    flash('Scheme saved as ' + scheme.name)
+                else:
+                    flash('You are not authorised to edit this scheme of work')
+                    result['error'] = "unauthorised"
+            else:
+                flash('This scheme of work does not exist')
+                result['error'] = "not found"
+        else:
+            scheme = SchemeOfWork(
+                name = form.edit_scheme_name.data,
+                creator = g.user,
+                objectives = scheme_objectives
+            )
+            db.session.add(scheme)
+            db.session.commit()
+            result['savedsuccess'] = True
+            flash('New scheme of work saved as ' + scheme.name)
+        return json.dumps(result, separators=(',',':'))
+    else:
+        form.errors['savedsuccess'] = False
+        return json.dumps(form.errors, separators=(',',':'))
+    
+@app.route('/scheme_delete/<int:id>')
+@login_required
+def scheme_delete(id):
+    result = {}
+    result['savedsuccess'] = False
+    scheme = SchemeOfWork.query.get(id)
+    if scheme:
+        if scheme.creator == g.user:
+            db.session.delete(scheme)
+            db.session.commit()
+            result['savedsuccess'] = True
+        else:
+            flash('You are not authorised to delete this scheme of work')
+            result['error'] = "unauthorised"
+    else:
+        flash('This scheme of work does not exist')
+        result['error'] = "not found"
+    return json.dumps(result, separators=(',',':'))
+
 
 @app.route('/restrict_modules_viewed/<int:user_id>/<int:institution_id>')
 @login_required

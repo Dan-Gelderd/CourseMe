@@ -5,6 +5,14 @@
 
 <script type='text/javascript'>
 $(document).ready(function () {
+  
+  $("#recommend_material").click(function(){
+    $("#send_message_form").find(".help-block").text("");
+    $("#send_message_form").find(".has-error").removeClass("has-error");
+    $("#send_message_modal").modal('show');
+    return false;
+  });
+  
   $(".star").on('click', function( event ) {
     //console.log("Star Click");
     var star = $(this)
@@ -162,12 +170,7 @@ $(document).ready(function () {
           <h1 style="display:none;">Social Actions</h1>
           <!-- DJG need to make acessible to screen readers using <a class="sr-only" href="#content">Skip to main content</a> -->
           <div style="font-size: large">
-            <span class="dropdown">
-              <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-share-alt"></span></a>
-              <ul class="dropdown-menu">
-                <li><a href="#">Recommend</a></li>
-              </ul> 
-            </span>
+            <a href="#" id="recommend_material"><span class="glyphicon glyphicon-share-alt"></span></a>
             <span class="dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-plus"></span></a>
               <ul class="dropdown-menu">
@@ -365,6 +368,6 @@ $(document).ready(function () {
     </div>
   </div>  
 
-
+{% include "subplates/send-message.html" %}
 
 {% endblock %}

@@ -1,0 +1,132 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<script type='text/javascript'>
+$(document).ready(function () {
+    
+    $('#edit_objectives_form_group').find('.dynamic-list-new-item-label').text("Enter new objective");
+    $('#edit_objectives_form_group').find('.dynamic-list-heading').text("Objectives");    
+    //$('#edit_members_form_group').find('.dynamic-list-new-item').setAttribute('placeholder', '')      
+    
+    var availableTags = [];
+    {% for objective in g.user.visible_objectives() %}
+        availableTags.push('{{ objective.name }}')    
+    {% endfor %}    
+        
+    $("#edit_objectives_form_group").find(".dynamic-list-new-item").autocomplete({
+        source: availableTags
+    });    
+    
+    $(".edit-scheme").click(function(){
+        $("#edit_scheme_panel").removeClass("hidden")
+        var scheme_id = this.id.split('_')[0];
+        console.log(scheme_id);
+        if (scheme_id == 0) {
+            console.log("clear");
+            $("#edit_scheme_id").val(0)
+            $("#edit_scheme_name").val("")
+            $("#edit_scheme_form").find(".dynamic-list-new-item").val("");
+            $("#edit_scheme_form").find(".help-block").text("");
+            $("#edit_scheme_form").find(".has-error").removeClass("has-error");
+            $("#edit_scheme_form").find(".dynamic-list-item").remove(); 
+            $("#delete_scheme").addClass("hidden")
+        }
+        else {
+            $.getJSON(
+                flask_util.url_for('scheme_get', {id: scheme_id }),
+                function(result) {
+                    console.log(result);        //DJG - test returned data
+                    if(result.error!=undefined) {
+                        location.reload(true)
+                    }
+                    else {
+                        $("#edit_scheme_id").val(result.id)
+                        $("#edit_scheme_name").val(result.name)
+                        $("#edit_scheme_form").find(".dynamic-list-new-item").val("");
+                        $("#edit_scheme_form").find(".help-block").text("");
+                        $("#edit_scheme_form").find(".has-error").removeClass("has-error");
+                        $("#delete_scheme").removeClass("hidden")
+                        dynamicList_addList(result.objectives, $("#edit_scheme_form"));
+                    }
+                }
+            );                    
+        }
+    });
+    
+    $("#save_scheme").click(function(){
+        event.preventDefault();
+        console.log('save');
+        var data = $("#edit_scheme_form").serializeArray(); 
+        $.post(  
+            flask_util.url_for('scheme_save'),
+            data, 
+            function(json) {
+                var result = $.parseJSON(json);
+                console.log(result);
+                if(result.error!=undefined || result.savedsuccess) {
+                    console.log('reload');
+                    location.reload(true);
+                }
+                else {
+                    if(result.edit_scheme_name!=undefined) {
+                        $("#error_edit_scheme_name").text(result.edit_scheme_name[0]);
+                        $("#edit_scheme_name_form_group").addClass("has-error");
+                    };                
+                }
+            }
+        );
+    });
+
+    $("#delete_scheme").click(function(){
+        event.preventDefault();
+        scheme_id = $("#edit_scheme_id").val();
+        $.getJSON(  
+            flask_util.url_for('scheme_delete', {id: scheme_id }),
+            function(result) {
+                location.reload(true);
+            }    
+        );    
+    });
+    
+});
+</script>
+
+<h1>Schemes of Work</h1>
+<p>Define schemes of work to help you monitor your own of your students' progress.</p>
+
+
+<div class="row">
+    <div class="col-md-6">
+        <ul class="list-unstyled">
+            <li><button id="0_scheme" type="button" class="btn btn-link edit-scheme">Create new scheme</button></li>
+            {% for scheme in g.user.schemes_of_work %}
+            <li><button id={{scheme.id ~ "_scheme"}} type="button" class="btn btn-link edit-scheme">{{scheme.name}}</button></li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="col-md-6">
+        <div id="edit_scheme_panel" class="panel panel-default hidden">
+            <div class="panel-body">
+                <form class="form" action="" method="POST" id="edit_scheme_form">
+                    {{ form.hidden_tag() }}
+                    {{ form.edit_scheme_id }}
+                    <div class="form-group" id="edit_scheme_name_form_group">
+                        {{ form.edit_scheme_name.label }}
+                        {{ form.edit_scheme_name(placeholder="Scheme Name", class="form-control") }}
+                        <p class="help-block" id="error_edit_scheme_name"></p>
+                    </div>
+                    <div class="dynamic-list-container" id="edit_objectives_form_group">
+                        {% with dynamic_list_select=form.edit_scheme_objectives %}
+                        {% include "subplates/dynamic-list.html" %}
+                        {% endwith %}
+                    </div>
+                
+                    <button id="save_scheme" class="btn btn-success" type="submit">Save</button>
+                    <button id="delete_scheme" class="btn btn-danger hidden" type="cancel">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>    
+</div>
+
+{% endblock %}

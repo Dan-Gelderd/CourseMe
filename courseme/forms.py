@@ -3,6 +3,7 @@ from wtforms import TextField, TextAreaField, PasswordField, BooleanField, Hidde
 from wtforms.validators import Required, Length, Email, Regexp, EqualTo, url
 from wtforms.fields.html5 import URLField
 from wtforms.fields import FieldList
+from models import Module
 
 class SignupForm(Form):
     email = TextField('Email address', validators=[
@@ -61,3 +62,14 @@ class EditGroup(Form):
     edit_group_id = HiddenField()
     edit_group_name = TextField('Group Name', validators = [Required('Enter a group name')])
     edit_group_members = SelectMultipleField('Members', choices=[])
+
+class EditScheme(Form):
+    edit_scheme_id = HiddenField()
+    edit_scheme_name = TextField('Scheme Name', validators = [Required('Enter a name for this scheme of work')])
+    edit_scheme_objectives = SelectMultipleField('Objectives', choices=[])
+    
+class SendMessage(Form):
+    message_subject = TextField('Message Subject')
+    message_body = TextAreaField('Message Content')
+    request_access = BooleanField("Request to view students' progress", default = False)
+    recommended_material = SelectField('Recommend Material', choices=Module.RecommendChoices())

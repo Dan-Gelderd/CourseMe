@@ -1,0 +1,34 @@
+<div class="modal fade" id="send_message_modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button class="close" type="button" data-dismiss="modal" aria-hidden="true">&times;</button> 
+                <h4 class="modal-title">New Message</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form" action="" method="POST" id="send_message_form">
+                    {{ messageform.hidden_tag() }}
+                    <div class="form-group" id="message_subject_form_group">
+                        {{ messageform.message_subject.label }}
+                        {{ messageform.message_subject(class="form-control") }}
+                        <p class="help-block" id="error_message_subject"></p>
+                    </div>
+                    <div class="form-group" id="message_body_form_group">
+                        {{ messageform.message_body.label }}
+                        {{ messageform.message_body(class="form-control") }}
+                        <p class="help-block" id="error_message_body"></p>
+                    </div>    
+                    <div class="form-group" id="request_access_form_group">
+                        {{ messageform.request_access.label }}
+                        {{ messageform.request_access(class="form-control") }}
+                        <p class="help-block" id="error_request_access"></p>
+                    </div>                    
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary btn-success" type="submit" id="send_message">Send</button>
+                <button class="btn btn-default" type="button" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>

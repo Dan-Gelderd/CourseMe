@@ -28,6 +28,18 @@ $(document).ready(function () {
         dynamicList_addList(moduleObjectives, $("#define_objectives"));
     });
     
+    $("#recommend_material").click(function(){
+            $("#edit_objective_id").val("");
+            $("#edit_objective_name").val("");
+            $("#edit_objective_subject").attr("disabled", false);            
+            $("#edit_objective_form").find(".dynamic-list-new-item").val("");
+            $("#edit_objective_form").find(".help-block").text("");
+            $("#edit_objective_form").find(".has-error").removeClass("has-error");
+            $("#edit_objective_form").find(".dynamic-list-item").remove();
+            $("#edit_objective_modal").modal('show');
+            return false;
+    });
+    
     $('[name="material_type"]').change(function() {
         var material_type = $('[name="material_type"]:checked' ).val();
         if (material_type == 'Course') {

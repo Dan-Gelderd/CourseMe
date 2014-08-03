@@ -8,6 +8,15 @@ $(document).ready(function () {
     $('#edit_members_form_group').find('.dynamic-list-heading').text("Members");    
     //$('#edit_members_form_group').find('.dynamic-list-new-item').setAttribute('placeholder', '')      
     
+    var availableTags = [];
+    {% for student in g.user.all_students() %}
+        availableTags.push('{{ student.email }}')    
+    {% endfor %}    
+        
+    $("#edit_members_form_group").find(".dynamic-list-new-item").autocomplete({
+        source: availableTags
+    });    
+    
     $(".edit-group").click(function(){
         $("#edit_group_panel").removeClass("hidden")
         var group_id = this.id.split('_')[0];
@@ -70,7 +79,13 @@ $(document).ready(function () {
 
     $("#delete_group").click(function(){
         event.preventDefault();
-        console.log('delete')
+        group_id = $("#edit_group_id").val();
+        $.getJSON(  
+            flask_util.url_for('group_delete', {id: group_id }),
+            function(result) {
+                location.reload(true);
+            }    
+        );    
     });
     
 });

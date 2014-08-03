@@ -40,6 +40,7 @@ class User(db.Model):
     modules_authored = db.relationship("Module", backref="author", lazy = 'dynamic')
     institutions_created = db.relationship("Institution", primaryjoin="Institution.creator_id==User.id", backref="creator", lazy='dynamic')
     groups_created = db.relationship("Group", primaryjoin="Group.creator_id==User.id", backref="creator", lazy='dynamic')
+    schemes_of_work = db.relationship("SchemeOfWork", backref="creator", lazy='dynamic')
 
     students = db.relationship("User",
                     secondary=student_tutor,
@@ -128,8 +129,11 @@ class User(db.Model):
     
     def recent_modules(self, count):
         #import pdb; pdb.set_trace()        #DJG - remove
-        #return self.live_modules_viewed().order_by(desc(UserModule.last_viewed)).limit(count).all()     #DJG - working but not on index page
-        return []
+        if self:
+            #return self.live_modules_viewed().order_by(desc(UserModule.last_viewed)).limit(count).all()     #DJG - working but not on index page
+            return []
+        else:
+            return []
     
     def relevant_institutions(self):
         #DJG - must be able to do better than this!
@@ -150,11 +154,21 @@ class User(db.Model):
     def permission(self, viewer):
         return self == viewer or viewer in self.tutors.all() or (self.institution_student and viewer in self.institution_tutors().all())
     
-    def has_students(self):
-        has_students = bool(self.students.first())
+    def all_students(self):
+        all_students = self.students.all()
         for i in self.institutions_member:
-            has_students = has_students or bool(i.students.first())
-        return has_students
+            all_students.extend(i.students.all())
+        #import pdb; pdb.set_trace()
+        return all_students    
+    
+    def has_students(self):         #DJG - change to use all students
+        if self:
+            has_students = bool(self.students.first())
+            for i in self.institutions_member:
+                has_students = has_students or bool(i.students.first())
+            return has_students
+        else:
+            return False
         
         
     @staticmethod
@@ -275,6 +289,38 @@ course_modules = db.Table('course_modules',
 )
 
 
+scheme_objectives = db.Table('scheme_objectives',
+    db.Column('scheme_id', db.Integer, db.ForeignKey('scheme_of_work.id')),
+    db.Column('objective_id', db.Integer, db.ForeignKey('objective.id'))
+)
+
+class SchemeOfWork(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    name = db.Column(db.String(120))    
+    creator_id = db.Column(db.Integer, db.ForeignKey(User.id), nullable=False)        #DJG - need , use_alter=True, name='fk_institution_creator_id' to avoid circular join references
+
+    objectives = db.relationship(Objective, secondary=scheme_objectives, lazy='dynamic',
+        backref=db.backref('schemes_of_work', lazy='dynamic'))
+    
+    def is_objective(self, objective):
+        return self.objectives.filter(scheme_objectives.c.objective_id == objective.id).count() > 0
+
+    def add_objective(self, objective):
+        if user:
+            if not self.is_objective(objective):
+                self.objectives.append(objective)
+                db.session.add(self)
+                db.session.commit()
+        else:
+            pass
+        
+    def as_dict(self):
+        result = {}
+        result['id'] = self.id
+        result['name'] = self.name
+        result['objectives'] = [objective.name for objective in self.objectives]
+        return result
+
 class UserObjective(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     user_id = db.Column(db.Integer, db.ForeignKey(User.id))
@@ -390,10 +436,13 @@ class Module(db.Model):                                             #DJG - chang
         for i in self.author.institutions:
             i.approved_modules = i.approved_modules.append(self)
         
-
     @staticmethod
     def LiveModules():
         return Module.query.filter(Module.live)
+
+    @staticmethod
+    def RecommendChoices():
+        return [(module.id, module.name) for module in Module.LiveModules()]
     
 class UserModule(db.Model):
     id = db.Column(db.Integer, primary_key = True)

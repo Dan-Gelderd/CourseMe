@@ -40,7 +40,6 @@
                   <a href="#" class="dropdown-toggle" data-toggle="dropdown">Quick Links<b class="caret"></b></a>
                   <ul class="dropdown-menu">
                     <li><a href="{{ url_for('editmodule', id=0) }}">Create new material</a></li>
-                    <li><a href="{{ url_for('objectives_admin') }}">See all objectives</a></li>
                     {% if g.user.is_authenticated() %}
                     <li role="presentation" class="divider"></li>
                     <li role="presentation" class="dropdown-header">Recent modules</li>
@@ -61,7 +60,8 @@
               </form>
               
               <ul class="nav navbar-nav navbar-right">
-                {% if g.user.has_students() %}
+                <li><a href="{{ url_for('objectives_admin') }}">Objectives Map</a></li>
+                {% if g.user.is_authenticated() and g.user.has_students() %}
                 <li><a href="{{ url_for('students') }}">Students</a></li>                
                 {% endif %}
                 <li class="dropdown">
