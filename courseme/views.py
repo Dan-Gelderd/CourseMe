@@ -787,6 +787,27 @@ def restrict_modules_viewed(user_id, institution_id):
 
     return json.dumps(result, separators=(',',':'))
 
+
+@app.route('/send_message', methods = ['POST'])
+@login_required
+def send_message():
+    form = forms.SendMessage()
+    result = {}
+    result['savedsuccess'] = False
+    #import pdb; pdb.set_trace()
+    if form.validate():
+        print 'message form submitted'
+        #import pdb; pdb.set_trace()
+        if form.message_type.data == "Individual":
+            pass
+        elif form.message_type.data == "Group":
+            pass
+        else:
+            flash("Message type not recognised")
+            return ""
+    return json.dumps(result, separators=(',',':'))
+
 @app.route('/test')
 def test():
     return render_template('test.html')
+

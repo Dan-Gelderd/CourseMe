@@ -9,6 +9,9 @@ $(document).ready(function () {
   $("#recommend_material").click(function(){
     $("#send_message_form").find(".help-block").text("");
     $("#send_message_form").find(".has-error").removeClass("has-error");
+    $("#message_subject").val("New recommendation - " + "{{module.name}}" + " by " + "{{module.author.name}}")
+    $("#recommended_material").val({{ module.id }});
+    $("#recommended_material_form_group").addClass("hidden");  
     $("#send_message_modal").modal('show');
     return false;
   });

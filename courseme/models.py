@@ -442,7 +442,7 @@ class Module(db.Model):                                             #DJG - chang
 
     @staticmethod
     def RecommendChoices():
-        return [(module.id, module.name) for module in Module.LiveModules()]
+        return [(str(module.id), module.name) for module in Module.LiveModules()]
     
 class UserModule(db.Model):
     id = db.Column(db.Integer, primary_key = True)

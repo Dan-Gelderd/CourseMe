@@ -69,6 +69,11 @@ class EditScheme(Form):
     edit_scheme_objectives = SelectMultipleField('Objectives', choices=[])
     
 class SendMessage(Form):
+    message_type = RadioField('Group or Individual Message',
+                                 choices=[('Individual', 'Individual'), ('Group', 'Group')],
+                                 default='Individual',
+                                 validators = [Required('Please specify whether you are sending an individual or a group message')])
+    message_to = TextField('To')
     message_subject = TextField('Message Subject')
     message_body = TextAreaField('Message Content')
     request_access = BooleanField("Request to view students' progress", default = False)

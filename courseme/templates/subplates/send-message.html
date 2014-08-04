@@ -3,11 +3,21 @@
         <div class="modal-content">
             <div class="modal-header">
                 <button class="close" type="button" data-dismiss="modal" aria-hidden="true">&times;</button> 
-                <h4 class="modal-title">New Message</h4>
+                <h4 class="modal-title">Send New Message</h4>
             </div>
             <div class="modal-body">
-                <form class="form" action="" method="POST" id="send_message_form">
+                <form class="form" action="{{ url_for('send_message') }}" method="POST" id="send_message_form">
                     {{ messageform.hidden_tag() }}
+                    <div class="form-group" id="message_type_form_group">
+                        {{ messageform.message_type.label }}
+                        {{ messageform.message_type(class="list-unstyled") }}           <!--DJG - how to add radio-inline class-->
+                        <p class="help-block" id="error_message_type"></p>
+                    </div>
+                    <div class="form-group" id="message_to_form_group">
+                        {{ messageform.message_to.label }}
+                        {{ messageform.message_to(class="form-control") }}
+                        <p class="help-block" id="error_message_to"></p>
+                    </div>
                     <div class="form-group" id="message_subject_form_group">
                         {{ messageform.message_subject.label }}
                         {{ messageform.message_subject(class="form-control") }}
@@ -19,10 +29,17 @@
                         <p class="help-block" id="error_message_body"></p>
                     </div>    
                     <div class="form-group" id="request_access_form_group">
-                        {{ messageform.request_access.label }}
-                        {{ messageform.request_access(class="form-control") }}
+                        <label class="checkbox">
+                            {{ messageform.request_access.label }}
+                            {{ messageform.request_access }}
+                        </label>
                         <p class="help-block" id="error_request_access"></p>
                     </div>                    
+                    <div class="form-group" id="recommended_material_form_group">
+                        {{ messageform.recommended_material.label }}
+                        {{ messageform.recommended_material(class="form-control") }}
+                        <p class="help-block" id="error_recommended_material"></p>
+                    </div>          
                 </form>
             </div>
             <div class="modal-footer">

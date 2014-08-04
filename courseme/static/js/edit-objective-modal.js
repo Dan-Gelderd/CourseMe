@@ -99,6 +99,7 @@ function loadEditObjectiveModal(objective) {
     $("#edit_objective_name").val(objective.name);
     $("#edit_objective_subject").val(objective.subject);
     $("#edit_objective_subject").attr("disabled", true);
+    //$("#edit_objective_subject").disabled = true;             DJG - think this is better
     $("#edit_objective_form").find(".dynamic-list-new-item").val("");
     $("#edit_objective_form").find(".help-block").text("");
     $("#edit_objective_form").find(".has-error").removeClass("has-error");
