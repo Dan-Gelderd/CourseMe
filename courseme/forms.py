@@ -73,7 +73,7 @@ class SendMessage(Form):
                                  choices=[('Individual', 'Individual'), ('Group', 'Group')],
                                  default='Individual',
                                  validators = [Required('Please specify whether you are sending an individual or a group message')])
-    message_to = TextField('To')
+    message_to = TextField('To', validators = [Required('Enter a recipient or group of recipients for your message')])
     message_subject = TextField('Message Subject')
     message_body = TextAreaField('Message Content')
     request_access = BooleanField("Request to view students' progress", default = False)

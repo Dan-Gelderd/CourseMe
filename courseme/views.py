@@ -796,16 +796,47 @@ def send_message():
     result['savedsuccess'] = False
     #import pdb; pdb.set_trace()
     if form.validate():
-        print 'message form submitted'
+        #print 'message form submitted'
         #import pdb; pdb.set_trace()
-        if form.message_type.data == "Individual":
-            pass
-        elif form.message_type.data == "Group":
-            pass
+        recommended_material = Module.query.get(form.recommended_material.data)
+        if recommended_material:     
+            if form.message_type.data == "Individual":
+                recipient = form.message_to.data
+                if recipient:
+                    message = Message(
+                        from_user = g.user,
+                        to_user = recipient,
+                        subject = form.message_subject.data,
+                        body = form.message_body.data,
+                        request_access = form.request_access.data,
+                        recommended_material = recommended_material
+                    )
+                    db.session.add(message)
+                    db.session.commit()
+                    result['savedsuccess'] = True
+                else:
+                    result["message_to_unfound"] = form.message_to.data
+            elif form.message_type.data == "Group":
+                group = Group.query.filter_by(name=form.message_to.data, creator=g.user).first()
+                if group:
+                    group.message(
+                        subject = form.message_subject.data,
+                        body = form.message_body.data,
+                        request_access = form.request_access.data,
+                        recommended_material = recommended_material
+                    )
+                    result['savedsuccess'] = True
+                else:
+                    result["message_to"] = "Group of recipients not found"
+            else:
+                result["message_type"] = "Message type not recognised"
         else:
-            flash("Message type not recognised")
-            return ""
-    return json.dumps(result, separators=(',',':'))
+            result["recommended_material"] = "Module not found"
+        
+        return json.dumps(result, separators=(',',':'))
+    else:    
+        form.errors['savedsuccess'] = False
+        return json.dumps(form.errors, separators=(',',':'))
 
 @app.route('/test')
 def test():

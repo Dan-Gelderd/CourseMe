@@ -170,7 +170,6 @@ class User(db.Model):
         else:
             return False
         
-        
     @staticmethod
     def make_unique_username(username):
         if User.query.filter_by(name = username).first() == None:
@@ -192,6 +191,13 @@ class User(db.Model):
         return User.query.get(1)
         #DJG - Not robust. Need some way to return the main system admin user
 
+    @staticmethod
+    def user_by_email(email):
+        user = User.query.filter_by(email = email).first()
+        if user:
+            return user
+        else:
+            return None
 
 objective_heirarchy = db.Table("objective_heirarchy",
     db.Column("prerequisite_id", db.Integer, db.ForeignKey("objective.id")),
@@ -610,16 +616,17 @@ class Group(db.Model):
         else:
             pass
 
-    def message(self, subject, recommended_material_id):
-        for memeber in self.members:
+    def message(self, subject, body, recommended_material=None, request_access=False):          #DJG - am I using this?
+        for member in self.members:
             message = Message(
                 from_id = self.creator_id,
                 to_id = member.id,
                 subject = subject,            
                 body = body,
-                sent=datetime.utcnow(),
-                recommended_material_id=recommended_material_id
+                sent=datetime.utcnow()
                 )
+            if recommended_material: message.recommended_material=recommended_material
+            if request_access: message.request_access=request_access
             db.session.add(message)
             db.session.commit()
 
