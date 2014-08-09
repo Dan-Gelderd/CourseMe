@@ -11,6 +11,9 @@ VIEW_ALL = 0
 VIEW_SYSTEM = 1
 VIEW_OWN = 2
 
+OBJ_NOT = 0
+OBJ_PART = 1
+OBJ_FULL = 2
 
 ENTERPRISE_LICENCE_DURATION = 1
 
@@ -270,13 +273,22 @@ class Objective(db.Model):
         if exclude and exclude in modules: modules.remove(exclude)
         return modules[:num]
     
+    def assessment(self, user, assessor):
+        return UserObjective.query.filter_by(user_id=user.id, assessor_id=assessor.id, objective_id=self.id).first()
+
     def assessed(self, user, assessor):     #DJG - could probably do in one line
-        userobjective = UserObjective.query.filter_by(user_id=user.id, assessor_id=assessor.id, objective_id=self.id).first()
+        userobjective = self.assessment(user, assessor)
         if userobjective:
             return userobjective.completed
         else:
             return False
-        
+
+    def assessed_display_class(self, user, assessor):
+        userobjective = self.assessment(user, assessor)
+        if userobjective:
+            return userobjective.assessed_display_class()
+        else:
+            return False
         
     @staticmethod
     def system_objectives():
@@ -332,16 +344,20 @@ class UserObjective(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey(User.id))
     assessor_id = db.Column(db.Integer, db.ForeignKey(User.id))
     objective_id = db.Column(db.Integer, db.ForeignKey(Objective.id))
-    completed = db.Column(db.Boolean, default = False)
+    completed = db.Column(db.SmallInteger, default = OBJ_NOT)
 
     user = db.relationship(User, primaryjoin="User.id==UserObjective.user_id", backref='user_objectives')
     assessor = db.relationship(User, primaryjoin="User.id==UserObjective.assessor_id", backref='assessed_objectives')
     objective = db.relationship(Objective, backref='user_objectives')
     
+    
     def assess(self):
-        completed = not self.completed
+        states = (OBJ_NOT, OBJ_PART, OBJ_FULL)
+        completed = states[(states.index(self.completed)+1) % len(states)]      #Cycles through the list of states
+        print completed
         self.completed = completed
         db.session.add(self)
+        #Set all other members from the student's institution to have the same assessment. Assessment is therefore an institution wide thing bt stored at the individual member level
         institution = self.user.institution_student
         if institution:
             if institution.is_member(self.assessor):
@@ -350,6 +366,14 @@ class UserObjective(db.Model):
                     userobjective.completed = completed
                     db.session.add(userobjective)
         db.session.commit()
+    
+    def assessed_display_class(self):
+        display_classes = {
+            OBJ_NOT: "objective_not",
+            OBJ_PART: "objective_partial warning",
+            OBJ_FULL: "objective_complete success"
+        }
+        return display_classes[self.completed]
     
     @staticmethod
     def FindOrCreate(user_id, assessor_id, objective_id):
@@ -448,7 +472,10 @@ class Module(db.Model):                                             #DJG - chang
 
     @staticmethod
     def RecommendChoices():
-        return [(str(module.id), module.name) for module in Module.LiveModules()]
+        try:        #DJG - this exception handling is needed because the forms module references this method and so on database creation it creates an error since the table cannot be found and queries. Perhaps there is a better way to prevent the cyclic dependency on startup
+            return [(str(module.id), module.name) for module in Module.LiveModules().all()]
+        except:
+            return []
     
 class UserModule(db.Model):
     id = db.Column(db.Integer, primary_key = True)

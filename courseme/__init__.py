@@ -38,4 +38,5 @@ def hash_string(string):
     salted_hash = string + app.config['SECRET_KEY']
     return md5.new(salted_hash).hexdigest()
 
-from courseme import views, models
+from courseme import models
+from courseme import views

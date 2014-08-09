@@ -259,7 +259,8 @@ def objective_assess(profile_id, objective_id):
     else:
         userobjective = UserObjective.FindOrCreate(profile_id, g.user.id, objective_id)
         userobjective.assess()
-        return json.dumps({'completed': userobjective.completed})
+        #import pdb; pdb.set_trace()
+        return json.dumps({'assessed_display_class': userobjective.assessed_display_class()})
 
 
 #modules
@@ -799,9 +800,9 @@ def send_message():
         #print 'message form submitted'
         #import pdb; pdb.set_trace()
         recommended_material = Module.query.get(form.recommended_material.data)
-        if recommended_material:     
+        if recommended_material:
             if form.message_type.data == "Individual":
-                recipient = form.message_to.data
+                recipient = User.user_by_email(form.message_to.data)
                 if recipient:
                     message = Message(
                         from_user = g.user,
@@ -809,7 +810,7 @@ def send_message():
                         subject = form.message_subject.data,
                         body = form.message_body.data,
                         request_access = form.request_access.data,
-                        recommended_material = recommended_material
+                        recommended_material_id = recommended_material.id
                     )
                     db.session.add(message)
                     db.session.commit()

@@ -12,17 +12,11 @@ $(document).ready(function () {
         $.getJSON(
             flask_util.url_for('objective_assess', {profile_id: {{profile.id}}, objective_id: objective_id}), 
             function(result) {
-                if (result.completed) {
-                    $(cell).addClass("success")
-                }
-                else {
-                    $(cell).removeClass("success")
-                } 
+                $(cell).removeClass("objective_not objective_partial warning objective_complete success");  //DJG - when objective classes are properly customised can remove the warning and succsess classes here   
+                $(cell).addClass(result.assessed_display_class)
             }
         );
     });
-
-
 })
 </script>
 
@@ -38,9 +32,9 @@ $(document).ready(function () {
 {% for objective in objectives %}    
     <tr>
         <td>{{objective.name}}</td>
-        <td id="{{ objective.id ~ '_assess' }}" class="mark_assessed{% if objective.assessed(profile, g.user) %} success{% endif %}"></td>
+        <td id="{{ objective.id ~ '_assess' }}" class="mark_assessed {{ objective.assessed_display_class(profile, g.user) }}"></td>
         <td class="hidden"></td>
-        <td class="{% if profile == g.user and not profile.institution_student %}hidden{% elif profile == g.user and objective.assessed(profile, profile.institution_student.creator) %} info{% elif profile != g.user and objective.assessed(profile, profile) %} info{% endif %}"></td>
+        <td class="{% if profile == g.user and not profile.institution_student %}hidden{% elif profile == g.user %} {{ objective.assessed_display_class(profile, profile.institution_student.creator) }} {% elif profile != g.user %} {{ objective.assessed_display_class(profile, profile) }} {% endif %}"></td>
     </tr>
 {% endfor %}
     
