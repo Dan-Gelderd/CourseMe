@@ -53,4 +53,31 @@ $(document).ready(function () {
             }
         );
     });   
+
+
+  $('.allow-access').click(function(event){
+    event.preventDefault();
+    var sender_id = $(this).closest(".access-request-id-container").find(".access-request-id").text();
+    $.post(
+      flask_util.url_for('allow_access', {request_id: sender_id }),
+      function(json) {
+          var result = $.parseJSON(json);
+          location.reload(true)
+      }
+    )
+  });
+
+  $('.deny-access').click(function(event){
+    event.preventDefault();
+    var sender_id = $(this).closest(".access-request-id-container").find(".access-request-id").text();
+    console.log(sender_id)
+    $.post(
+      flask_util.url_for('deny_access', {request_id: sender_id }),
+      function(json) {
+          var result = $.parseJSON(json);
+          location.reload(true)
+      }
+    )
+  });
+
 });

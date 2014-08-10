@@ -2,17 +2,26 @@
 {% block content %}
 
 <script type='text/javascript'>
+//Add Class to table column given heading       DJG - repeat of code on index page - should move into main.js file
+function addColumnClass(table_id, col_name, class_name) {
+    col = $('#' + table_id + ' th:contains(' + col_name + ')');
+    col_index = col.index() + 1; // Get the index & increment by 1 to match nth-child indexing
+    $('#' + table_id + ' tr td:nth-child(' + col_index + ')').addClass(class_name);
+}
+
 $(document).ready(function () {
 
     $("#objectives_to_view").val({{scheme_id}})
-
+    $("#students_to_view").val({{group.id}})
+    
     //Button per objective to mark the corresponding objective as assessed
     $(".mark_assessed").on('click', function () {
         cell = this
         var objective_id = cell.id.split('_')[0]
+        var profile_id = cell.id.split('_')[1]
         console.log("assess objective " + objective_id + " clicked")
         $.getJSON(
-            flask_util.url_for('objective_assess', {profile_id: {{profile.id}}, objective_id: objective_id}), 
+            flask_util.url_for('objective_assess', {profile_id: profile_id, objective_id: objective_id}), 
             function(result) {
                 $(cell).removeClass("objective_not objective_partial warning objective_complete success");  //DJG - when objective classes are properly customised can remove the warning and succsess classes here   
                 $(cell).addClass(result.assessed_display_class)
@@ -23,25 +32,26 @@ $(document).ready(function () {
     $("#objectives_to_view").on('change', function () {
         var scheme_id = $(this).val();
         console.log(scheme_id);
-        window.location.href = flask_util.url_for('objectives', {profile_id: {{profile.id}}, scheme_id: scheme_id});
+        window.location.href = flask_util.url_for('objectives_group', {group_id: {{group.id}}, scheme_id: scheme_id});
     });
 
     $("#students_to_view").on('change', function () {
         var group_id = $(this).val();
         window.location.href = flask_util.url_for('objectives_group', {group_id: group_id, scheme_id: {{scheme_id}}});
     });
+ 
     
 })
 </script>
 
 
 
-<h1>{{profile.name}} Progress</h1>
+<h1>{{group.name}} Progress</h1>
 
 <form class="form-inline">
     <div class="form-group">
         <select id="objectives_to_view" class="form-control">
-            <option value=0>All Objectives</option>
+            <option value=0>All</option>
             {% for scheme in g.user.schemes_of_work.all() %}
             <option value={{scheme.id}}>{{scheme.name}}</option>
             {% endfor %}
@@ -49,8 +59,7 @@ $(document).ready(function () {
     </div>
     <div class="form-group">
         <select id="students_to_view" class="form-control">
-            <option value="-1" selected=true>{{profile.name}}</option>
-            <option value=0>All Students</option>
+            <option value=0>All</option>
             {% for gp in g.user.groups_created.all() %}
             <option value={{gp.id}}>{{gp.name}}</option>
             {% endfor %}
@@ -58,19 +67,23 @@ $(document).ready(function () {
     </div>
 </form>
 
-<table class="table table-condensed">
+
+<table id="objective_progress" class="table table-condensed">
     <tr>
-      <th></th>
-      <th class="DJG_rotate_headers">{% if profile == g.user %}Self Assessment{% elif profile.institution_student and profile.institution_student.is_member(g.user) %}{{profile.institution_student.name}} Assessment{% else %}Your Assessment{% endif %}</th> 
-      <th class="hidden">CourseMe Assessment</th>
-      <th class="{% if profile == g.user and not profile.institution_student %}hidden{% endif %}">{% if profile == g.user and profile.institution_student %}{{profile.institution_student.name}} Assessment{% else %}Self Assessment{% endif %}</th>
+        <th></th>
+        {% for profile in profiles %}
+        <th class="DJG_rotate_headers"><a href="{{url_for('objectives', profile_id=profile.id, scheme_id=scheme_id)}}">{{profile.email}}</a></th>
+        {% endfor %}
     </tr>
 {% for objective in objectives %}    
     <tr>
         <td>{{objective.name}}</td>
-        <td id="{{ objective.id ~ '_assess' }}" class="mark_assessed {{ objective.assessed_display_class(profile, g.user) }}"></td>
-        <td class="hidden"></td>
-        <td class="{% if profile == g.user and not profile.institution_student %}hidden{% elif profile == g.user %} {{ objective.assessed_display_class(profile, profile.institution_student.creator) }} {% elif profile != g.user %} {{ objective.assessed_display_class(profile, profile) }} {% endif %}"></td>
+        {% for profile in profiles %}
+        <td id="{{ objective.id ~ '_' ~ profile.id ~ '_assess' }}" class="mark_assessed {{ objective.assessed_display_class(profile, g.user) }}"></td>
+        {% endfor %}
+        {% for profile in profiles %}        
+        <td class="{{ objective.assessed_display_class(profile, profile) }}"></td>
+        {% endfor %}    
     </tr>
 {% endfor %}
     

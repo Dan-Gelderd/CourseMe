@@ -71,7 +71,7 @@
                     <li><a href="{{ url_for('logout') }}">Sign Out</a></li>
                     <li><a href="{{ url_for('profile', id=g.user.id) }}">Profile</a></li>
                     <li><a href="{{ url_for('messages') }}">Messages</a></li>
-                    <li><a href="{{ url_for('objectives', id=g.user.id) }}">Learning Objectives</a></li>
+                    <li><a href="{{ url_for('objectives', profile_id=g.user.id) }}">Learning Objectives</a></li>
                     <li><a href="{{ url_for("groups") }}">Groups</a></li>
                     <li class="divider"></li>
                     <li role="presentation" class="dropdown-header">My Material</li>

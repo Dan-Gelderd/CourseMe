@@ -53,7 +53,10 @@ $(document).ready(function () {
         <div class="panel-heading">People you have granted access to</div>
         <ul class="list-group">
         {% for u in profile.tutors.all() %}
-          <li class="list-group-item"><a href="{{url_for("profile", id=u.id)}}">{{u.name}}</a></li>
+          <li class="list-group-item">
+            <a href="{{url_for("profile", id=u.id)}}">{{u.name}}</a>
+            <span class="input-group-btn access-request-id-container"><span class="hidden access-request-id">{{u.id}}</span><button class="btn btn-link deny-access">&times;</button></span>            
+          </li>
         {% endfor %}
         </ul>
       </div>

@@ -1,6 +1,38 @@
 {% extends "layout.html" %}
 {% block content %}
 
+<script type='text/javascript'>
+//$(document).ready(function () {
+//    
+//  $('.allow-access').click(function(event){
+//    event.preventDefault();
+//    var sender_id = $(this).closest(".access-request-id-container").find(".access-request-id").text();
+//    $.post(
+//      flask_util.url_for('allow_access', {request_id: sender_id }),
+//      function(json) {
+//          var result = $.parseJSON(json);
+//          location.reload(true)
+//          }
+//      }
+//    )
+//  });
+//
+//  $('.deny-access').click(function(event){
+//    event.preventDefault();
+//    var sender_id = $(this).closest(".access-request-id-container").find(".access-request-id").text();
+//    $.post(
+//      flask_util.url_for('deny_access', {request_id: sender_id }),
+//      function(json) {
+//          var result = $.parseJSON(json);
+//          location.reload(true)
+//          }
+//      }
+//    )
+//  });
+//})
+</script>
+
+
 <h1>Received Messages</h1>
 <ul class="media-list">
   {% for message in g.user.live_messages().all() %}
@@ -19,13 +51,14 @@
       <h5 class="media-heading">Reccommendation:</h5>
       <p>{{ message.from_user.name }} has recommended <a href={{ url_for('module', id=message.recommended_material.id) }}>{{ message.recommended_material.name }}</a> for you</p>
       {% endif %}
-      {% if message.request_access %}
+      {% if message.request_access and not g.user.permission(message.from_user) %}
       <h5 class="media-heading">Access Request:</h5>
       <p>{{ message.from_user.name }} has has requested to view you progress on CourseMe
         <form class="form-inline" role="form">
-          <div class="form-group">
-            <button type="submit" class="allow_access btn btn-sm btn-success">Allow</button>
-            <button type="submit" class="deny_access btn btn-sm btn-danger">Deny</button>
+          <div class="form-group access-request-id-container">
+            <div class="hidden access-request-id">{{message.from_id}}</div>
+            <button type="submit" class="allow-access btn btn-sm btn-success">Allow</button>
+            <button type="submit" class="deny-access btn btn-sm btn-danger">Deny</button>
           </div>
         </form>  
       </p>

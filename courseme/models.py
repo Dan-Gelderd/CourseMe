@@ -172,6 +172,34 @@ class User(db.Model):
             return has_students
         else:
             return False
+    
+    def allow_access(self, tutor):
+        if not self.permission(tutor):
+            self.tutors.append(tutor)
+            db.session.add(self)
+            db.session.commit()
+            student_message = Message.AdminMessage(
+                to_id = self.id,
+                subject = "Access granted to new tutor - " + tutor.name,
+                body = "You have granted permission to " + tutor.name + " to view your progress through learning objectives. You can review and change who has permission to view this information on your own profile page."        
+            )
+            Message.AdminMessage(
+                to_id = tutor.id,
+                subject = "Access granted to new student - " + self.name,
+                body = "You have been granted permission by " + self.name + " to view their progress through learning objectives. You can view the learning objectives of you students on ...DJG - finish message."        
+            )
+            return True
+        else:
+            return False
+
+    def deny_access(self, tutor):
+        if self.permission(tutor):
+            self.tutors.remove(tutor)
+            db.session.add(self)
+            db.session.commit()
+            return True
+        else:
+            return False
         
     @staticmethod
     def make_unique_username(username):
@@ -196,7 +224,7 @@ class User(db.Model):
 
     @staticmethod
     def user_by_email(email):
-        user = User.query.filter_by(email = email).first()
+        user = User.query.filter_by(email = email).one()
         if user:
             return user
         else:
@@ -377,6 +405,7 @@ class UserObjective(db.Model):
     
     @staticmethod
     def FindOrCreate(user_id, assessor_id, objective_id):
+        #DJG - should check for multiple query returns
         userobjective = UserObjective.query.filter_by(user_id=user_id, assessor_id=assessor_id, objective_id=objective_id).first()
         if userobjective is None:
             userobjective = UserObjective(
@@ -520,7 +549,7 @@ class UserModule(db.Model):
     def course_completed(self):
         course = self.part_of_course()
         if course:    
-            user_course = UserModule.query.filter_by(user_id=self.user.id, module_id=course.id).first()
+            user_course = UserModule.query.filter_by(user_id=self.user.id, module_id=course.id).one()
             return user_course.completed()
         else:
             return 0 
@@ -558,7 +587,7 @@ class UserModule(db.Model):
 
     @staticmethod
     def FindOrCreate(user_id, module_id):
-        usermodule = UserModule.query.filter_by(user_id=user_id, module_id=module_id).first()
+        usermodule = UserModule.query.filter_by(user_id=user_id, module_id=module_id).one()
         if usermodule is None:
             usermodule = UserModule(user_id=user_id,
                                     module_id=module_id,
@@ -657,6 +686,11 @@ class Group(db.Model):
             db.session.add(message)
             db.session.commit()
 
+    def viewable_members(self):
+        students = self.members.order_by(User.email).all()
+        return [s for s in students if s in self.creator.all_students()]
+
+
     def as_dict(self):
         result = {}
         result['id'] = self.id
@@ -742,7 +776,7 @@ class Institution(db.Model):
     
     @staticmethod     
     def create(name, creator, blurb=""):
-        if Institution.query.filter_by(name=name).first():
+        if Institution.query.filter_by(name=name).one():
             return False
         else:
             institution = Institution(

@@ -82,7 +82,7 @@ def login():
     title = 'CourseMe - Login'
     form = forms.LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email = form.email.data).first()
+        user = User.user_by_email(form.email.data)
         if user is None:
             form.email.errors.append('Email not registered')
             return render_template('login.html', form = form, title=title)
@@ -114,28 +114,77 @@ def objectives_admin():
                            objectiveform=objectiveform,
                            objectives=objectives)
 
-@app.route('/objectives/<int:id>')
+@app.route('/objectives/<int:profile_id>')
+@app.route('/objectives/<int:profile_id>/<int:scheme_id>')
 @login_required
-def objectives(id):
-    profile = User.query.get(id)
+def objectives(profile_id, scheme_id=0):
+    profile = User.query.get(profile_id)
     if not profile:
         flash("This user does not exist")
-        return redirect(url_for('objectives', id=g.user.id))      
+        return redirect(url_for('objectives', profile_id=g.user.id))      
     elif not profile.permission(g.user):
         flash("You do not have permission to view this user's learning objectives")
-        return redirect(url_for('objectives', id=g.user.id)) 
+        return redirect(url_for('objectives', profile_id=g.user.id)) 
     else:
         title = "CourseMe - Objectives"
         objectiveform = forms.EditObjective()
-        objectives = g.user.visible_objectives().all()
-        objectives.sort(key=operator.methodcaller("score"))   #DJG - isn't there a way of doing this within the order_by of the query
+        objectives = []
+        if scheme_id == 0:
+            objectives = g.user.visible_objectives().all()    
+        else:
+            scheme = SchemeOfWork.query.get(scheme_id)
+            if scheme:
+                objectives = scheme.objectives.all()    
+            else:
+                flash("Scheme of work not found")
+                return redirect(url_for('schemes'))                 
+        objectives.sort(key=operator.methodcaller("score"))     #DJG - isn't there a way of doing this within the order_by of the query
         return render_template(
             'objectives.html',
             title=title,
             objectiveform=objectiveform,
             objectives=objectives,
-            profile=profile)
+            profile=profile,
+            scheme_id=scheme_id)
 
+
+@app.route('/objectives-group/<int:group_id>')
+@app.route('/objectives-group/<int:group_id>/<int:scheme_id>')
+@login_required
+def objectives_group(group_id, scheme_id=0):
+    if group_id == 0:
+        group = {"id": 0, "name": "All Students"}
+        profiles = g.user.all_students()
+    else:
+        group = Group.query.get(group_id)
+        if not group:
+            flash("This group does not exist")
+            return redirect(url_for('groups'))
+        else:
+            profiles = group.viewable_members()
+        if len(profiles) == 0:    
+            flash("You do not have permission to view any of these users' learning objectives")
+            return redirect(url_for('groups')) 
+    
+    title = "CourseMe - Objectives"
+    objectives = []
+    if scheme_id == 0:
+        objectives = g.user.visible_objectives().all()    
+    else:
+        scheme = SchemeOfWork.query.get(scheme_id)
+        if scheme:
+            objectives = scheme.objectives.all()    
+        else:
+            flash("Scheme of work not found")
+            return redirect(url_for('schemes'))                 
+    objectives.sort(key=operator.methodcaller("score"))     #DJG - isn't there a way of doing this within the order_by of the query
+    return render_template(
+        'objectives_group.html',
+        title=title,
+        objectives=objectives,
+        profiles=profiles,
+        scheme_id=scheme_id,
+        group=group)
 
 @app.route('/objective-add-update', methods = ['POST'])
 def objective_add_update():
@@ -231,14 +280,14 @@ def objective_add_update():
 @app.route('/objective-delete')
 def objective_delete():
     #DJG - need to check user has authority to delete objective
-    objective = Objective.query.filter_by(id = request.args.get("objective_id")).first()        #DJG - could replace with get as we are looking up a primary key
+    objective = Objective.query.get(request.args.get("objective_id"))        
     db.session.delete(objective)        #DJG - secondary table should be updated automatically because of relationship definintion
     db.session.commit()
     return ""
 
 @app.route('/objective-get')
 def objective_get():
-    objective = Objective.query.filter_by(id = request.args.get("objective_id")).first()    #DJG - could replace with get as we are looking up a primary key
+    objective = Objective.query.get(request.args.get("objective_id"))    
     return json.dumps(objective.as_dict(), sort_keys=True, separators=(',',':'))
 
 
@@ -621,7 +670,7 @@ def group_save():
         result['savedsuccess'] = False
         id = int(form.edit_group_id.data)
         #import pdb; pdb.set_trace()
-        group_members = [User.query.filter_by(email=e).first() for e in form.edit_group_members.data]
+        group_members = [User.user_by_email(e) for e in form.edit_group_members.data]
         if id>0:
             group = Group.query.get(id)
             if group:
@@ -709,7 +758,7 @@ def scheme_save():
         result['savedsuccess'] = False
         id = int(form.edit_scheme_id.data)
         #import pdb; pdb.set_trace()
-        scheme_objectives = [Objective.query.filter_by(name=o).first() for o in form.edit_scheme_objectives.data]
+        scheme_objectives = [Objective.query.filter_by(name=o).one() for o in form.edit_scheme_objectives.data]
         if id>0:
             scheme = SchemeOfWork.query.get(id)
             if scheme:
@@ -818,7 +867,7 @@ def send_message():
                 else:
                     result["message_to_unfound"] = form.message_to.data
             elif form.message_type.data == "Group":
-                group = Group.query.filter_by(name=form.message_to.data, creator=g.user).first()
+                group = Group.query.filter_by(name=form.message_to.data, creator=g.user).one()
                 if group:
                     group.message(
                         subject = form.message_subject.data,
@@ -838,6 +887,30 @@ def send_message():
     else:    
         form.errors['savedsuccess'] = False
         return json.dumps(form.errors, separators=(',',':'))
+
+@app.route('/allow_access/<int:request_id>', methods = ['POST'])
+@login_required
+def allow_access(request_id):
+    result = {}
+    request_from = User.query.get(request_id)
+    if request_from:
+        result['savedsuccess'] = g.user.allow_access(request_from)
+    else:
+        flash("Tutor not found")
+        result['savedsuccess'] = False
+    return json.dumps(result, separators=(',',':'))
+
+@app.route('/deny_access/<int:request_id>', methods = ['POST'])
+@login_required
+def deny_access(request_id):
+    result = {}
+    request_from = User.query.get(request_id)
+    if request_from:
+        result['savedsuccess'] = g.user.deny_access(request_from)
+    else:
+        flash("Tutor not found")
+        result['savedsuccess'] = False
+    return json.dumps(result, separators=(',',':'))
 
 @app.route('/test')
 def test():
