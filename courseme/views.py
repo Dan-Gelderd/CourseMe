@@ -2,7 +2,7 @@ from flask import render_template, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from courseme import app, db, lm, hash_string, lectures
 import forms
-from models import User, ROLE_USER, ROLE_ADMIN, Objective, SchemeOfWork, UserObjective, Module, UserModule, Institution, Group, Message
+from models import User, ROLE_USER, ROLE_ADMIN, Objective, SchemeOfWork, UserObjective, Module, UserModule, Institution, Group, Message, Question
 from datetime import datetime
 import json, operator
 #import pdb; pdb.set_trace()        #DJG - remove
@@ -912,7 +912,9 @@ def deny_access(request_id):
         result['savedsuccess'] = False
     return json.dumps(result, separators=(',',':'))
 
-@app.route('/test')
-def test():
-    return render_template('test.html')
+@app.route('/question')
+def question():
+    questions = Question.query.all()
+    return render_template('question.html',
+                           questions = questions)
 

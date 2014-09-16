@@ -310,7 +310,6 @@ module = Module(
 db.session.add(module)
 
 
-
 db.session.commit()
 
 courseMe.add_member(me)

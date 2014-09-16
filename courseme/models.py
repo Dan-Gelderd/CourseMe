@@ -41,6 +41,7 @@ class User(db.Model):
     view_institution_only = db.relationship("Institution", primaryjoin="Institution.id==User.view_institution_only_id", backref="users_viewing_approved")
     objectives_created = db.relationship("Objective", backref="created_by", lazy='dynamic')
     modules_authored = db.relationship("Module", backref="author", lazy = 'dynamic')
+    questions_authored = db.relationship("Question", backref="author", lazy = 'dynamic')
     institutions_created = db.relationship("Institution", primaryjoin="Institution.creator_id==User.id", backref="creator", lazy='dynamic')
     groups_created = db.relationship("Group", primaryjoin="Group.creator_id==User.id", backref="creator", lazy='dynamic')
     schemes_of_work = db.relationship("SchemeOfWork", backref="creator", lazy='dynamic')
@@ -324,6 +325,13 @@ class Objective(db.Model):
         system_objectives = set.union(*system_objectives_iterator)
         return system_objectives
     
+    @staticmethod
+    def Choices():
+        try:        #DJG - this exception handling is needed because the forms module references this method and so on database creation it creates an error since the table cannot be found and queries. Perhaps there is a better way to prevent the cyclic dependency on startup
+            return [(str(objective.id), objective.name) for objective in Objective.query.all()]
+        except:
+            return []
+
 module_objectives = db.Table('module_objectives',
     db.Column('module_id', db.Integer, db.ForeignKey('module.id')),
     db.Column('objective_id', db.Integer, db.ForeignKey('objective.id'))
@@ -587,7 +595,7 @@ class UserModule(db.Model):
 
     @staticmethod
     def FindOrCreate(user_id, module_id):
-        usermodule = UserModule.query.filter_by(user_id=user_id, module_id=module_id).one()
+        usermodule = UserModule.query.filter_by(user_id=user_id, module_id=module_id).first()
         if usermodule is None:
             usermodule = UserModule(user_id=user_id,
                                     module_id=module_id,
@@ -788,3 +796,23 @@ class Institution(db.Model):
             db.session.add(institution)
             db.session.commit()
             return institution
+        
+        
+class Question(db.Model):
+    id = db.Column(db.Integer, primary_key = True)      
+    question = db.Column(db.String(5000))
+    answer = db.Column(db.String(5000))
+    time_created = db.Column(db.DateTime)
+    last_updated = db.Column(db.DateTime)
+    submitted = db.Column(db.DateTime) 
+    published = db.Column(db.DateTime)
+    locked = db.Column(db.DateTime)
+    extension = db.Column(db.Boolean, default = False)
+
+    votes = db.Column(db.Integer, default = 0)
+
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+    objective_id = db.Column(db.Integer, db.ForeignKey('objective.id'))
+    
+    objective = db.relationship(Objective, backref='questions')

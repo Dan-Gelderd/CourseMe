@@ -3,7 +3,7 @@ from wtforms import TextField, TextAreaField, PasswordField, BooleanField, Hidde
 from wtforms.validators import Required, Length, Email, Regexp, EqualTo, url
 from wtforms.fields.html5 import URLField
 from wtforms.fields import FieldList
-from models import Module
+from models import Module, Objective
 
 class SignupForm(Form):
     email = TextField('Email address', validators=[
@@ -57,6 +57,13 @@ class EditModule(Form):
     easy_language = BooleanField('Simple Language', default = False)
     extension = BooleanField('Extension Material', default = False)
     for_teachers = BooleanField('Ideas for Teachers', default = False)
+
+class EditQuestion(Form):
+    edit_question_id = HiddenField()
+    question = TextAreaField('Notes')
+    answer = TextAreaField('Answer')
+    objective = SelectField('Objectives', choices=Objective.Choices())
+    extension = BooleanField('Extension Material', default = False)
 
 class EditGroup(Form):
     edit_group_id = HiddenField()
