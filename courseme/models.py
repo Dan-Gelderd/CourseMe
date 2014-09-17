@@ -784,7 +784,7 @@ class Institution(db.Model):
     
     @staticmethod     
     def create(name, creator, blurb=""):
-        if Institution.query.filter_by(name=name).one():
+        if Institution.query.filter_by(name=name).first():
             return False
         else:
             institution = Institution(

@@ -476,13 +476,14 @@ def editmodule(id = 0):
 @login_required
     #DJG - Login should not be required just temporary to stop user_module tracking breaking - need guest user
 def module(id):
-       
+    title = "CourseMe - Module"   
     module = Module.query.get_or_404(id)
     messageform = forms.SendMessage()
     usermodule = UserModule.FindOrCreate(g.user.id, id) 
     templates = {"Lecture": "lecture.html", "Course": "course.html"}
     
     return render_template(templates[module.material_type],
+                           title=title,
                            messageform=messageform,
                            module=module,
                            usermodule=usermodule)
