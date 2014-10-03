@@ -4,18 +4,30 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>{{ title }}</title>
-        <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+        <!--<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">-->
+        <link rel="stylesheet" href="/static/lib/bootstrap/css/bootstrap.min.css">
+            
         <!--<link rel="stylesheet" href="/static/css/lib/bootstrap-tagsinput.css" />-->
+        
         <link rel="stylesheet" href="/static/css/main.css" />
-        <link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">
+        
+        <!--<link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">-->
+        <link rel="stylesheet" href="/static/lib/jquery-ui/jquery-ui.css">
+        
         <link rel="stylesheet" href="//raw.github.com/jharding/typeahead.js-bootstrap.css/master/typeahead.js-bootstrap.css" media="screen">
+
         <!-- DJG - not needed if using bootstrap styling <link rel="stylesheet" href="//cdn.datatables.net/1.10.0/css/jquery.dataTables.css"> -->
         <link rel="stylesheet" href="//cdn.datatables.net/plug-ins/be7019ee387/integration/bootstrap/3/dataTables.bootstrap.css">
 
         <link rel="shortcut icon" href="/static/images/courseme.ico" />
-        <script src="http://code.jquery.com/jquery-latest.js"></script>
-        <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        
+        <!--<script src="http://code.jquery.com/jquery-latest.js"></script>-->
+        <script src="/static/lib/jquery/jquery-1.11.1.min.js"></script>
+        
+        <!--<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
+        <script type="text/javascript" src="http:/static/lib/mathjax/MathJax.js"></script>
 
+        
     </head>
 
 
@@ -129,10 +141,15 @@
         
         <!-- DJG - not sure which of these are needed -->
         {{ flask_util_js.js }}
-        <script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>        
+        <!--<script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>-->
+        <script src="/static/lib/jquery-ui/jquery-ui.js"></script>
+        
         <script src="//cdn.datatables.net/1.10.0/js/jquery.dataTables.js"></script>
         <script src="//cdn.datatables.net/plug-ins/be7019ee387/integration/bootstrap/3/dataTables.bootstrap.js"></script>
-        <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+        
+        <!--<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>-->
+        <script src="/static/lib/bootstrap/js/bootstrap.min.js"></script>
+        
         <script src="/static/js/dynamic-list.js"></script>
         <script src="/static/js/edit-objective-modal.js"></script>
         <script src="/static/js/send-message.js"></script>        

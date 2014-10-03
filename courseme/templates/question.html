@@ -108,6 +108,7 @@ Type some \(\rm\TeX\) code and press RETURN:<br />
 <hr>
 <h2>Some Latex examples inserted into HTML from database</h2>
 {% for question in questions %}
+<p>{{question.id}}</p>
 <p>{{question.question}}</p>
 {% endfor %}
 

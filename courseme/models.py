@@ -225,7 +225,7 @@ class User(db.Model):
 
     @staticmethod
     def user_by_email(email):
-        user = User.query.filter_by(email = email).one()
+        user = User.query.filter_by(email = email).first()      #DJG - want to use one to check for duplicates
         if user:
             return user
         else:
