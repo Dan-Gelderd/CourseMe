@@ -913,9 +913,24 @@ def deny_access(request_id):
         result['savedsuccess'] = False
     return json.dumps(result, separators=(',',':'))
 
-@app.route('/question')
-def question():
+@app.route('/edit_question', methods = ['GET', 'POST'])
+def edit_question():
+    title = "CourseMe - Questions"
+    form = forms.EditQuestion()
+    #import pdb; pdb.set_trace()
+    if form.validate_on_submit():
+        question = Question(
+            question = form.question.data,
+            answer = form.answer.data,
+            time_created = datetime.utcnow(),
+            last_updated = datetime.utcnow()
+        )
+        db.session.add(question)
+        db.session.commit()
+        
     questions = Question.query.all()
-    return render_template('question.html',
+    return render_template('edit_question.html',
+                           title = title,
+                           form=form,
                            questions = questions)
 

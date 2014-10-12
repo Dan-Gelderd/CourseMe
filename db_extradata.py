@@ -115,3 +115,29 @@ db.session.add(q)
 db.session.commit()
 
 
+
+q = Question(
+    question =
+r'''
+This is a question:
+\[  1 +  \frac{q^2}{(1-q)}+\frac{q^6}{(1-q)(1-q^2)}+\cdots =
+\prod_{j=0}^{\infty}\frac{1}{(1-q^{5j+2})(1-q^{5j+3})},
+\quad\quad \text{for $|q|<1$}. \]
+
+And here is the answer \(\sqrt{3x-1}+(1+x)^2\).
+Isn't it great.
+''',
+    
+    answer = "",
+    time_created = datetime.utcnow(),
+    last_updated = datetime.utcnow(),
+    locked = datetime.utcnow(),
+    extension = False,
+    author_id = User.main_admin_user().id,
+    objective_id = 1
+)
+
+
+db.session.add(q)
+
+db.session.commit()

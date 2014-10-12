@@ -74,7 +74,7 @@ $(document).ready(function () {
 
         
         $.post(  
-            flask_util.url_for('editmodule', {id: {{edit_id}} }),  
+            flask_util.url_for('editmodule', {id: {{ edit_id }} }),  
             data,  
             function(json) {
                 

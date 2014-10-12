@@ -60,9 +60,9 @@ class EditModule(Form):
 
 class EditQuestion(Form):
     edit_question_id = HiddenField()
-    question = TextAreaField('Notes')
+    question = TextAreaField('Question')
     answer = TextAreaField('Answer')
-    objective = SelectField('Objectives', choices=Objective.Choices())
+    #objective = SelectField('Objectives', choices=Objective.Choices())
     extension = BooleanField('Extension Material', default = False)
 
 class EditGroup(Form):
