@@ -14,7 +14,7 @@
         <!--<link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">-->
         <link rel="stylesheet" href="/static/lib/jquery-ui/jquery-ui.css">
         
-        <link rel="stylesheet" href="//raw.github.com/jharding/typeahead.js-bootstrap.css/master/typeahead.js-bootstrap.css" media="screen">
+        <!--<link rel="stylesheet" href="//raw.github.com/jharding/typeahead.js-bootstrap.css/master/typeahead.js-bootstrap.css" media="screen">-->
 
         <!-- DJG - not needed if using bootstrap styling <link rel="stylesheet" href="//cdn.datatables.net/1.10.0/css/jquery.dataTables.css"> -->
         <link rel="stylesheet" href="//cdn.datatables.net/plug-ins/be7019ee387/integration/bootstrap/3/dataTables.bootstrap.css">
@@ -60,6 +60,7 @@
                     <li><a href="{{ url_for('module', id=mod.id) }}"><span class="glyphicon glyphicon-list-alt"></span> {{mod.name}}</a></li>
                     {% endfor %}
                     <li role="presentation" class="divider"></li>
+                    <li><a href="{{ url_for('edit_question', id=0) }}">Create question</a></li>
                     {% endif %} 
                   </ul>
                 </li>

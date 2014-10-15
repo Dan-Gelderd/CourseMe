@@ -449,7 +449,7 @@ class Module(db.Model):                                             #DJG - chang
 
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))     #DJG - why is user lower case in ForeignKey('user.id')
 
-    objectives = db.relationship('Objective', secondary=module_objectives,
+    objectives = db.relationship('Objective', secondary=module_objectives,      #DJG - shouldn't I have lazy = dynamic here too?
         backref=db.backref('modules', lazy='dynamic'))
 
     modules = db.relationship("Module",
@@ -797,6 +797,10 @@ class Institution(db.Model):
             db.session.commit()
             return institution
         
+question_objectives = db.Table('question_objectives',
+    db.Column('question_id', db.Integer, db.ForeignKey('question.id')),
+    db.Column('objective_id', db.Integer, db.ForeignKey('objective.id'))
+)
         
 class Question(db.Model):
     id = db.Column(db.Integer, primary_key = True)      
@@ -813,6 +817,5 @@ class Question(db.Model):
 
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
-    objective_id = db.Column(db.Integer, db.ForeignKey('objective.id'))
-    
-    objective = db.relationship(Objective, backref='questions')
+    objectives = db.relationship('Objective', secondary=question_objectives,   #DJG - shouldn't I have  lazy='dynamic', here too?
+        backref=db.backref('questions', lazy='dynamic'))

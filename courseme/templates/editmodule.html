@@ -264,8 +264,8 @@ $(document).ready(function () {
             {% include "subplates/dynamic-list.html" %}
             {% endwith %}
         </div>
-        {% include "subplates/edit-objective-modal.html" %}
-        <button class="btn btn-default btn-sm btn-success pull-right" id="create_objective">Create New Objective</button>
+
+        <button class="btn btn-sm btn-success pull-right" id="create_objective">Create New Objective</button>
     </div>
 
     <div id="implied_course_objectives" class="{% if edit_module_form.material_type.data != "Course" %}hidden{% endif %}">
@@ -290,6 +290,8 @@ $(document).ready(function () {
     {% if edit_id > 0 %}<button id="delete" class="btn btn-danger" type="cancel">Delete</button>{% endif %}    
     
 </form>
+
+{% include "subplates/edit-objective-modal.html" %}         <!--DJG - can't put this inside another form or the save button in the modal form triggers a submit in the parent form-->
 
 <br />
 

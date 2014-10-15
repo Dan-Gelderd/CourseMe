@@ -324,7 +324,7 @@ def editmodule(id = 0):
     module = None
     form_header = "Create new module:"
     if id > 0:
-        module = Module.query.get_or_404(id)
+        module = Module.query.get(id)
         if module:
             if module.author_id != g.user.id:
                 flash('You are not authorised to edit this module')
@@ -388,11 +388,7 @@ def editmodule(id = 0):
             material_type = module.material_type if id > 0 else moduleform.material_type.data
             material_source = ""
             material_path = ""
-            if material_type != "Course":
-                #Reading off the list of objectives
-                #DJG - try request.POST["objectives"] to see if data format is different
-                #unicode_list = request.form["objectives"]       #DJG - the data sent by the ajax request has the list converted into a unicode text string with commas
-                #python_list = filter(None, unicode_list.split(','))            #DJG - Dodgy string manipulation, means I can't have commas in objective names     
+            if material_type != "Course":   
                 select_list = moduleform.module_objectives.data
                 if select_list: objectives = g.user.visible_objectives().filter(Objective.name.in_(select_list)).all()      #DJG - avoiding using the in_ operation when the list is empty as this is an inefficiency
                 undefined_objectives = list(set(select_list) - set(obj.name for obj in objectives))     #DJG - Need to trap undefined objectives and return savedsucess as json if failed
@@ -419,7 +415,7 @@ def editmodule(id = 0):
                 else:
                     result['material'] = ["No content provided"]
                     
-            else:
+            else:       #DJG - method below can be improved now?!...
                 unicode_list = request.form["course_modules"]       #DJG - the data sent by the ajax request has the list converted into a unicode text string with commas
                 python_list = filter(None, unicode_list.split(','))  
                 if python_list: course_modules = [Module.query.get(mod_id) for mod_id in python_list]     #DJG - need some validation here to make sure modules exist and are not themselves courses etc.
@@ -913,24 +909,101 @@ def deny_access(request_id):
         result['savedsuccess'] = False
     return json.dumps(result, separators=(',',':'))
 
-@app.route('/edit_question', methods = ['GET', 'POST'])
-def edit_question():
+@app.route('/edit_question/<int:id>', methods = ['GET', 'POST'])
+def edit_question(id = 0):
     title = "CourseMe - Questions"
     form = forms.EditQuestion()
+    objectiveform = forms.EditObjective()
+    question_objectives = []
+    question = None
     #import pdb; pdb.set_trace()
-    if form.validate_on_submit():
-        question = Question(
-            question = form.question.data,
-            answer = form.answer.data,
-            time_created = datetime.utcnow(),
-            last_updated = datetime.utcnow()
-        )
-        db.session.add(question)
-        db.session.commit()
+    form_header = "Create new question:"
+    if id > 0:
+        question = Question.query.get(id)
+        if question:
+            if question.author_id != g.user.id:
+                flash('You are not authorised to edit this question')
+                return redirect(url_for('questions'))
+            elif request.method == 'GET':
+                form_header = "Edit question:"
+                form = forms.EditQuestion(
+                    question = question.question,
+                    answer = question.answer,
+                    extension = module.extension
+                )
+                question_objectives = question.objectives
+        else:
+            flash('There is no such question to edit')
+            return redirect(url_for('questions'))            
+
+    if request.method == 'GET':
         
-    questions = Question.query.all()
-    return render_template('edit_question.html',
-                           title = title,
-                           form=form,
-                           questions = questions)
+        objectives = g.user.visible_objectives().all()
+        objectives.sort(key=operator.methodcaller("score"))   #DJG - isn't there a way of doing this within the order_by of the query                 
+
+        questions = Question.query.all()
+    
+        return render_template('edit_question.html',
+                               title = title,
+                               form=form,
+                               question_objectives=question_objectives,
+                               objectiveform = objectiveform,
+                               objectives = objectives,
+                               questions = questions)
+
+
+    if request.method == 'POST':
+        #import pdb; pdb.set_trace()
+        form.question_objectives.choices = [(i, i) for i in form.question_objectives.data]
+
+        if form.validate():         
+            objectives = []
+            result = {}
+            result['savedsuccess'] = False           
+            proceed = False
+
+            select_list = form.question_objectives.data
+            if select_list: objectives = g.user.visible_objectives().filter(Objective.name.in_(select_list)).all()      #DJG - avoiding using the in_ operation when the list is empty as this is an inefficiency
+            undefined_objectives = list(set(select_list) - set(obj.name for obj in objectives))     #DJG - Need to trap undefined objectives and return savedsucess as json if failed
+
+            if undefined_objectives:       #DJG - code repeat of above, how to avoid this
+                is_are = 'is not already defined as an objetive' if len(undefined_objectives) == 1 else 'are not already defined as objetives'
+                result['objectives'] = ["'" + "', '".join(undefined_objectives) + "' " + is_are]
+                return json.dumps(result, separators=(',',':'))
+            else:
+                proceed = True
+
+            if proceed:
+                if question:
+                    question.question = form.question.data
+                    question.answer = form.answer.data
+                    question.objectives = objectives
+                    question.extension = form.extension.data
+                    question.last_updated=datetime.utcnow()
+                else:
+                    question = Question(question=form.question.data,
+                                        answer = form.answer.data,
+                                        time_created=datetime.utcnow(),
+                                        last_updated=datetime.utcnow(),
+                                        author_id=g.user.id,
+                                        objectives=objectives,
+                                        extension = form.extension.data
+                                        )     
+                    db.session.add(question)
+                db.session.commit()
+                #DJG - need some way that newly published material is added to institution approved list
+                result['savedsuccess'] = True
+                result['question_id'] = question.id
+                flash("Question saved")
+            
+            return json.dumps(result, separators=(',',':'))
+        
+        else:
+            form.errors['savedsuccess'] = False
+            return json.dumps(form.errors, separators=(',',':'))
+
+
+        
+    
+
 

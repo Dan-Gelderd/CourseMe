@@ -12,15 +12,62 @@
 <!--<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML,Safe"></script>-->
 <script type="text/javascript" src="/static/lib/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML,Safe"></script>
 
-<script>
+<script type='text/javascript'>
+$(document).ready(function () {
+
+    $(function() {
+
+        $('#define_objectives').find('.dynamic-list-new-item-label').text("Enter new objective for this question");
+        $('#define_objectives').find('.dynamic-list-heading').text("Objectives");        
+                
+        var availableTags = [];
+        {% for objective in objectives %}
+            availableTags.push('{{ objective.name }}')    
+        {% endfor %}    
+
+        $("#define_objectives").find(".dynamic-list-new-item").autocomplete({
+            source: availableTags
+        });
+        
+        $("#new_prerequisite_form_group").find(".dynamic-list-new-item").autocomplete({
+            source: availableTags
+        });
+        
+        questionObjectives = [];
+        {% for objective in question_objectives %}
+            questionObjectives.push('{{ objective.name }}')    
+        {% endfor %}    
+        dynamicList_addList(questionObjectives, $("#define_objectives"));
+    });
 
     $("#test_question").click(function(event){
         event.preventDefault();     //DJG - don't want submit button to post the form as well as the ajax request or get 400 bad request error. Not sure if this is the right way to fix it.
-        $("#test_question_output").value = $("#MathInput").value;
+        console.log('test button');
+        $("#test_question_output").html($("#question").val());
+        $("#test_answer_output").html($("#answer").val());        
         MathJax.Hub.Queue(["Typeset",MathJax.Hub],"test_question_output");
+        MathJax.Hub.Queue(["Typeset",MathJax.Hub],"test_answer_output");
+        $("#question_test_display").removeClass("hidden");
+        $("#answer_test_display").removeClass("hidden");
     });
 
+    $("#clear_question").click(function(event){
+        event.preventDefault();     //DJG - don't want submit button to post the form as well as the ajax request or get 400 bad request error. Not sure if this is the right way to fix it.
+        console.log('clear question');
+        $("#test_question_output").html("");
+        $("#question").val("");
+        $("#question_test_display").addClass("hidden");
+    });
 
+    $("#clear_answer").click(function(event){
+        event.preventDefault();     //DJG - don't want submit button to post the form as well as the ajax request or get 400 bad request error. Not sure if this is the right way to fix it.
+        console.log('clear answer');
+        $("#test_answer_output").html("");
+        $("#answer").val("");    
+        $("#answer_test_display").addClass("hidden");
+    });
+
+})
 
 
   ////
@@ -60,19 +107,76 @@
   //})();
 </script>
 
-<p>
+<!--<p>
 Type some \(\rm\TeX\) code and press RETURN:<br /> 
 <textarea id="MathInput" rows="4" cols="50"></textarea>
 </p>
 
-<button id="test_question" class="btn btn-success" type="submit">Test</button>
-<button id="clear_question" class="btn btn-danger" type="cancel">Clear</button>       <!--DJG - don't understand type attribute of buttons-->
-
 <p>You typed:</p>
-<div class="box" id="box" style="visibility:hidden"></div>
+<div class="box" id="box" style="visibility:hidden">
 <div id="MathOutput" class="output"></div>
-<div id="test_question_output">
-  
+</div>-->
+
+
+
+
+
+<div class="row">
+  <div class="col-md-12">
+
+    <form class="form" action={{ url_for('edit_question', id=0) }} method="POST" id="edit_question_form">
+        {{ form.hidden_tag() }}
+        {{ form.edit_question_id }}
+        <div class="form-group" id="question_form_group">
+            {{ form.question.label }}
+            {{ form.question(placeholder="Enter Question", class="form-control") }}
+            <p class="help-block" id="error_question"></p>
+        </div>
+        <div class="form-group">  
+          <div id="question_test_display" class="panel panel-default hidden">
+            <div class="panel-body">
+                <p id="test_question_output"></p>
+            </div>
+          </div>
+          <button id="clear_question" class="btn btn-default btn-sm pull-right" type="cancel">Clear Question</button>       <!--DJG - don't understand type attribute of buttons-->
+        </div>
+        <div class="form-group" id="answer_form_group">
+            {{ form.answer.label }}
+            {{ form.answer(placeholder="Enter Answer", class="form-control") }}
+            <p class="help-block" id="error_answer"></p>
+        </div>
+        <div class="form-group">  
+          <div id="answer_test_display" class="panel panel-default hidden">
+            <div class="panel-body">
+                <p id="test_answer_output"></p>
+            </div>
+          </div>
+          <button id="clear_answer" class="btn btn-default btn-sm pull-right" type="cancel">Clear Answer</button>
+        </div>
+        
+        <div id="special_features" class="form-group">
+          <label class="btn btn-info">
+              {{ form.extension.label }}
+              {{ form.extension }}
+          </label>        
+        </div>
+        
+        <div class="form-group">
+            <div class="dynamic-list-container" id="define_objectives">
+                {% with dynamic_list_select=form.question_objectives %}
+                {% include "subplates/dynamic-list.html" %}
+                {% endwith %}
+            </div>
+            <button class="btn btn-sm btn-success pull-right" id="create_objective">Create New Objective</button>
+        </div>
+
+        
+        <button id="test_question" class="btn btn-success" type="submit">Test</button>        
+        <button id="save_question" class="btn btn-success" type="submit">Save</button>
+        <button id="delete_question" class="btn btn-danger" type="cancel">Delete</button>
+    </form>
+  {% include "subplates/edit-objective-modal.html" %}
+  </div>    
 </div>
 
 
@@ -112,31 +216,7 @@ Type some \(\rm\TeX\) code and press RETURN:<br />
 \]
 </p>
 <p>Finally, while display equations look good for a page of samples, the ability to mix math and text in a paragraph is also important. This expression \(\sqrt{3x-1}+(1+x)^2\) is an example of an inline equation.  As you see, MathJax equations can be used this way as well, without unduly disturbing the spacing between lines.</p>
-
-
-<div class="row">
-  <div class="col-md-12">
-
-    <form class="form" action={{ url_for('edit_question') }} method="POST" id="edit_question_form">
-        {{ form.hidden_tag() }}
-        {{ form.edit_question_id }}
-        <div class="form-group" id="question_form_group">
-            {{ form.question.label }}
-            {{ form.question(placeholder="Enter Question", class="form-control") }}
-            <p class="help-block" id="error_question"></p>
-        </div>
-        <div class="form-group" id="answer_form_group">
-            {{ form.answer.label }}
-            {{ form.answer(placeholder="Enter Answer", class="form-control") }}
-            <p class="help-block" id="error_answer"></p>
-        </div>
-        <button id="save_question" class="btn btn-success" type="submit">Save</button>
-        <button id="delete_question" class="btn btn-danger" type="cancel">Delete</button>
-    </form>
-
-  </div>    
-</div>
-
+<br>
 
 <hr>
 <h2>Some Latex examples inserted into HTML from database</h2>
@@ -146,7 +226,7 @@ Type some \(\rm\TeX\) code and press RETURN:<br />
 {% endfor %}
 
 
-<script>
+<!--<script>
   //
   //  IE doesn't fire onchange events for RETURN, so
   //   use onkeypress to do a blur (and refocus) to
@@ -157,6 +237,6 @@ Type some \(\rm\TeX\) code and press RETURN:<br />
       if (window.event && window.event.keyCode === 13) {this.blur(); this.focus()}
     }
   }
-</script>
+</script>-->
 
 {% endblock %}
