@@ -1,6 +1,57 @@
 {% extends "layout.html" %}
 {% block content %}
 
+
+
+<h1>{{group.name}} Progress</h1>
+
+<form class="form-inline">
+    <div class="form-group">
+        <select id="objectives_to_view" class="form-control">
+            <option value=0>All Objectives</option>
+            {% for scheme in g.user.schemes_of_work.all() %}
+            <option value={{scheme.id}}>{{scheme.name}}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-group">
+        <select id="profiles_to_view" class="form-control">
+            <option value=0>All Students</option>
+            {% for gp in g.user.groups_created.all() %}
+            <option value={{gp.id}}>{{gp.name}}</option>
+            {% endfor %}
+        </select>
+    </div>
+</form>
+
+
+<table id="objective_table" class="table table-condensed">
+    <thead>
+        <tr>
+            <th></th>
+            {% for profile in profiles %}
+            <th class="DJG_rotate_headers"><a href="{{url_for('objectives', profile_id=profile.id, scheme_id=scheme_id)}}">{{profile.email}}</a></th>
+            {% endfor %}
+            {% for profile in profiles %}
+            <th class="DJG_rotate_headers"><a href="{{url_for('objectives', profile_id=profile.id, scheme_id=scheme_id)}}">{{profile.email}} Self Assessment</a></th>
+            {% endfor %}        
+        </tr>
+    </thead>
+    <tbody>
+        {% for objective in objectives %}    
+        <tr>
+            <td>{{objective.name}}</td>
+            {% for profile in profiles %}
+            <td id="{{ objective.id ~ '_' ~ profile.id ~ '_assess' }}" class="mark_assessed {{ objective.assessed_display_class(profile, g.user) }}"></td>
+            {% endfor %}
+            {% for profile in profiles %}        
+            <td class="{{ objective.assessed_display_class(profile, profile) }}"></td>
+            {% endfor %}    
+        </tr>
+        {% endfor %}
+    </tbody>    
+</table>
+
 <script type='text/javascript'>
 //Add Class to table column given heading       DJG - repeat of code on index page - should move into main.js file
 function addColumnClass(table_id, col_name, class_name) {
@@ -10,6 +61,13 @@ function addColumnClass(table_id, col_name, class_name) {
 }
 
 $(document).ready(function () {
+
+    var table = $('#objective_table').DataTable( {
+        "paginate": false
+    } );
+    new $.fn.dataTable.FixedHeader( table, {
+                left:   true
+    } );
 
     $("#objectives_to_view").val({{scheme_id}})
     $("#students_to_view").val({{group.id}})
@@ -35,7 +93,7 @@ $(document).ready(function () {
         window.location.href = flask_util.url_for('objectives_group', {group_id: {{group.id}}, scheme_id: scheme_id});
     });
 
-    $("#students_to_view").on('change', function () {
+    $("#profiles_to_view").on('change', function () {
         var group_id = $(this).val();
         window.location.href = flask_util.url_for('objectives_group', {group_id: group_id, scheme_id: {{scheme_id}}});
     });
@@ -43,51 +101,5 @@ $(document).ready(function () {
     
 })
 </script>
-
-
-
-<h1>{{group.name}} Progress</h1>
-
-<form class="form-inline">
-    <div class="form-group">
-        <select id="objectives_to_view" class="form-control">
-            <option value=0>All</option>
-            {% for scheme in g.user.schemes_of_work.all() %}
-            <option value={{scheme.id}}>{{scheme.name}}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="form-group">
-        <select id="students_to_view" class="form-control">
-            <option value=0>All</option>
-            {% for gp in g.user.groups_created.all() %}
-            <option value={{gp.id}}>{{gp.name}}</option>
-            {% endfor %}
-        </select>
-    </div>
-</form>
-
-
-<table id="objective_progress" class="table table-condensed">
-    <tr>
-        <th></th>
-        {% for profile in profiles %}
-        <th class="DJG_rotate_headers"><a href="{{url_for('objectives', profile_id=profile.id, scheme_id=scheme_id)}}">{{profile.email}}</a></th>
-        {% endfor %}
-    </tr>
-{% for objective in objectives %}    
-    <tr>
-        <td>{{objective.name}}</td>
-        {% for profile in profiles %}
-        <td id="{{ objective.id ~ '_' ~ profile.id ~ '_assess' }}" class="mark_assessed {{ objective.assessed_display_class(profile, g.user) }}"></td>
-        {% endfor %}
-        {% for profile in profiles %}        
-        <td class="{{ objective.assessed_display_class(profile, profile) }}"></td>
-        {% endfor %}    
-    </tr>
-{% endfor %}
-    
-</table>
-
 
 {% endblock %}

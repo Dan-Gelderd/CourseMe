@@ -309,7 +309,10 @@ def objective_assess(profile_id, objective_id):
         userobjective = UserObjective.FindOrCreate(profile_id, g.user.id, objective_id)
         userobjective.assess()
         #import pdb; pdb.set_trace()
-        return json.dumps({'assessed_display_class': userobjective.assessed_display_class()})
+        return json.dumps({
+            'assessed_display_class': userobjective.assessed_display_class(),
+            'assessed': userobjective.completed
+            })
 
 
 #modules
@@ -910,6 +913,7 @@ def deny_access(request_id):
     return json.dumps(result, separators=(',',':'))
 
 @app.route('/edit_question/<int:id>', methods = ['GET', 'POST'])
+@login_required
 def edit_question(id = 0):
     title = "CourseMe - Questions"
     form = forms.EditQuestion()
@@ -929,7 +933,7 @@ def edit_question(id = 0):
                 form = forms.EditQuestion(
                     question = question.question,
                     answer = question.answer,
-                    extension = module.extension
+                    extension = question.extension
                 )
                 question_objectives = question.objectives
         else:
@@ -941,15 +945,14 @@ def edit_question(id = 0):
         objectives = g.user.visible_objectives().all()
         objectives.sort(key=operator.methodcaller("score"))   #DJG - isn't there a way of doing this within the order_by of the query                 
 
-        questions = Question.query.all()
-    
         return render_template('edit_question.html',
                                title = title,
+                               form_header = form_header,
                                form=form,
                                question_objectives=question_objectives,
                                objectiveform = objectiveform,
                                objectives = objectives,
-                               questions = questions)
+                               edit_id=id)
 
 
     if request.method == 'POST':
@@ -1003,7 +1006,30 @@ def edit_question(id = 0):
             return json.dumps(form.errors, separators=(',',':'))
 
 
-        
+@app.route('/delete_question/<int:id>', methods = ['GET', 'POST'])
+@login_required
+def delete_question(id = 0):
+    result = {}
+    result['savedsuccess'] = False
+    question = Question.query.get(id)
+    if question:
+        if question.author == g.user:
+            db.session.delete(question)
+            db.session.commit()
+            result['savedsuccess'] = True
+            return json.dumps(result, separators=(',',':'))
+        else:
+            flash('You are not authorised to delete this question')
+            return redirect(url_for('questions'))
+    else:
+        flash('This question does not exist')
+        return redirect(url_for('questions'))
     
 
-
+@app.route('/questions', methods = ['GET'])
+def questions():
+    title = "CourseMe - Questions"
+    questions = Question.query.all()
+    return render_template('questions.html',
+                           title = title,
+                           questions = questions)

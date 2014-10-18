@@ -38,17 +38,20 @@ $(document).ready(function () {
             questionObjectives.push('{{ objective.name }}')    
         {% endfor %}    
         dynamicList_addList(questionObjectives, $("#define_objectives"));
+    
+        if ({{edit_id}}>0) {
+          //DJG - hit the test button
+          console.log('hit test question');
+          testQuestion();
+        }
+          
     });
 
+
+    
     $("#test_question").click(function(event){
         event.preventDefault();     //DJG - don't want submit button to post the form as well as the ajax request or get 400 bad request error. Not sure if this is the right way to fix it.
-        console.log('test button');
-        $("#test_question_output").html($("#question").val());
-        $("#test_answer_output").html($("#answer").val());        
-        MathJax.Hub.Queue(["Typeset",MathJax.Hub],"test_question_output");
-        MathJax.Hub.Queue(["Typeset",MathJax.Hub],"test_answer_output");
-        $("#question_test_display").removeClass("hidden");
-        $("#answer_test_display").removeClass("hidden");
+        testQuestion();   
     });
 
     $("#clear_question").click(function(event){
@@ -67,59 +70,40 @@ $(document).ready(function () {
         $("#answer_test_display").addClass("hidden");
     });
 
+    $(".delete-question").click(function(event){
+        event.preventDefault();     //DJG - don't want submit button to post the form as well as the ajax request or get 400 bad request error. Not sure if this is the right way to fix it.
+
+        edit_id = {{edit_id}}
+        $.getJSON(flask_util.url_for('delete_question', {id: edit_id }),
+            function(result) {
+                if(result.savedsuccess)
+                {
+                    window.location.href = flask_util.url_for('questions');
+                }
+                else
+                {       
+                    window.location.reload();
+                }
+            }
+        )
+    });
+    
 })
 
-
-  ////
-  ////  Use a closure to hide the local variables from the
-  ////  global namespace
-  ////
-  //
-  //
-  //
-  //(function () {
-  //  var QUEUE = MathJax.Hub.queue;  // shorthand for the queue
-  //  var math = null, box = null;    // the element jax for the math output, and the box it's in
-  //
-  //  //
-  //  //  Hide and show the box (so it doesn't flicker as much)
-  //  //
-  //  var HIDEBOX = function () {box.style.visibility = "hidden"}
-  //  var SHOWBOX = function () {box.style.visibility = "visible"}
-  //
-  //  //
-  //  //  Get the element jax when MathJax has produced it.
-  //  //
-  //  QUEUE.Push(function () {
-  //    math = MathJax.Hub.getAllJax("MathOutput")[0];
-  //    box = document.getElementById("box");
-  //    SHOWBOX(); // box is initially hidden so the braces don't show
-  //  });
-  //
-  //  //
-  //  //  The onchange event handler that typesets the math entered
-  //  //  by the user.  Hide the box, then typeset, then show it again
-  //  //  so we don't see a flash as the math is cleared and replaced.
-  //  //
-  //  window.UpdateMath = function (TeX) {
-  //    QUEUE.Push(HIDEBOX,["Text",math,"\\displaystyle{"+TeX+"}"],SHOWBOX);
-  //  }
-  //})();
+function testQuestion() {
+    $("#test_question_output").html($("#question").val());
+    $("#test_answer_output").html($("#answer").val());        
+    MathJax.Hub.Queue(["Typeset",MathJax.Hub],"test_question_output");
+    MathJax.Hub.Queue(["Typeset",MathJax.Hub],"test_answer_output");
+    $("#question_test_display").removeClass("hidden");
+    $("#answer_test_display").removeClass("hidden");
+    return false;
+}    
+    
 </script>
 
-<!--<p>
-Type some \(\rm\TeX\) code and press RETURN:<br /> 
-<textarea id="MathInput" rows="4" cols="50"></textarea>
-</p>
 
-<p>You typed:</p>
-<div class="box" id="box" style="visibility:hidden">
-<div id="MathOutput" class="output"></div>
-</div>-->
-
-
-
-
+<h2>{{form_header}}</h2>
 
 <div class="row">
   <div class="col-md-12">
@@ -169,16 +153,14 @@ Type some \(\rm\TeX\) code and press RETURN:<br />
             </div>
             <button class="btn btn-sm btn-success pull-right" id="create_objective">Create New Objective</button>
         </div>
-
         
         <button id="test_question" class="btn btn-success" type="submit">Test</button>        
         <button id="save_question" class="btn btn-success" type="submit">Save</button>
-        <button id="delete_question" class="btn btn-danger" type="cancel">Delete</button>
+        <button id="delete_question" class="btn btn-danger delete-question{% if edit_id == 0 %} hidden{% endif %}" type="cancel">Delete</button>
     </form>
   {% include "subplates/edit-objective-modal.html" %}
   </div>    
 </div>
-
 
 <hr>
 <h2>Some Latex examples hardcocded onto the page</h2>
@@ -218,25 +200,5 @@ Type some \(\rm\TeX\) code and press RETURN:<br />
 <p>Finally, while display equations look good for a page of samples, the ability to mix math and text in a paragraph is also important. This expression \(\sqrt{3x-1}+(1+x)^2\) is an example of an inline equation.  As you see, MathJax equations can be used this way as well, without unduly disturbing the spacing between lines.</p>
 <br>
 
-<hr>
-<h2>Some Latex examples inserted into HTML from database</h2>
-{% for question in questions %}
-<p>{{question.id}}</p>
-<p>{{question.question}}</p>
-{% endfor %}
-
-
-<!--<script>
-  //
-  //  IE doesn't fire onchange events for RETURN, so
-  //   use onkeypress to do a blur (and refocus) to
-  //   force the onchange to occur
-  //
-  if (MathJax.Hub.Browser.isMSIE) {
-    MathInput.onkeypress = function () {
-      if (window.event && window.event.keyCode === 13) {this.blur(); this.focus()}
-    }
-  }
-</script>-->
 
 {% endblock %}

@@ -310,7 +310,7 @@ class Objective(db.Model):
         if userobjective:
             return userobjective.completed
         else:
-            return False
+            return 0
 
     def assessed_display_class(self, user, assessor):
         userobjective = self.assessment(user, assessor)
