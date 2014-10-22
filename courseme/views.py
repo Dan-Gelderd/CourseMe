@@ -150,8 +150,9 @@ def objectives(profile_id, scheme_id=0):
 
 @app.route('/objectives-group/<int:group_id>')
 @app.route('/objectives-group/<int:group_id>/<int:scheme_id>')
+@app.route('/objectives-group/<int:group_id>/<int:scheme_id>/<int:name_display>')
 @login_required
-def objectives_group(group_id, scheme_id=0):
+def objectives_group(group_id, scheme_id=0, name_display=1):
     if group_id == 0:
         group = {"id": 0, "name": "All Students"}
         profiles = g.user.all_students()
@@ -184,6 +185,7 @@ def objectives_group(group_id, scheme_id=0):
         objectives=objectives,
         profiles=profiles,
         scheme_id=scheme_id,
+        name_display=name_display,
         group=group)
 
 @app.route('/objective-add-update', methods = ['POST'])

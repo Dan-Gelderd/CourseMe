@@ -64,6 +64,7 @@ class EditQuestion(Form):
     answer = TextAreaField('Answer')
     #objective = SelectField('Objectives', choices=Objective.Choices())
     extension = BooleanField('Extension Material', default = False)
+    visually_impaired = BooleanField('Audio Assistance', default = False)
     question_objectives = SelectMultipleField('Objectives', choices=[])
 
 class EditGroup(Form):

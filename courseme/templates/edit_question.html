@@ -139,11 +139,22 @@ function testQuestion() {
         </div>
         
         <div id="special_features" class="form-group">
-          <label class="btn btn-info">
-              {{ form.extension.label }}
-              {{ form.extension }}
-          </label>        
-        </div>
+            <label>This material contains:</label>
+            <div class="row">
+                <div class="col-sm-3">
+                    <label class="btn btn-info">
+                        {{ form.extension.label }}
+                        {{ form.extension }}
+                    </label>    
+                </div>
+                <div class="col-sm-3">    
+                    <label class="btn btn-info">
+                        {{ form.visually_impaired.label }}
+                        {{ form.visually_impaired }}
+                    </label>
+                </div>
+            </div>    
+        </div>    
         
         <div class="form-group">
             <div class="dynamic-list-container" id="define_objectives">
@@ -163,42 +174,74 @@ function testQuestion() {
 </div>
 
 <hr>
-<h2>Some Latex examples hardcocded onto the page</h2>
-<div class="math-header">A Cross Product Formula</div>
+<h2>Examples</h2>
+<div class="example-header">You can write LaTeX expressions inside \\( and \\) braces and it will appear in line with the rest of your text:</div>
 
-\[\mathbf{V}_1 \times \mathbf{V}_2 =  \begin{vmatrix}
-\mathbf{i} &amp; \mathbf{j} &amp; \mathbf{k} \\
-\frac{\partial X}{\partial u} &amp;  \frac{\partial Y}{\partial u} &amp; 0 \\
-\frac{\partial X}{\partial v} &amp;  \frac{\partial Y}{\partial v} &amp; 0
-\end{vmatrix}  \]
+<b>For example:</b>
+<div class="example-input">
+What are all the roots to the equation \\( x^2-4x+3=0 \\)?
+</div>
+<b>Appears as:</b>
+<div class="example-output">
+What are all the roots to the equation \( x^2-4x+3=0 \)?
+</div>
 
-<div class="math-header">The probability of getting \(k\) heads when flipping \(n\) coins is</div>
 
-\[P(E)   = {n \choose k} p^k (1-p)^{ n-k} \]
+<div class="example-header">You can write LaTeX expressions inside \\[ and \\] braces and it will appear as a block within the rest of your text:</div>
 
-<div class="math-header">An Identity of Ramanujan</div>
+<b>For example:</b>
+<div class="example-input">
+Diagonalise the matrix \\[ x^2-4x+3=0 \\]
+</div>
 
-\[ \frac{1}{\Bigl(\sqrt{\phi \sqrt{5}}-\phi\Bigr) e^{\frac25 \pi}} =
-1+\frac{e^{-2\pi}} {1+\frac{e^{-4\pi}} {1+\frac{e^{-6\pi}}
-{1+\frac{e^{-8\pi}} {1+\ldots} } } } \]
-
-<div class="math-header">A Rogers-Ramanujan Identity</div>
-
-\[  1 +  \frac{q^2}{(1-q)}+\frac{q^6}{(1-q)(1-q^2)}+\cdots =
-\prod_{j=0}^{\infty}\frac{1}{(1-q^{5j+2})(1-q^{5j+3})},
-\quad\quad \text{for $|q|&lt;1$}. \]
-
-<div class="math-header">Maxwell&#8217;s Equations</div>
-<p>
-\[  \begin{aligned}
+<b>Appears as:</b>
+<div class="example-output">
+Diagonalise the matrix \[ \begin{aligned}
 \nabla \times \vec{\mathbf{B}} -\, \frac1c\, \frac{\partial\vec{\mathbf{E}}}{\partial t} &amp; = \frac{4\pi}{c}\vec{\mathbf{j}} \\
 \nabla \cdot \vec{\mathbf{E}} &amp; = 4 \pi \rho \\
 \nabla \times \vec{\mathbf{E}}\, +\, \frac1c\, \frac{\partial\vec{\mathbf{B}}}{\partial t} &amp; = \vec{\mathbf{0}} \\
-\nabla \cdot \vec{\mathbf{B}} &amp; = 0 \end{aligned}
+\nabla \cdot \vec{\mathbf{B}} &amp; = 0 \end{aligned} \]
+</div>
+
+<div class="example-header">Avoid using &amp;, &lt; and &gt; symbols in your questions as these get misinterpreted by the browser:</div>
+
+<b>For example:</b>
+<div class="example-input tex2jax_ignore">
+Write down all inter values of \(x\) such that \( x &lt; 7 \) and \(x &gt; 3 \).
+</div>
+
+<b>Appears as:</b>
+<div class="example-output">
+Write down all inter values of \(x\) such that \( x &lt; 7 \) and \(x &gt; 3 \).
+</div>
+
+<div class="example-header">Avoid using &amp;, &lt; and &gt; symbols in your questions as these get misinterpreted by the browser:</div>
+
+<b>For example:</b>
+<div class="example-input tex2jax_ignore">
+Write down all inter values of \(x\) such that \( x &lt; 7 &amp; x &gt; 3 \).
+</div>
+
+<b>Appears as:</b>
+<div class="example-output">
+Write down all inter values of \(x\) such that \( x &lt; 7 &amp; x &gt; 3 \).
+</div>
+
+<div class="example-header">Avoid using &amp;, &lt; and &gt; symbols in your questions as these get misinterpreted by the browser:</div>
+
+<b>For example:</b>
+<div class="example-input tex2jax_ignore">
+Write down all inter values of \(x\) such that \( x &lt; 7 &amp; x &gt; 3 \).
+</div>
+
+<b>Appears as:</b>
+<div class="example-output">
+\[
+\begin{enumerate}
+\item
+\item
+\end{enumerate}
 \]
-</p>
-<p>Finally, while display equations look good for a page of samples, the ability to mix math and text in a paragraph is also important. This expression \(\sqrt{3x-1}+(1+x)^2\) is an example of an inline equation.  As you see, MathJax equations can be used this way as well, without unduly disturbing the spacing between lines.</p>
-<br>
 
-
+</div>
 {% endblock %}

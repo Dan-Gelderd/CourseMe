@@ -78,6 +78,7 @@ $(document).ready(function () {
 
     $("#objectives_to_view").val({{scheme_id}})
 
+    
     //Button per objective to mark the corresponding objective as assessed
     $(".mark_assessed").on('click', function () {
         cell = this
@@ -101,11 +102,12 @@ $(document).ready(function () {
 
     $("#profiles_to_view").on('change', function () {
         var group_id = $(this).val();
+        console.log(group_id)
         if (group_id == -1) {           //DJG - should all javascript if statements use ==? think I am using = elsewhere
             window.location.href = flask_util.url_for('objectives', {profile_id: {{g.user.id}}, scheme_id: {{scheme_id}}});
         }
         else {
-            window.location.href = flask_util.url_for('objectives_group', {group_id: group_id, scheme_id: {{scheme_id}}});
+            window.location.href = flask_util.url_for('objectives_group', {group_id: group_id, scheme_id: {{scheme_id}}, name_display: 1});
         }
 
     });

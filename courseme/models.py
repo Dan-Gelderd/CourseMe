@@ -444,6 +444,7 @@ class Module(db.Model):                                             #DJG - chang
     easy_language = db.Column(db.Boolean, default = False)
     extension = db.Column(db.Boolean, default = False)
     for_teachers = db.Column(db.Boolean, default = False)
+    visually_impaired = db.Column(db.Boolean, default = False)
 
     votes = db.Column(db.Integer, default = 0)
 
@@ -812,6 +813,7 @@ class Question(db.Model):
     published = db.Column(db.DateTime)
     locked = db.Column(db.DateTime)
     extension = db.Column(db.Boolean, default = False)
+    visually_impaired = db.Column(db.Boolean, default = False)      #DJG - need to put this in forms and stuff
 
     votes = db.Column(db.Integer, default = 0)
 
