@@ -22,6 +22,11 @@ student_tutor = db.Table("student_tutor",
     db.Column("student_id", db.Integer, db.ForeignKey("user.id"))
 )
 
+question_selections = db.Table('question_selections',
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+    db.Column('question_id', db.Integer, db.ForeignKey('question.id'))
+)
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     password = db.Column(db.String(120), nullable=False)      #DJG - What does index=True do?
@@ -53,6 +58,8 @@ class User(db.Model):
                     backref = db.backref('tutors', lazy = 'dynamic'),           #DJG - Does this need to be included to make the secondary table update when an objective is passed to session.delete()? 
                     lazy = 'dynamic',                                           #DJG - not the default, don't know why I need it: the attribute will return a pre-configured Query object for all read operations, onto which further filtering operations can be applied before iterating the results.
                     passive_updates=False)  
+
+    questions_selected = db.relationship('Question', secondary=question_selections, lazy='dynamic')
 
     def is_authenticated(self):
         return True
@@ -202,6 +209,27 @@ class User(db.Model):
         else:
             return False
         
+    def question_selected(self, question):
+        return question in self.questions_selected.all()
+    
+    def select_question(self, question):
+        if not self.question_selected(question):
+            self.questions_selected.append(question)
+            db.session.commit()
+
+    def deselect_question(self, question):
+        if self.question_selected(question):
+            self.questions_selected.remove(question)
+            db.session.commit()
+
+    def toggle_select_question(self, question):
+        if self.question_selected(question):
+            self.deselect_question(question)
+            return ""
+        else:
+            self.select_question(question)
+            return "success"        
+        
     @staticmethod
     def make_unique_username(username):
         if User.query.filter_by(name = username).first() == None:
@@ -240,6 +268,7 @@ class Objective(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique = True, nullable=False)
     subject = db.Column(db.String(50), default="Mathematics")
+    topic = db.Column(db.String(100))
     description = db.Column(db.String(50), nullable=True)
 
     created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))     #DJG - why is user lower case in ForeignKey('user.id')    
@@ -821,3 +850,10 @@ class Question(db.Model):
 
     objectives = db.relationship('Objective', secondary=question_objectives,   #DJG - shouldn't I have  lazy='dynamic', here too?
         backref=db.backref('questions', lazy='dynamic'))
+
+    def as_dict(self):
+        result = self.__dict__
+        result['author'] = self.author.name
+        result['objectives'] = [o.name for o in self.objectives]
+        del result['_sa_instance_state']
+        return result

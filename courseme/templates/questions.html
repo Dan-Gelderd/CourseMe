@@ -3,12 +3,14 @@
 
 <script type="text/javascript" src="/static/lib/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML,Safe"></script>
 
-<script type='text/javascript'>
-$(document).ready(function () {
+<style type="text/css" class="init">
 
-    
-})
-</script>
+    tr.group,
+    tr.group:hover {
+    background-color: #ddd !important;
+    }
+
+</style>
 
 <form class="form-inline" role="form">
   <div class="form-group">
@@ -25,18 +27,14 @@ $(document).ready(function () {
     <label class="sr-only" for="exampleInputPassword2">Password</label>
     <input type="password" class="form-control" id="exampleInputPassword2" placeholder="Password">
   </div>
-  <div class="checkbox">
-    <label>
-      <input type="checkbox"> Select all
-    </label>
-  </div>
-  <button type="submit" class="btn btn-default pull-right" id="select_questions">Go</button>
+
+  <button type="submit" class="btn btn-default pull-right" id="select_questions">Print</button>
 </form>
 
 <h2>Questions</h2>
 
 
-{% for question in questions %}
+<!--{% for question in questions %}
 
 <div class="row">
   <div class="col-md-1">
@@ -53,7 +51,132 @@ $(document).ready(function () {
   </div>
 </div>  
 
-{% endfor %}
+{% endfor %}-->
 
+<table id="table_id" class="table" cellspacing="0" width="100%">
+    <thead></thead>
+    <tbody></tbody>
+    <tfoot></tfoot>
+</table>
+
+<button id="clear_filters" type="Cancel" class="btn btn-default">Clear all filters</button>
+
+<script>
+
+
+//Add Class to column given heading
+function addColumnClass(colName, className) {
+    col = $('#table_id th:contains(' + colName + ')');
+    col_index = col.index() + 1; // Get the index & increment by 1 to match nth-child indexing
+    $('#table_id tr td:nth-child(' + col_index + ')').addClass(className);
+}
+
+
+$(document).ready( function () {                //DJG - https://datatables.net/manual/installation        
+    
+    //console.log({{catalogue | safe}});        
+    var table = $('#table_id').DataTable( {
+    
+        "paging":   false,
+        "ordering": false,
+        "info":     false,
+
+        "aoColumnDefs": [  // enables turning off sorting for the columns
+            {"bVisible": false, "aTargets": [0, 1]}  //DJG - targets grid columns to hide - just add the column to be disabled into the array
+        ],
+        
+        "order": [[ 1, 'asc' ]],
+        "displayLength": 50,
+        "drawCallback": function ( settings ) {
+            var api = this.api();
+            var rows = api.rows( {page:'current'} ).nodes();
+            var last=null;
+ 
+            api.column(1, {page:'current'} ).data().each( function ( group, i ) {
+                if ( last !== group ) {
+                    $(rows).eq( i ).before(
+                        '<tr class="group"><td colspan="5">'+group+'</td></tr>'
+                    );
+ 
+                    last = group;
+                }
+            } );
+        },
+        
+        data: {{catalogue | safe}},
+        
+        columns: [
+
+            { data: 'id', name: 'id' },                
+            { data: 'objectives', title: 'Objectives' },
+            { data: 'question', title: 'Question' },
+            { data: 'author', title: 'Author' },
+            
+            {
+                "title":          'Include',
+                "class":          'include-question',
+                "orderable":      false,
+                "data":           null,
+                "defaultContent": ''
+            }
+        ],
+    
+        "createdRow": function ( row, data, index ) {
+            if ( data[4] > 4000 ) {
+                $('td', row).eq(4).addClass('success');
+            }
+        }    
+    
+    } );
+
+    
+    //Add classes to columns for event handling
+    //addColumnClass("Name", 'module-name-column')
+    //addColumnClass("Author", 'module-author-column')
+
+    //display hand cursor on hover to let User know it's a clickable link
+    //$('.module-name-column, .module-author-column').hover(function() {
+    //    $(this).css('cursor', 'pointer');
+    //}, function() {
+    //    $(this).css('cursor', 'auto');
+    //});    
+    //
+    //$('.module-name-column').click(function() {
+    //    module_id = table.row(this.parentNode).data().id;
+    //    window.location.href = flask_util.url_for('module', {id: module_id });
+    //});
+
+    //display hand cursor on hover to let User know it's a clickable link
+    $('.include-question').hover(function() {
+        $(this).css('cursor', 'pointer');
+    }, function() {
+        $(this).css('cursor', 'auto');
+    });    
+    
+    $('#table_id tbody').on('click', 'td.include-question', function () {       //DJG - don't know if I need this or can just do '.include-question'.click...
+        var cell = this
+        question_id = table.row(this.parentNode).data().id;
+        console.log(question_id);
+        $.getJSON(
+                  flask_util.url_for('select_question', {id: question_id}),
+                  function(json) {
+                    console.log(json);
+                    if (json.savedsuccess = "true") {
+                      $(cell).removeClass("success");                      
+                      $(cell).addClass(json.selected_class)
+                      console.log(cell)
+                    }
+                  }
+        ) 
+    });    
+
+} );
+
+
+$("#clear_filters").on( 'click', function( event ) {
+    window.location.reload()
+});
+    
+</script>
 
 {% endblock %}

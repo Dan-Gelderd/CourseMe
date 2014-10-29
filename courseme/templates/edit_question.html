@@ -108,7 +108,7 @@ function testQuestion() {
 <div class="row">
   <div class="col-md-12">
 
-    <form class="form" action={{ url_for('edit_question', id=0) }} method="POST" id="edit_question_form">
+    <form class="form" action={{ url_for('edit_question', id=edit_id) }} method="POST" id="edit_question_form">
         {{ form.hidden_tag() }}
         {{ form.edit_question_id }}
         <div class="form-group" id="question_form_group">
@@ -175,23 +175,23 @@ function testQuestion() {
 
 <hr>
 <h2>Examples</h2>
-<div class="example-header">You can write LaTeX expressions inside \\( and \\) braces and it will appear in line with the rest of your text:</div>
+<div class="example-header tex2jax_ignore">You can write LaTeX expressions inside \( and \) braces and it will appear in line with the rest of your text:</div>
 
 <b>For example:</b>
-<div class="example-input">
-What are all the roots to the equation \\( x^2-4x+3=0 \\)?
+<div class="example-input tex2jax_ignore">
+What are all the roots to the equation \( x^2-4x+3=0 \)?
 </div>
 <b>Appears as:</b>
 <div class="example-output">
 What are all the roots to the equation \( x^2-4x+3=0 \)?
 </div>
 
-
-<div class="example-header">You can write LaTeX expressions inside \\[ and \\] braces and it will appear as a block within the rest of your text:</div>
+<br>
+<div class="example-header tex2jax_ignore">You can write LaTeX expressions inside \[ and \] braces and it will appear as a block within the rest of your text:</div>
 
 <b>For example:</b>
-<div class="example-input">
-Diagonalise the matrix \\[ x^2-4x+3=0 \\]
+<div class="example-input tex2jax_ignore">
+Diagonalise the matrix \[ x^2-4x+3=0 \]
 </div>
 
 <b>Appears as:</b>
@@ -203,45 +203,34 @@ Diagonalise the matrix \[ \begin{aligned}
 \nabla \cdot \vec{\mathbf{B}} &amp; = 0 \end{aligned} \]
 </div>
 
-<div class="example-header">Avoid using &amp;, &lt; and &gt; symbols in your questions as these get misinterpreted by the browser:</div>
+<br>
+<div class="example-header tex2jax_ignore">Avoid using &amp;, &lt; and &gt; symbols in your questions as these get misinterpreted by the browser:</div>
 
 <b>For example:</b>
 <div class="example-input tex2jax_ignore">
-Write down all inter values of \(x\) such that \( x &lt; 7 \) and \(x &gt; 3 \).
+Write down all inter values of \(x\) such that \( x \lt 7 &amp; x \gt 3 \).
 </div>
 
 <b>Appears as:</b>
 <div class="example-output">
-Write down all inter values of \(x\) such that \( x &lt; 7 \) and \(x &gt; 3 \).
+Write down all inter values of \(x\) such that \( x \lt 7 &amp; x \gt 3 \).
 </div>
-
-<div class="example-header">Avoid using &amp;, &lt; and &gt; symbols in your questions as these get misinterpreted by the browser:</div>
+<br>
+<div class="example-header tex2jax_ignore">To create multiple question parts use manually typesetting:</div>
 
 <b>For example:</b>
 <div class="example-input tex2jax_ignore">
-Write down all inter values of \(x\) such that \( x &lt; 7 &amp; x &gt; 3 \).
+This is a question:
+a) part a
+b) part b
 </div>
 
 <b>Appears as:</b>
 <div class="example-output">
-Write down all inter values of \(x\) such that \( x &lt; 7 &amp; x &gt; 3 \).
+This is a question: <br>
+a) part a  <br>
+b) part \( x^2-4x+3=0 \)
 </div>
 
-<div class="example-header">Avoid using &amp;, &lt; and &gt; symbols in your questions as these get misinterpreted by the browser:</div>
 
-<b>For example:</b>
-<div class="example-input tex2jax_ignore">
-Write down all inter values of \(x\) such that \( x &lt; 7 &amp; x &gt; 3 \).
-</div>
-
-<b>Appears as:</b>
-<div class="example-output">
-\[
-\begin{enumerate}
-\item
-\item
-\end{enumerate}
-\]
-
-</div>
 {% endblock %}

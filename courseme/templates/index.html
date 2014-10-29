@@ -104,6 +104,8 @@
         var table = $('#table_id').DataTable( {
             //"dom": '<"toolbar">frtip',      //DJG - maybe a better way to add custom filter control       
 
+            stateSave: true,
+            
             "aoColumnDefs": [  // enables turning off sorting for the columns
                 {"bVisible": false, "aTargets": [0, 1]}  //DJG - targets grid columns to hide - just add the column to be disabled into the array
             ],

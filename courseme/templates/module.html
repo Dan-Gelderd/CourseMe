@@ -118,7 +118,7 @@ $(document).ready(function () {
               flask_util.url_for('add_module_to_course', {module_id: module_id, course_id: course_id}),
               function(json) {
                 console.log(json);
-                if (json.savedsuccess = "False") {
+                if (json.savedsuccess = "false") {
                   window.location.reload()
                 }
               }

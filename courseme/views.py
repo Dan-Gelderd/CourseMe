@@ -1008,7 +1008,7 @@ def edit_question(id = 0):
             return json.dumps(form.errors, separators=(',',':'))
 
 
-@app.route('/delete_question/<int:id>', methods = ['GET', 'POST'])
+@app.route('/delete-question/<int:id>', methods = ['GET', 'POST'])
 @login_required
 def delete_question(id = 0):
     result = {}
@@ -1032,6 +1032,24 @@ def delete_question(id = 0):
 def questions():
     title = "CourseMe - Questions"
     questions = Question.query.all()
+    catalogue = [question.as_dict() for question in questions]                #DJG - confused over best way to do this http://stackoverflow.com/questions/1958219/convert-sqlalchemy-row-object-to-python-dict  
     return render_template('questions.html',
                            title = title,
-                           questions = questions)
+                           questions = questions,
+                           catalogue = json.dumps(catalogue, cls=CustomEncoder, separators=(',',':'))
+                           )
+
+
+@app.route('/select-question/<int:id>', methods = ['GET', 'POST'])
+@login_required
+def select_question(id = 0):
+    result = {}
+    result['savedsuccess'] = False
+    question = Question.query.get(id)
+    if question:
+        result['selected_class']  = g.user.toggle_select_question(question)
+        result['savedsuccess'] = True
+        return json.dumps(result, separators=(',',':'))    
+    else:
+        flash('This question does not exist')
+        return redirect(url_for('questions'))
