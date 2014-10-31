@@ -2,7 +2,7 @@ from flask import render_template, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from courseme import app, db, lm, hash_string, lectures
 import forms
-from models import User, ROLE_USER, ROLE_ADMIN, Objective, SchemeOfWork, UserObjective, Module, UserModule, Institution, Group, Message, Question
+from models import User, ROLE_USER, ROLE_ADMIN, Objective, SchemeOfWork, UserObjective, Module, UserModule, Institution, Group, Message, Question, Subject, Topic
 from datetime import datetime
 import json, operator
 #import pdb; pdb.set_trace()        #DJG - remove
@@ -23,6 +23,7 @@ def load_user(id):
 @app.before_request
 def before_request():
     g.user = current_user       #DJG - Could scrap this and just use current_user directly?
+    g.subjects = Subject.query.all()
     if g.user.is_authenticated():
         g.user.last_seen = datetime.utcnow()
         db.session.add(g.user)
@@ -99,6 +100,19 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('index'))
+
+
+@app.route('/select-subject/<int:id>', methods = ["POST"])
+@login_required
+def select_subject(id):
+    if id > 0: subject = Subject.query.get(id)
+    if subject:
+        g.user.subject_id = subject.id
+        db.session.add(g.user)
+        db.session.commit()
+        print subject.id, subject.name, g.user.name
+    return ""
+
 
 
 #objectives
