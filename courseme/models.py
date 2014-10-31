@@ -17,6 +17,23 @@ OBJ_FULL = 2
 
 ENTERPRISE_LICENCE_DURATION = 1
 
+
+class Subject(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    name = db.Column(db.String(64), nullable=False)    
+    time_created = db.Column(db.DateTime)
+    
+    topics = db.relationship("Topic", backref="subject", lazy='dynamic')
+    objectives = db.relationship("Objective", backref="subject", lazy='dynamic')
+
+class Topic(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    name = db.Column(db.String(64), nullable=False)    
+    time_created = db.Column(db.DateTime)
+    subject_id = db.Column(db.Integer, db.ForeignKey(Subject.id), nullable=False)     
+
+    objectives = db.relationship("Objective", backref="topic", lazy='dynamic')    
+
 student_tutor = db.Table("student_tutor",
     db.Column("tutor_id", db.Integer, db.ForeignKey("user.id")),
     db.Column("student_id", db.Integer, db.ForeignKey("user.id"))
@@ -39,6 +56,8 @@ class User(db.Model):
     enterprise_licence = db.Column(db.DateTime)
     view_system_only = db.Column(db.Boolean, default = False)  
     time_deleted = db.Column(db.DateTime)
+
+    subject_id = db.Column(db.Integer, db.ForeignKey('subject.id'))          
     
     view_institution_only_id = db.Column(db.Integer, db.ForeignKey('institution.id'))           
     institution_student_id = db.Column(db.Integer, db.ForeignKey('institution.id'))
@@ -267,9 +286,11 @@ objective_heirarchy = db.Table("objective_heirarchy",
 class Objective(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique = True, nullable=False)
-    subject = db.Column(db.String(50), default="Mathematics")
-    topic = db.Column(db.String(100))
+    subject_id = db.Column(db.Integer, db.ForeignKey(Subject.id), nullable=False)
+    topic_id = db.Column(db.Integer, db.ForeignKey(Topic.id))                               #DJG - need to change to reference to topic table
     description = db.Column(db.String(50), nullable=True)
+    time_created = db.Column(db.DateTime)
+    last_updated = db.Column(db.DateTime)    
 
     created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))     #DJG - why is user lower case in ForeignKey('user.id')    
 

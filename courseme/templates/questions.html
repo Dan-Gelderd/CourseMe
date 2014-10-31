@@ -77,32 +77,14 @@ $(document).ready( function () {                //DJG - https://datatables.net/m
     //console.log({{catalogue | safe}});        
     var table = $('#table_id').DataTable( {
     
-        "paging":   false,
-        "ordering": false,
-        "info":     false,
+        //"paging":   false,
+        //"ordering": false,
+        //"info":     false,
 
         "aoColumnDefs": [  // enables turning off sorting for the columns
             {"bVisible": false, "aTargets": [0, 1]}  //DJG - targets grid columns to hide - just add the column to be disabled into the array
         ],
-        
-        "order": [[ 1, 'asc' ]],
-        "displayLength": 50,
-        "drawCallback": function ( settings ) {
-            var api = this.api();
-            var rows = api.rows( {page:'current'} ).nodes();
-            var last=null;
- 
-            api.column(1, {page:'current'} ).data().each( function ( group, i ) {
-                if ( last !== group ) {
-                    $(rows).eq( i ).before(
-                        '<tr class="group"><td colspan="5">'+group+'</td></tr>'
-                    );
- 
-                    last = group;
-                }
-            } );
-        },
-        
+
         data: {{catalogue | safe}},
         
         columns: [
@@ -120,6 +102,28 @@ $(document).ready( function () {                //DJG - https://datatables.net/m
                 "defaultContent": ''
             }
         ],
+        
+        "order": [[ 1, 'asc' ]],
+        
+        "displayLength": 50,
+        "drawCallback": function ( settings ) {
+            var api = this.api();
+            var rows = api.rows( {page:'current'} ).nodes();
+            var last=[null];
+ 
+            api.column(1, {page:'current'} ).data().each( function ( group, i ) {
+                //DJG - need library to do deep comparison on the array objects in column 1 as the test always returns false otherwise
+                if ( last[0] !== group[0] ) {
+                    $(rows).eq( i ).before(
+                        '<tr class="group"><td colspan="5">'+group+'</td></tr>'
+                    );
+                    //console.log(last);
+                    //console.log(group);
+                    //console.log(last==group);
+                    last = group;
+                }
+            } );
+        },
     
         "createdRow": function ( row, data, index ) {
             if ( data[4] > 4000 ) {

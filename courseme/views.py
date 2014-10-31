@@ -914,7 +914,7 @@ def deny_access(request_id):
         result['savedsuccess'] = False
     return json.dumps(result, separators=(',',':'))
 
-@app.route('/edit_question/<int:id>', methods = ['GET', 'POST'])
+@app.route('/edit-question/<int:id>', methods = ['GET', 'POST'])
 @login_required
 def edit_question(id = 0):
     title = "CourseMe - Questions"
@@ -1001,7 +1001,7 @@ def edit_question(id = 0):
                 result['question_id'] = question.id
                 flash("Question saved")
             
-            return json.dumps(result, separators=(',',':'))
+            return redirect(url_for('questions'))
         
         else:
             form.errors['savedsuccess'] = False

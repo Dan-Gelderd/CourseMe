@@ -1,7 +1,59 @@
 #!flask/bin/python
 from courseme import db, hash_string
-from courseme.models import Module, User, ROLE_USER, ROLE_ADMIN, Objective, Institution, Question
+from courseme.models import Module, User, ROLE_USER, ROLE_ADMIN, Objective, Institution, Question, Subject, Topic
 from datetime import datetime
+
+
+maths = Subject(
+        name = "Mathematics",    
+        time_created = datetime.utcnow()
+)
+
+biology = Subject(
+        name = "Biology",    
+        time_created = datetime.utcnow()
+)
+
+misc = Subject(
+        name = "Miscelaneous",    
+        time_created = datetime.utcnow()
+)
+
+db.session.add(maths)
+db.session.add(biology)
+db.session.add(misc)
+db.session.commit()
+
+algebra = Topic(
+        name = "Algebra",    
+        time_created = datetime.utcnow(),
+        subject = maths
+)
+
+geometry = Topic(
+        name = "Geometry",    
+        time_created = datetime.utcnow(),
+        subject = maths
+)
+
+number = Topic(
+        name = "Number",    
+        time_created = datetime.utcnow(),
+        subject = maths
+)
+
+calculus = Topic(
+        name = "Calculus",    
+        time_created = datetime.utcnow(),
+        subject = maths
+)
+
+db.session.add(algebra)
+db.session.add(geometry)
+db.session.add(number)
+db.session.add(calculus)
+
+db.session.commit()
 
 user = User(email="support@courseme.com",
             password=hash_string("111111"),
@@ -102,7 +154,8 @@ db.session.commit()
 
 
 objective = Objective(name="Rationalise the denominator of fractions with surds",
-                      subject="Mathematics",
+                      subject=maths,
+                      topic=number,
                       created_by_id=User.main_admin_user().id
                       #prerequisites=[Objective.query.get(2)]
                       )
@@ -110,7 +163,8 @@ db.session.add(objective)
 db.session.commit()
 
 objective = Objective(name="Estimate powers and roots of any given positive",
-                      subject="Mathematics",
+                      subject=maths,
+                      topic=number,
                       created_by_id=User.main_admin_user().id
                       #prerequisites=[Objective.query.get(2)]
                       )
@@ -118,7 +172,8 @@ db.session.add(objective)
 db.session.commit()
 
 objective = Objective(name="Convert terminating decimals to their corresponding fractions",
-                      subject="Mathematics",
+                      subject=maths,
+                      topic=number,
                       created_by_id=User.main_admin_user().id
                       #prerequisites=[Objective.query.get(2)]
                       )
@@ -126,7 +181,8 @@ db.session.add(objective)
 db.session.commit()
 
 objective = Objective(name="Identify and work with fractions in ratio problems",
-                      subject="Mathematics",
+                      subject=maths,
+                      topic=number,
                       created_by_id=User.main_admin_user().id
                       #prerequisites=[Objective.query.get(2)]
                       )
@@ -134,7 +190,8 @@ db.session.add(objective)
 db.session.commit()
 
 objective = Objective(name="Use and interpret algebraic notation",
-                      subject="Mathematics",
+                      subject=maths,
+                      topic=algebra,
                       created_by_id=User.main_admin_user().id
                       #prerequisites=[Objective.query.get(2)]
                       )
@@ -142,7 +199,8 @@ db.session.add(objective)
 db.session.commit()
 
 objective = Objective(name="Substitute numerical values into formulae and expressions, including scientific formulae",
-                      subject="Mathematics",
+                      subject=maths,
+                      topic=algebra,
                       created_by_id=User.main_admin_user().id
                       #prerequisites=[Objective.query.get(2)]
                       )
@@ -150,7 +208,8 @@ db.session.add(objective)
 db.session.commit()
 
 objective2 = Objective(name="Substitute algebraic expressions into formulae and expressions, including scientific formulae",
-                      subject="Mathematics",
+                      subject=maths,
+                      topic=algebra,
                       created_by_id=User.main_admin_user().id,
                       prerequisites=[objective]
                       )
@@ -158,7 +217,8 @@ db.session.add(objective2)
 db.session.commit()
 
 objective = Objective(name="Round numbers and measures to an appropriate degree of accuracy",
-                      subject="Mathematics",
+                      subject=maths,
+                      topic=number,
                       created_by_id=User.main_admin_user().id
                       #prerequisites=[Objective.query.get(2)]
                       )
@@ -166,7 +226,8 @@ db.session.add(objective)
 db.session.commit()
 
 objective2 = Objective(name="Use inequality notation to specify simple error intervals due to truncation or rounding",
-                      subject="Mathematics",
+                      subject=maths,
+                      topic=number,
                       created_by_id=User.main_admin_user().id,
                       prerequisites=[objective]
                       )
@@ -174,7 +235,8 @@ db.session.add(objective2)
 db.session.commit()
 
 objective = Objective(name="Apply and interpret limits of accuracy",
-                      subject="Mathematics",
+                      subject=maths,
+                      topic=number,
                       created_by_id=User.main_admin_user().id
                       #prerequisites=[Objective.query.get(2)]
                       )
@@ -182,7 +244,8 @@ db.session.add(objective)
 db.session.commit()
 
 objective = Objective(name="Rearrange formulae to change the subject",
-                      subject="Mathematics",
+                      subject=maths,
+                      topic=algebra,
                       created_by_id=User.main_admin_user().id
                       #prerequisites=[Objective.query.get(2)]
                       )
