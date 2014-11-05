@@ -34,7 +34,7 @@ class EditObjective(Form):
     edit_objective_name = TextField('Objective', validators = [
                 DataRequired('Enter a description of the objective'),
                 Length(min=4, message=(u'Description must be at least 4 characters'))])
-    edit_objective_subject = SelectField('Subject', choices=[('Mathematics','Mathematics'),('Biology','Biology')])
+    edit_objective_topic = SelectField('Topic', choices=[])
     edit_objective_prerequisites = SelectMultipleField('Prerequisites', choices=[])
     #authors = FieldList(TextField('Name'))      #DJG - Try this as way of geting proper ordered list back from form
 

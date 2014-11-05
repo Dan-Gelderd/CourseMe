@@ -3,6 +3,15 @@ $(document).ready(function () {
     $('#new_prerequisite_form_group').find('.dynamic-list-new-item-label').text("Enter new prerequisite for this objective");
     $('#new_prerequisite_form_group').find('.dynamic-list-heading').text("Prerequisites");    
 
+
+    //DJG - could add choices here - but can't use jinja2 templating in js files? 
+    //{% for topic in g.user.subject.topics %}
+    //new_topic = document.createElement('option');
+    //new_topic.setAttribute('value', 'topic.id');
+    //new_topic.setAttribute('text', 'topic.name'); 
+    //$("#edit_objective_topic").append(new_topic);
+    //{% endfor %}
+    
     //Button to bring up new empty form modal to create a new objective with prerequisites
     $("#create_objective").click(function(){
             $("#edit_objective_id").val("");
@@ -98,8 +107,7 @@ $(document).ready(function () {
 function loadEditObjectiveModal(objective) {
     $("#edit_objective_id").val(objective.id);
     $("#edit_objective_name").val(objective.name);
-    $("#edit_objective_subject").val(objective.subject);
-    $("#edit_objective_subject").attr("disabled", true);
+    $("#edit_objective_topic").val(objective.topic_id);
     //$("#edit_objective_subject").disabled = true;             DJG - think this is better
     $("#edit_objective_form").find(".dynamic-list-new-item").val("");
     $("#edit_objective_form").find(".help-block").text("");

@@ -1,3 +1,4 @@
+#from flask import g         #DJG - Just added this to get the TopicChoices static method working. Could maybe otherwise add it as a method of User; doesn't work
 from courseme import db
 import json, operator
 from datetime import datetime, timedelta
@@ -20,7 +21,7 @@ ENTERPRISE_LICENCE_DURATION = 1
 
 class Subject(db.Model):
     id = db.Column(db.Integer, primary_key = True)
-    name = db.Column(db.String(64), nullable=False)    
+    name = db.Column(db.String(64), nullable=False, unique = True)    
     time_created = db.Column(db.DateTime)
     
     topics = db.relationship("Topic", backref="subject", lazy='dynamic')
@@ -28,11 +29,16 @@ class Subject(db.Model):
 
 class Topic(db.Model):
     id = db.Column(db.Integer, primary_key = True)
-    name = db.Column(db.String(64), nullable=False)    
+    name = db.Column(db.String(64), nullable=False, unique = True)    
     time_created = db.Column(db.DateTime)
     subject_id = db.Column(db.Integer, db.ForeignKey(Subject.id), nullable=False)     
 
     objectives = db.relationship("Objective", backref="topic", lazy='dynamic')    
+
+    @staticmethod
+    def TopicChoices(user):
+        return [(str(topic.id), topic.name) for topic in Topic.query.filter(Topic.subject_id == user.subject_id).all()]
+
 
 student_tutor = db.Table("student_tutor",
     db.Column("tutor_id", db.Integer, db.ForeignKey("user.id")),
@@ -124,7 +130,7 @@ class User(db.Model):
     def visible_objectives(self):
         visible_objective_user_ids = [u.id for u in User.admin_users()]
         visible_objective_user_ids.append(self.id)
-        return Objective.query.filter(Objective.created_by_id.in_(visible_objective_user_ids))      #DJG - what about visible courses?
+        return Objective.query.filter(Objective.created_by_id.in_(visible_objective_user_ids)).filter(Objective.subject_id == self.subject_id)      #DJG - what about visible courses?
 
     def live_modules_authored(self):
         return Module.LiveModules().filter_by(author_id = self.id)
@@ -342,7 +348,8 @@ class Objective(db.Model):
         data = {}
         data['id'] = self.id
         data['name'] = self.name
-        data['subject'] = self.subject
+        data['subject'] = self.subject.name
+        data['topic_id'] = self.topic_id        
         data['prerequisites'] = [p.name for p in self.prerequisites.all()]
         #return json.dumps(data, sort_keys=True, separators=(',',':'))      DJG - could convert to JSON in here
         return data
@@ -510,6 +517,9 @@ class Module(db.Model):                                             #DJG - chang
                         backref = db.backref('courses', lazy = 'dynamic'),        #DJG - Does this need to be included to make the secondary table update when an objective is passed to session.delete()? 
                         lazy = 'dynamic',                                       
                         passive_updates=False)
+
+    def subject_id(self):
+        return self.objectives[0].subject_id
 
     def calculate_votes():
         pass #DJG - calculate the proper votes total by summing usermodules and store in this parameter, to be run periodically to keep votes count properly alligned; should print out a record if mismatched to developer log

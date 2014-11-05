@@ -121,6 +121,7 @@ def select_subject(id):
 def objectives_admin():
     title = "CourseMe - Objectives"
     objectiveform = forms.EditObjective()
+    objectiveform.edit_objective_topic.choices = Topic.TopicChoices(g.user)     #DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
     objectives = g.user.visible_objectives().all()
     objectives.sort(key=operator.methodcaller("score"))   #DJG - isn't there a way of doing this within the order_by of the query
     return render_template('objectivesadmin.html',
@@ -142,6 +143,7 @@ def objectives(profile_id, scheme_id=0):
     else:
         title = "CourseMe - Objectives"
         objectiveform = forms.EditObjective()
+        objectiveform.edit_objective_topic.choices = Topic.TopicChoices(g.user)     #DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
         objectives = []
         if scheme_id == 0:
             objectives = g.user.visible_objectives().all()    
@@ -205,6 +207,7 @@ def objectives_group(group_id, scheme_id=0, name_display=1):
 @app.route('/objective-add-update', methods = ['POST'])
 def objective_add_update():
     form = forms.EditObjective()
+    form.edit_objective_topic.choices = Topic.TopicChoices(g.user)     #DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
     form.edit_objective_prerequisites.choices = [(i, i) for i in form.edit_objective_prerequisites.data]
     #import pdb; pdb.set_trace()
     #form will be the fields of the html form with the csrf
@@ -215,7 +218,7 @@ def objective_add_update():
     if form.validate():
         obj_id = form.edit_objective_id.data
         name = form.edit_objective_name.data
-        subject = form.edit_objective_subject.data
+        topic = Topic.query.get(form.edit_objective_topic.data)
         prerequisites = []
         #import pdb; pdb.set_trace()        #DJG - remove
         #Reading off the list of prerequisites
@@ -238,10 +241,15 @@ def objective_add_update():
                 is_are = 'is not already defined as an objective' if len(undefined_prerequisites) == 1 else 'are not already defined as objectives'
                 result['new_prerequisite'] = ["'" + "', '".join(undefined_prerequisites) + "' " + is_are]
                 #No need to check for cyclic prerequisites as the new objective cannot be a prerequisite to anything already
-            elif subject not in ["Mathematics", "Biology"]:
-                result['edit_objective_subject'] = ["Not allowed to define objectives for subject " + subject]
+            elif topic.subject_id != g.user.subject_id:
+                result['edit_objective_subject'] = [g.user.subject_id]
             else:
-                objective = Objective(name=name, subject=subject, prerequisites=prerequisites, created_by_id=g.user.id)
+                objective = Objective(name=name,
+                                      subject_id=g.user.subject_id,
+                                      topic = topic,
+                                      prerequisites=prerequisites,
+                                      created_by_id=g.user.id
+                                      )
                 db.session.add(objective)
                 db.session.commit()
                 result['savedsuccess'] = True
@@ -267,8 +275,15 @@ def objective_add_update():
                         #The new objective name is already taken
                         result['edit_objective_name'] = ["Objective '" + name + "' already exists"]
                         proceed = False
- 
-            #Name not changed or new name not taken
+            
+            #Name not changed or new name not taken            
+            if proceed:
+                #Need to check user.subject is the same as the existing objective subject
+                if g.user.subject_id != objective.subject_id or topic.subject_id != objective.subject_id:
+                    result['edit_objective_subject'] = [objective.subject_id]
+                    proceed = False
+            
+            #User subject same as exsting objective subject
             if proceed:
                 #Need to check all the prerequisites exist already            
                 if undefined_prerequisites:       #DJG - code repeat of above, how to avoid this
@@ -283,6 +298,7 @@ def objective_add_update():
                     else:
                         objective.name = name
                         objective.prerequisites = prerequisites
+                        objective.topic = topic
                         db.session.add(objective)
                         db.session.commit()                    
                         result['savedsuccess'] = True
@@ -339,6 +355,7 @@ def editmodule(id = 0):
     moduleform = forms.EditModule()         #DJG - need the arguement because using validate not validate_on_submit?
     #import pdb; pdb.set_trace()            #DJG - remove
     objectiveform = forms.EditObjective()
+    objectiveform.edit_objective_topic.choices = Topic.TopicChoices(g.user)     #DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
     module_objectives = []
     module = None
     form_header = "Create new module:"
@@ -349,6 +366,9 @@ def editmodule(id = 0):
                 flash('You are not authorised to edit this module')
                 return redirect(url_for('module', id=id))
             elif request.method == 'GET':
+                g.user.subject_id = module.subject_id()
+                db.session.add(g.user)
+                db.session.commit()
                 material_type = module.material_type
                 form_header = "Edit " + material_type + ":"
                 material_source = module.material_source
@@ -493,6 +513,9 @@ def editmodule(id = 0):
 def module(id):
     title = "CourseMe - Module"   
     module = Module.query.get_or_404(id)
+    g.user.subject_id = module.subject_id()
+    db.session.add(g.user)
+    db.session.commit()
     messageform = forms.SendMessage()
     usermodule = UserModule.FindOrCreate(g.user.id, id) 
     templates = {"Lecture": "lecture.html", "Course": "course.html"}
@@ -934,6 +957,7 @@ def edit_question(id = 0):
     title = "CourseMe - Questions"
     form = forms.EditQuestion()
     objectiveform = forms.EditObjective()
+    objectiveform.edit_objective_topic.choices = Topic.TopicChoices(g.user)     #DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
     question_objectives = []
     question = None
     #import pdb; pdb.set_trace()

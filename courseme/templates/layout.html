@@ -50,8 +50,11 @@
               <form class="navbar-form navbar-left" role="select">      <!-- DJG - Don't understand roles --> 
                 <div class="form-group">
                   <select id="select_subject" type="combobox" class="form-control" placeholder="Choose a subject">
+                    {% if not g.user.subject_id %}
+                    <option value = 0 selected>Select a subject</option>
+                    {% endif %}                
                     {% for subject in g.subjects %}
-                    <option value = {{subject.id}}>{{subject.name}}</option>
+                    <option value = {{subject.id}} {% if subject.id == g.user.subject_id %}selected{% endif %}>{{subject.name}}</option>
                     {% endfor %}
                   </select>
                 </div>
@@ -174,7 +177,7 @@
         
         <script type='text/javascript'>
             $(document).ready(function () {
-
+                
                 $("#select_subject").change(function(event){
                     event.preventDefault();     //DJG - don't want submit button to post the form as well as the ajax request or get 400 bad request error. Not sure if this is the right way to fix it.
                     var subject_id = $(this).val();
@@ -182,7 +185,7 @@
                     $.post(
                         flask_util.url_for('select_subject', {id: subject_id}),
                         function() {
-                            window.location.reload()
+                            window.location.href = flask_util.url_for('index');
                         }       
                     );                        
                 });
