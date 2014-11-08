@@ -266,7 +266,8 @@ module = Module(
     material_source="youtube", 
     material_path="//www.youtube.com/embed/lA6hE7NFIK0?list=UUOGeU-1Fig3rrDjhm9Zs_wg",
     objectives=[Objective.query.get(1)],
-    extension = True
+    extension = True,
+    subject_id = maths.id
     )
 db.session.add(module)
 
@@ -281,7 +282,8 @@ module = Module(
     material_source="youtube", 
     material_path="//www.youtube.com/embed/VIVIegSt81k?rel=0",
     objectives=[Objective.query.get(2)],
-    extension = True
+    extension = True,
+    subject_id = maths.id
     )
 db.session.add(module)
 
@@ -297,7 +299,8 @@ module = Module(
     material_path="//www.youtube.com/embed/e4MSN6IImpI?list=PLF7CBA45AEBAD18B8",
     objectives=[Objective.query.get(3)],
     extension = True,
-    visually_impaired = True
+    visually_impaired = True,
+    subject_id = maths.id
     )
 db.session.add(module)
 
@@ -312,7 +315,8 @@ module = Module(
     material_source="youtube", 
     material_path="//www.youtube-nocookie.com/embed/N-7tcTIrers?rel=0",
     objectives=[Objective.query.get(3)],
-    extension = True
+    extension = True,
+    subject_id = maths.id
     )
 db.session.add(module)
 
@@ -329,7 +333,8 @@ module = Module(
     material_path="//www.youtube-nocookie.com/embed/0BsoWvWXOMM?rel=0",
     objectives=[Objective.query.get(3)],
     extension = True,
-    visually_impaired = True
+    visually_impaired = True,
+    subject_id = maths.id
     )
 db.session.add(module)  
 
@@ -345,7 +350,8 @@ module = Module(
     material_path="//www.youtube-nocookie.com/embed/GmMX3-nTWbE?rel=0",
     objectives=[Objective.query.get(3)],
     extension = True,
-    visually_impaired = False
+    visually_impaired = False,
+    subject_id = maths.id
     )
 db.session.add(module)  
 
@@ -359,7 +365,8 @@ module = Module(
     material_type = "Lecture",
     material_source="youtube", 
     material_path="//www.youtube-nocookie.com/embed/52ZlXsFJULI?rel=0",
-    objectives=[Objective.query.get(3)]
+    objectives=[Objective.query.get(3)],
+    subject_id = maths.id
     )
 db.session.add(module)  
 
@@ -373,7 +380,8 @@ module = Module(
     material_type = "Lecture",
     material_source="youtube", 
     material_path="//www.youtube-nocookie.com/embed/F21S9Wpi0y8?rel=0",
-    objectives=[Objective.query.get(3)]
+    objectives=[Objective.query.get(3)],
+    subject_id = maths.id
     )
 db.session.add(module)
 
@@ -397,7 +405,8 @@ Finally, while display equations look good for a page of samples, the ability to
     extension = False,
     visually_impaired = False, 
     author_id = User.main_admin_user().id,
-    objectives=[Objective.query.get(3)]
+    objectives=[Objective.query.get(3)],
+    subject = maths
 )
 
 db.session.add(q)
@@ -419,7 +428,8 @@ r'''
     extension = False,
     visually_impaired = True,
     author_id = User.main_admin_user().id,
-    objectives=[Objective.query.get(2)]
+    objectives=[Objective.query.get(2)],
+    subject = maths
 )
 
 
@@ -441,7 +451,8 @@ r'''
     extension = False,
     visually_impaired = False,
     author_id = User.main_admin_user().id,
-    objectives=[Objective.query.get(1)]
+    objectives=[Objective.query.get(1)],
+    subject = maths
 )
 
 
@@ -467,7 +478,8 @@ r'''
     extension = False,
     visually_impaired = False,
     author_id = User.main_admin_user().id,
-    objectives=[Objective.query.get(4)]
+    objectives=[Objective.query.get(4)],
+    subject = maths
 )
 
 
@@ -491,7 +503,8 @@ r'''
     extension = True,
     visually_impaired = True,
     author_id = User.main_admin_user().id,
-    objectives=[Objective.query.get(3)]
+    objectives=[Objective.query.get(3)],
+    subject = maths
 )
 
 
@@ -520,7 +533,8 @@ Isn't it great.
     extension = True,
     visually_impaired = False,
     author_id = User.main_admin_user().id,
-    objectives=[Objective.query.get(3), Objective.query.get(2)]
+    objectives=[Objective.query.get(3), Objective.query.get(2)],
+    subject = maths
 )
 
 

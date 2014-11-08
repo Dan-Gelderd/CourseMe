@@ -209,7 +209,7 @@ def objective_add_update():
     form = forms.EditObjective()
     form.edit_objective_topic.choices = Topic.TopicChoices(g.user)     #DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
     form.edit_objective_prerequisites.choices = [(i, i) for i in form.edit_objective_prerequisites.data]
-    #import pdb; pdb.set_trace()
+    import pdb; pdb.set_trace()
     #form will be the fields of the html form with the csrf
     #request.form will be the data posted back through the ajax request
     #DJG - don't know why the request.form object seems to have a second empty edit_objective_id attribute
@@ -358,7 +358,11 @@ def editmodule(id = 0):
     objectiveform.edit_objective_topic.choices = Topic.TopicChoices(g.user)     #DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
     module_objectives = []
     module = None
-    form_header = "Create new module:"
+    if not g.user.subject:
+        flash("You need to select what subject you are interested in")
+        return redirect(url_for('index'))
+    
+    form_header = "Create new " + g.user.subject.name + " module:"
     if id > 0:
         module = Module.query.get(id)
         if module:
@@ -366,7 +370,7 @@ def editmodule(id = 0):
                 flash('You are not authorised to edit this module')
                 return redirect(url_for('module', id=id))
             elif request.method == 'GET':
-                g.user.subject_id = module.subject_id()
+                g.user.subject = module.subject
                 db.session.add(g.user)
                 db.session.commit()
                 material_type = module.material_type
@@ -486,6 +490,7 @@ def editmodule(id = 0):
                                     material_type = material_type,
                                     material_source=material_source, 
                                     material_path=material_path,
+                                    subject = g.user.subject,
                                     objectives=objectives,
                                     modules = course_modules,
                                     subtitles = moduleform.subtitles.data,
@@ -513,7 +518,7 @@ def editmodule(id = 0):
 def module(id):
     title = "CourseMe - Module"   
     module = Module.query.get_or_404(id)
-    g.user.subject_id = module.subject_id()
+    g.user.subject_id = module.subject_id
     db.session.add(g.user)
     db.session.commit()
     messageform = forms.SendMessage()
@@ -567,11 +572,16 @@ def voteclick(id):
 def add_module_to_course(module_id, course_id):
     result = {}
     result['savedsuccess'] = False
+    if not g.user.subject:
+        flash("You need to select what subject you are interested in")
+        return redirect(url_for('index'))
+    
     if course_id == 0:
         course = Module(name="New Course",
                         time_created=datetime.utcnow(),
                         last_updated=datetime.utcnow(),
                         author_id=g.user.id,
+                        subject=g.user.subject,
                         material_type = "Course")
         db.session.add(course)
     else:
@@ -586,7 +596,9 @@ def add_module_to_course(module_id, course_id):
                 if course.author_id != g.user.id:
                     flash('You are not authorised to edit this course')
                 elif course.material_type != "Course":
-                    flask('You cannot add modules to a ' + course.material_type)
+                    flash('You cannot add modules to a ' + course.material_type)
+                elif course.subject != module.subject:
+                    flash('You cannot add a ' + module.subject.name + ' module to a ' + course.subject.name + ' course')
                 else:
                     course_modules = course.modules.all()
                     course_modules.append(module)
@@ -970,6 +982,9 @@ def edit_question(id = 0):
                 return redirect(url_for('questions'))
             elif request.method == 'GET':
                 form_header = "Edit question:"
+                g.user.subject_id = question.subject_id
+                db.session.add(g.user)
+                db.session.commit()
                 form = forms.EditQuestion(
                     question = question.question,
                     answer = question.answer,
@@ -1016,6 +1031,10 @@ def edit_question(id = 0):
             else:
                 proceed = True
 
+            if question and g.user.subject_id != question.subject_id:
+                result['subject'] = [question.subject_id]
+                proceed = False
+
             if proceed:
                 if question:
                     question.question = form.question.data
@@ -1025,6 +1044,7 @@ def edit_question(id = 0):
                     question.last_updated=datetime.utcnow()
                 else:
                     question = Question(question=form.question.data,
+                                        subject = g.user.subject,
                                         answer = form.answer.data,
                                         time_created=datetime.utcnow(),
                                         last_updated=datetime.utcnow(),
@@ -1069,7 +1089,11 @@ def delete_question(id = 0):
 @app.route('/questions', methods = ['GET'])
 def questions():
     title = "CourseMe - Questions"
-    questions = Question.query.all()
+    if g.user:
+        questions = g.user.visible_questions().all()
+    else:
+        questions = Question.query.all()
+    
     catalogue = [question.as_dict() for question in questions]                #DJG - confused over best way to do this http://stackoverflow.com/questions/1958219/convert-sqlalchemy-row-object-to-python-dict  
     return render_template('questions.html',
                            title = title,

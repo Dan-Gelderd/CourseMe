@@ -26,6 +26,8 @@ class Subject(db.Model):
     
     topics = db.relationship("Topic", backref="subject", lazy='dynamic')
     objectives = db.relationship("Objective", backref="subject", lazy='dynamic')
+    modules = db.relationship("Module", primaryjoin="Module.subject_id==Subject.id", backref="subject", lazy='dynamic')
+    questions = db.relationship("Question", backref="subject", lazy='dynamic')
 
 class Topic(db.Model):
     id = db.Column(db.Integer, primary_key = True)
@@ -64,6 +66,7 @@ class User(db.Model):
     time_deleted = db.Column(db.DateTime)
 
     subject_id = db.Column(db.Integer, db.ForeignKey('subject.id'))          
+    subject = db.relationship("Subject")
     
     view_institution_only_id = db.Column(db.Integer, db.ForeignKey('institution.id'))           
     institution_student_id = db.Column(db.Integer, db.ForeignKey('institution.id'))
@@ -131,6 +134,13 @@ class User(db.Model):
         visible_objective_user_ids = [u.id for u in User.admin_users()]
         visible_objective_user_ids.append(self.id)
         return Objective.query.filter(Objective.created_by_id.in_(visible_objective_user_ids)).filter(Objective.subject_id == self.subject_id)      #DJG - what about visible courses?
+
+    def visible_questions(self):
+        if self.subject_id > 0 :
+            return Question.query.filter(Question.subject_id == self.subject_id)
+        else:
+            return Question.query
+
 
     def live_modules_authored(self):
         return Module.LiveModules().filter_by(author_id = self.id)
@@ -297,6 +307,7 @@ class Objective(db.Model):
     description = db.Column(db.String(50), nullable=True)
     time_created = db.Column(db.DateTime)
     last_updated = db.Column(db.DateTime)    
+    assessable = db.Column(db.Boolean, nullable=False, default=True)
 
     created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))     #DJG - why is user lower case in ForeignKey('user.id')    
 
@@ -502,10 +513,11 @@ class Module(db.Model):                                             #DJG - chang
     extension = db.Column(db.Boolean, default = False)
     for_teachers = db.Column(db.Boolean, default = False)
     visually_impaired = db.Column(db.Boolean, default = False)
-
     votes = db.Column(db.Integer, default = 0)
 
-    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))     #DJG - why is user lower case in ForeignKey('user.id')
+    subject_id = db.Column(db.Integer, db.ForeignKey('subject.id'), nullable = False)
+
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = False)     #DJG - why is user lower case in ForeignKey('user.id')
 
     objectives = db.relationship('Objective', secondary=module_objectives,      #DJG - shouldn't I have lazy = dynamic here too?
         backref=db.backref('modules', lazy='dynamic'))
@@ -518,8 +530,8 @@ class Module(db.Model):                                             #DJG - chang
                         lazy = 'dynamic',                                       
                         passive_updates=False)
 
-    def subject_id(self):
-        return self.objectives[0].subject_id
+    #def subject_id(self):
+    #    return self.objectives[0].subject_id
 
     def calculate_votes():
         pass #DJG - calculate the proper votes total by summing usermodules and store in this parameter, to be run periodically to keep votes count properly alligned; should print out a record if mismatched to developer log
@@ -874,9 +886,9 @@ class Question(db.Model):
     locked = db.Column(db.DateTime)
     extension = db.Column(db.Boolean, default = False)
     visually_impaired = db.Column(db.Boolean, default = False)      #DJG - need to put this in forms and stuff
-
     votes = db.Column(db.Integer, default = 0)
 
+    subject_id = db.Column(db.Integer, db.ForeignKey(Subject.id), nullable=False)
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
     objectives = db.relationship('Objective', secondary=question_objectives,   #DJG - shouldn't I have  lazy='dynamic', here too?
@@ -888,3 +900,4 @@ class Question(db.Model):
         result['objectives'] = [o.name for o in self.objectives]
         del result['_sa_instance_state']
         return result
+   
