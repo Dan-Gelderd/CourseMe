@@ -16,3 +16,4 @@ flask-util-js
 flask-wtf
 markupsafe
 migrate
+flask-triangle

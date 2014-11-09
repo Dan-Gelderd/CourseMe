@@ -209,7 +209,7 @@ def objective_add_update():
     form = forms.EditObjective()
     form.edit_objective_topic.choices = Topic.TopicChoices(g.user)     #DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
     form.edit_objective_prerequisites.choices = [(i, i) for i in form.edit_objective_prerequisites.data]
-    import pdb; pdb.set_trace()
+    #import pdb; pdb.set_trace()
     #form will be the fields of the html form with the csrf
     #request.form will be the data posted back through the ajax request
     #DJG - don't know why the request.form object seems to have a second empty edit_objective_id attribute
@@ -219,11 +219,8 @@ def objective_add_update():
         obj_id = form.edit_objective_id.data
         name = form.edit_objective_name.data
         topic = Topic.query.get(form.edit_objective_topic.data)
+        topic_id = topic_id if topic else None
         prerequisites = []
-        #import pdb; pdb.set_trace()        #DJG - remove
-        #Reading off the list of prerequisites
-        #unicode_list = request.form["prerequisites"]                    #DJG - the data sent by the ajax request has the list converted into a unicode text string with commas
-        #python_list = filter(None, unicode_list.split(','))             #DJG - Dodgy string manipulation, means I can't have commas in objective names
         select_list = form.edit_objective_prerequisites.data
         if select_list: prerequisites = g.user.visible_objectives().filter(Objective.name.in_(select_list)).all()
         undefined_prerequisites = list(set(select_list) - set(obj.name for obj in prerequisites))
@@ -241,12 +238,12 @@ def objective_add_update():
                 is_are = 'is not already defined as an objective' if len(undefined_prerequisites) == 1 else 'are not already defined as objectives'
                 result['new_prerequisite'] = ["'" + "', '".join(undefined_prerequisites) + "' " + is_are]
                 #No need to check for cyclic prerequisites as the new objective cannot be a prerequisite to anything already
-            elif topic.subject_id != g.user.subject_id:
+            elif topic and topic.subject_id != g.user.subject_id:
                 result['edit_objective_subject'] = [g.user.subject_id]
             else:
                 objective = Objective(name=name,
                                       subject_id=g.user.subject_id,
-                                      topic = topic,
+                                      topic_id = topic_id,
                                       prerequisites=prerequisites,
                                       created_by_id=g.user.id
                                       )
@@ -279,7 +276,7 @@ def objective_add_update():
             #Name not changed or new name not taken            
             if proceed:
                 #Need to check user.subject is the same as the existing objective subject
-                if g.user.subject_id != objective.subject_id or topic.subject_id != objective.subject_id:
+                if g.user.subject_id != objective.subject_id or (topic and topic.subject_id != objective.subject_id):
                     result['edit_objective_subject'] = [objective.subject_id]
                     proceed = False
             
@@ -298,7 +295,7 @@ def objective_add_update():
                     else:
                         objective.name = name
                         objective.prerequisites = prerequisites
-                        objective.topic = topic
+                        objective.topic_id = topic_id
                         db.session.add(objective)
                         db.session.commit()                    
                         result['savedsuccess'] = True
@@ -1115,3 +1112,11 @@ def select_question(id = 0):
     else:
         flash('This question does not exist')
         return redirect(url_for('questions'))
+
+
+@app.route('/angular', methods = ['GET'])
+def test_angular():
+    title = "CourseMe - Angular"
+    return render_template('test_angular.html',
+                           title = title
+                           )

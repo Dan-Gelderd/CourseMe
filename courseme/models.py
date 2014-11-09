@@ -39,7 +39,10 @@ class Topic(db.Model):
 
     @staticmethod
     def TopicChoices(user):
-        return [(str(topic.id), topic.name) for topic in Topic.query.filter(Topic.subject_id == user.subject_id).all()]
+        topic_choices = [("0", "")]
+        for topic in Topic.query.filter(Topic.subject_id == user.subject_id).all():
+            topic_choices.append((str(topic.id), topic.name))
+        return topic_choices
 
 
 student_tutor = db.Table("student_tutor",
