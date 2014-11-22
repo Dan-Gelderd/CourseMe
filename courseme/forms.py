@@ -14,7 +14,9 @@ class SignupForm(Form):
                 Length(min=6, message=(u'Password must be at least 6 characters'))])
     confirm_password = PasswordField('Confirm password', validators=[
                 EqualTo('password', message='Password confirmation did not match')])
-    username = TextField('Name', validators=[DataRequired()])
+    username = TextField('Username', validators=[DataRequired()])
+    forename = TextField('Forename')    
+    surname = TextField('Surname')    
     agree = BooleanField('By signing up your agree to follow our <a href="#">Terms and Conditions</a>',
                 validators=[DataRequired(u'You must agree the Terms of Service')])    
     remember_me = BooleanField('remember_me', default = False)

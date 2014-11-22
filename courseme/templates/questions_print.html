@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<script type="text/javascript" src="/static/lib/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML,Safe"></script>
+
+<script type='text/javascript'>
+$(document).ready(function () {
+
+  //Allow re-ordering of questions   
+  $(function() {
+    $( "#questions_selected" ).sortable();
+    $( "#questions_selected" ).disableSelection();
+  });
+
+  
+  
+});
+</script>
+
+<div class="no-print">
+<form class="form-inline" role="form">
+  <div class="form-group">
+    <label class="sr-only" for="exampleInputEmail2">Email address</label>
+    <input type="email" class="form-control" id="exampleInputEmail2" placeholder="Enter email">
+  </div>
+  <div class="form-group">
+    <div class="input-group">
+      <div class="input-group-addon">@</div>
+      <input class="form-control" type="email" placeholder="Enter email">
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="sr-only" for="exampleInputPassword2">Password</label>
+    <input type="password" class="form-control" id="exampleInputPassword2" placeholder="Password">
+  </div>
+</form>
+</div>
+
+<h2>Questions</h2>
+
+<ul class="list-group" id="questions_selected">
+    {% for question in questions %}
+    <li class="list-group-item question-list-print">
+        <span hidden class="question-id">{{question.id}}</span>
+        {{question.question | safe}}
+        <span class="input-group-btn no-print"><button class="btn btn-link" type="button" onclick="$(this).closest('li').remove()">&times;</button></span>
+    </li>    
+    {% endfor %}    
+</ul>
+
+
+{% endblock %}

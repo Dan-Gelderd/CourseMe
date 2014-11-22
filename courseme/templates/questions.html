@@ -14,44 +14,35 @@
 
 <form class="form-inline" role="form">
   <div class="form-group">
-    <label class="sr-only" for="exampleInputEmail2">Email address</label>
-    <input type="email" class="form-control" id="exampleInputEmail2" placeholder="Enter email">
+    <label for="topic_select">Select Topic</label>
+    <select class="form-control" id="topic_select">
+        <option selected=True>All</option>
+        {% for topic in g.user.subject.topics %}
+        <option>
+            {{topic.name}}
+        </option>
+        {% endfor %}
+    </select>
   </div>
   <div class="form-group">
-    <div class="input-group">
-      <div class="input-group-addon">@</div>
-      <input class="form-control" type="email" placeholder="Enter email">
-    </div>
+    <label for="answers_required">Answers available</label>
+    <input class="form-control" id="answers_required" type="checkbox">
   </div>
+
   <div class="form-group">
     <label class="sr-only" for="exampleInputPassword2">Password</label>
     <input type="password" class="form-control" id="exampleInputPassword2" placeholder="Password">
   </div>
-
-  <button type="submit" class="btn btn-default pull-right" id="select_questions">Print</button>
+  <div class="form-group pull-right">
+    <a href="{{url_for('questions_print')}}" class="btn btn-default pull-right" id="print_questions">Print selected questions</a>
+  </div>
+  <div class="form-group pull-right">
+    <a href="{{url_for('deselect_all_questions')}}" class="btn btn-default pull-right" id="deselect_all_questions">Deselect all</a>
+  </div>  
 </form>
 
+
 <h2>Questions</h2>
-
-
-<!--{% for question in questions %}
-
-<div class="row">
-  <div class="col-md-1">
-    <p>{{question.id}}</p>
-  </div>
-  <div class="col-md-9">
-    <p>{{question.question}}</p>
-  </div>
-  <div class="col-md-1">
-    <a href="{{url_for("edit_question", id=question.id)}}" class="{% if g.user.id != question.author_id %}hidden{% endif %}">edit</a>
-  </div>
-  <div class="col-md-1">
-    <input class="include-question" name="include" type="checkbox" value={{question.id}}>
-  </div>
-</div>  
-
-{% endfor %}-->
 
 <table id="table_id" class="table" cellspacing="0" width="100%">
     <thead></thead>
@@ -74,89 +65,92 @@ function addColumnClass(colName, className) {
 
 $(document).ready( function () {                //DJG - https://datatables.net/manual/installation        
     
-    //console.log({{catalogue | safe}});        
     var table = $('#table_id').DataTable( {
-    
-        //"paging":   false,
-        //"ordering": false,
-        //"info":     false,
 
-        "aoColumnDefs": [  // enables turning off sorting for the columns
-            {"bVisible": false, "aTargets": [0, 1]}  //DJG - targets grid columns to hide - just add the column to be disabled into the array
+        "aoColumnDefs": [  
+            {"bVisible": false, "aTargets": [0, 1, 5, 6, 7]}  //DJG - targets grid columns to hide - just add the column to be disabled into the array
         ],
 
         data: {{catalogue | safe}},
         
         columns: [
 
-            { data: 'id', name: 'id' },                
+            { data: 'id', name: 'id' },
             { data: 'objectives', title: 'Objectives' },
-            { data: 'question', title: 'Question' },
-            { data: 'author', title: 'Author' },
-            
+            { data: 'question', title: 'Question', orderable: false },      //DJG - check this is turning off sorting for these columns
+            { data: 'author', title: 'Author', orderable: false },
             {
                 "title":          'Include',
                 "class":          'include-question',
                 "orderable":      false,
-                "data":           null,
+                "data":           'selected',
                 "defaultContent": ''
-            }
+            },
+            { data: 'topics', name: 'Topics' },
+            { data: 'answer', name: 'Answer' },
+            { data: 'has_answer', name: 'Has_Answer' },
+
+
         ],
         
         "order": [[ 1, 'asc' ]],
         
-        "displayLength": 50,
+        "displayLength": 10,
+
         "drawCallback": function ( settings ) {
             var api = this.api();
             var rows = api.rows( {page:'current'} ).nodes();
             var last=[null];
  
-            api.column(1, {page:'current'} ).data().each( function ( group, i ) {
-                //DJG - need library to do deep comparison on the array objects in column 1 as the test always returns false otherwise
-                if ( last[0] !== group[0] ) {
+            api.column(1, {page:'current'} ).data().each( function ( group, i ) {           //DJG - Is there a way to refer to columns here other than buy their index
+                //DJG - not sure if this is right way to compare lists of strings
+                if ( last.sort().toString() !== group.sort().toString() ) {
                     $(rows).eq( i ).before(
                         '<tr class="group"><td colspan="5">'+group+'</td></tr>'
                     );
-                    //console.log(last);
-                    //console.log(group);
-                    //console.log(last==group);
                     last = group;
                 }
             } );
+
+            //display hand cursor on hover to let User know it's a clickable link
+            $('.include-question').hover(function() {
+                $(this).css('cursor', 'pointer');
+            }, function() {
+                $(this).css('cursor', 'auto');
+            });    
+        
+            MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
+
         },
     
-        "createdRow": function ( row, data, index ) {
-            if ( data[4] > 4000 ) {
-                $('td', row).eq(4).addClass('success');
+        "createdRow": function ( row, data, index ) {           //DJG - could use this to add selected class to individual cells based on data
+            if ( data.selected == 1 ) {
+                $('td', row).eq(2).addClass('success');
             }
         }    
+    } );
     
+    $('#topic_select').on( 'change', function () {
+        console.log('topic_select');
+        table.column( 'Topics:name' )
+            .search( $(this).val(), true, false )       //DJG - needed to remove the regex bit of this code or empty string search would return none not all data - http://datatables.net/forums/discussion/21355/regex-and-server-side-processing-not-really-working
+            .draw();
     } );
 
-    
-    //Add classes to columns for event handling
-    //addColumnClass("Name", 'module-name-column')
-    //addColumnClass("Author", 'module-author-column')
-
-    //display hand cursor on hover to let User know it's a clickable link
-    //$('.module-name-column, .module-author-column').hover(function() {
-    //    $(this).css('cursor', 'pointer');
-    //}, function() {
-    //    $(this).css('cursor', 'auto');
-    //});    
-    //
-    //$('.module-name-column').click(function() {
-    //    module_id = table.row(this.parentNode).data().id;
-    //    window.location.href = flask_util.url_for('module', {id: module_id });
-    //});
-
-    //display hand cursor on hover to let User know it's a clickable link
-    $('.include-question').hover(function() {
-        $(this).css('cursor', 'pointer');
-    }, function() {
-        $(this).css('cursor', 'auto');
-    });    
-    
+    $('#answers_required').on( 'change', function () {
+        if($(this).is(':checked')){
+        
+            table.column( 'Has_Answer:name' )
+                .search( "1", true, false )       //DJG - needed to remove the regex bit of this code or empty string search would return none not all data - http://datatables.net/forums/discussion/21355/regex-and-server-side-processing-not-really-working
+                .draw();
+        }
+        else{
+            table.column( 'Has_Answer:name' )
+                .search( "", true, false )       //DJG - needed to remove the regex bit of this code or empty string search would return none not all data - http://datatables.net/forums/discussion/21355/regex-and-server-side-processing-not-really-working
+                .draw();
+        }
+    } );
+        
     $('#table_id tbody').on('click', 'td.include-question', function () {       //DJG - don't know if I need this or can just do '.include-question'.click...
         var cell = this
         question_id = table.row(this.parentNode).data().id;
@@ -173,13 +167,17 @@ $(document).ready( function () {                //DJG - https://datatables.net/m
                   }
         ) 
     });    
-
+    
+    console.log({{catalogue | safe}})
+    
 } );
+
 
 
 $("#clear_filters").on( 'click', function( event ) {
     window.location.reload()
 });
+
     
 </script>
 

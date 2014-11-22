@@ -62,7 +62,7 @@ def signup():
         email_exist = User.query.filter_by(email=form.email.data).count()
         if email_exist:
             form.email.errors.append('This email address has already been registered')
-            return render_template('signup.html', form = form, title = title)
+            redirect(url_for('login'))
         else:
             user = User(email=form.email.data,
                         password=hash_string(form.password.data),
@@ -477,27 +477,25 @@ def editmodule(id = 0):
                     module.easy_language = moduleform.easy_language.data
                     module.extension = moduleform.extension.data
                     module.for_teachers = moduleform.for_teachers.data
+                    db.session.add(module)
+                    db.session.commit()
                 else:
-                    module = Module(name=moduleform.name.data,
+                    module = Module.CreateModule(
+                                    name=moduleform.name.data,
                                     description = moduleform.description.data,
                                     notes = moduleform.notes.data,
-                                    time_created=datetime.utcnow(),
-                                    last_updated=datetime.utcnow(),
-                                    author_id=g.user.id,
+                                    author=g.user,
                                     material_type = material_type,
                                     material_source=material_source, 
                                     material_path=material_path,
                                     subject = g.user.subject,
                                     objectives=objectives,
-                                    modules = course_modules,
                                     subtitles = moduleform.subtitles.data,
                                     easy_language = moduleform.easy_language.data,
                                     extension = moduleform.extension.data,
                                     for_teachers = moduleform.for_teachers.data
-                                    )     
-                    db.session.add(module)
-                db.session.commit()
-                #DJG - need some way that newly published material is added to institution approved list
+                                    )
+
                 result['savedsuccess'] = True
                 result['module_id'] = module.id
                 flash(material_type + " saved as " + module.name)
@@ -574,13 +572,11 @@ def add_module_to_course(module_id, course_id):
         return redirect(url_for('index'))
     
     if course_id == 0:
-        course = Module(name="New Course",
-                        time_created=datetime.utcnow(),
-                        last_updated=datetime.utcnow(),
-                        author_id=g.user.id,
-                        subject=g.user.subject,
-                        material_type = "Course")
-        db.session.add(course)
+        course = Module.CreateModule(
+            name="New Course",
+            author=g.user,
+            subject=g.user.subject,
+            material_type = "Course")
     else:
         course = Module.query.get(course_id)
     module = Module.query.get(module_id)
@@ -594,7 +590,7 @@ def add_module_to_course(module_id, course_id):
                     flash('You are not authorised to edit this course')
                 elif course.material_type != "Course":
                     flash('You cannot add modules to a ' + course.material_type)
-                elif course.subject != module.subject:
+                elif course.subject_id != module.subject_id:
                     flash('You cannot add a ' + module.subject.name + ' module to a ' + course.subject.name + ' course')
                 else:
                     course_modules = course.modules.all()
@@ -650,7 +646,6 @@ def delete_module(id):
         flash('No Module identified with id ' + id)
 
     return json.dumps(result, separators=(',',':'))
-
 
 
 @app.route('/profile/<int:id>')
@@ -1038,20 +1033,21 @@ def edit_question(id = 0):
                     question.answer = form.answer.data
                     question.objectives = objectives
                     question.extension = form.extension.data
+                    question.visually_impaired = form.visually_impaired.data
                     question.last_updated=datetime.utcnow()
-                else:
-                    question = Question(question=form.question.data,
-                                        subject = g.user.subject,
-                                        answer = form.answer.data,
-                                        time_created=datetime.utcnow(),
-                                        last_updated=datetime.utcnow(),
-                                        author_id=g.user.id,
-                                        objectives=objectives,
-                                        extension = form.extension.data
-                                        )     
                     db.session.add(question)
-                db.session.commit()
-                #DJG - need some way that newly published material is added to institution approved list
+                    db.session.commit()
+                else:
+                    question = Question.CreateQuestion(
+                        question=form.question.data,
+                        answer = form.answer.data,
+                        subject = g.user.subject,
+                        author=g.user,
+                        objectives=objectives,
+                        extension = form.extension.data,
+                        visually_impaired = form.visually_impaired.data
+                        )     
+
                 result['savedsuccess'] = True
                 result['question_id'] = question.id
                 flash("Question saved")
@@ -1086,12 +1082,13 @@ def delete_question(id = 0):
 @app.route('/questions', methods = ['GET'])
 def questions():
     title = "CourseMe - Questions"
-    if g.user:
+    if g.user.is_authenticated():
         questions = g.user.visible_questions().all()
+        catalogue = [question.as_dict(g.user) for question in questions]                #DJG - confused over best way to do this http://stackoverflow.com/questions/1958219/convert-sqlalchemy-row-object-to-python-dict  
     else:
         questions = Question.query.all()
-    
-    catalogue = [question.as_dict() for question in questions]                #DJG - confused over best way to do this http://stackoverflow.com/questions/1958219/convert-sqlalchemy-row-object-to-python-dict  
+        catalogue = [question.as_dict() for question in questions]                #DJG - confused over best way to do this http://stackoverflow.com/questions/1958219/convert-sqlalchemy-row-object-to-python-dict      
+
     return render_template('questions.html',
                            title = title,
                            questions = questions,
@@ -1113,6 +1110,23 @@ def select_question(id = 0):
         flash('This question does not exist')
         return redirect(url_for('questions'))
 
+@app.route('/questions-print', methods = ['GET'])
+@login_required
+def questions_print():
+    title = "CourseMe - Questions"
+    questions = g.user.questions_selected
+    return render_template('questions_print.html',
+                           title = title,
+                           questions = questions
+                           )
+
+@app.route('/deselect-all-questions', methods = ['GET'])
+@login_required
+def deselect_all_questions():
+    g.user.questions_selected = []
+    db.session.add(g.user)
+    db.session.commit()
+    return redirect(url_for('questions'))
 
 @app.route('/angular', methods = ['GET'])
 def test_angular():

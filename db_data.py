@@ -65,7 +65,8 @@ db.session.add(user)
 
 me = User(email="dan.gelderd@courseme.com",
             password=hash_string("111111"),
-            name="Dan Gelderd",
+            name="Dan",
+            forename="Dan",
             blurb="I built the CourseMe website and now am fabulously rich.",
             time_registered=datetime.utcnow(),
             last_seen=datetime.utcnow(),
@@ -100,13 +101,13 @@ db.session.commit()
 
 courseMe = Institution.create(
     name = "CourseMe",
-    creator = User.main_admin_user(),
+    administrator = User.main_admin_user(),
     blurb = "This is the main CourseMe institution"
     )
 
 school = Institution.create(
     name = "High School",
-    creator = head,
+    administrator = head,
     blurb = "This is a great High School. We use CourseMe for everything. We have 100 pupils and they're all doing great."
     )
 
@@ -127,6 +128,8 @@ for i in range(1, 100):
     student = User(email="student" + str(i) + "@server.fake",
             password=hash_string("111111"),
             name="Student"+str(i),
+            forename="Richie",
+            surname="Rich",
             time_registered=datetime.utcnow(),
             last_seen=datetime.utcnow(),
             role = ROLE_USER)
@@ -338,22 +341,19 @@ module = Module(
     )
 db.session.add(module)  
 
-module = Module(
+module = Module.CreateModule(
     name="Solving Linear Equations",
     description = "An easy introduction to solving simple equations with one unknown",
     notes = "Here are some notes about this lecture",
-    time_created=datetime.utcnow(),
-    last_updated=datetime.utcnow(),
-    author_id=head.id,
+    author=head,
     material_type = "Lecture",
     material_source="youtube", 
     material_path="//www.youtube-nocookie.com/embed/GmMX3-nTWbE?rel=0",
     objectives=[Objective.query.get(3)],
     extension = True,
     visually_impaired = False,
-    subject_id = maths.id
+    subject = maths
     )
-db.session.add(module)  
 
 module = Module(
     name="Adding Fractions",
@@ -392,26 +392,21 @@ courseMe.add_member(me)
 
 school.add_member(teacher)
 
-q = Question(
+q = Question.CreateQuestion(
     question =
 r'''
 Finally, while display equations look good for a page of samples, the ability to mix math and text in a paragraph is also important. This expression \(\sqrt{3x-1}+(1+x)^2\) is an example of an inline equation.  As you see, MathJax equations can be used this way as well, without unduly disturbing the spacing between lines.
 ''',
     
     answer = "",
-    time_created = datetime.utcnow(),
-    last_updated = datetime.utcnow(),
-    locked = datetime.utcnow(),
     extension = False,
     visually_impaired = False, 
-    author_id = User.main_admin_user().id,
+    author = User.main_admin_user(),
     objectives=[Objective.query.get(3)],
     subject = maths
 )
 
-db.session.add(q)
-
-q = Question(
+q = Question.CreateQuestion(
     question =
 r'''
 \begin{aligned}
@@ -422,21 +417,15 @@ r'''
 ''',
     
     answer = "",
-    time_created = datetime.utcnow(),
-    last_updated = datetime.utcnow(),
-    locked = datetime.utcnow(),
     extension = False,
     visually_impaired = True,
-    author_id = User.main_admin_user().id,
+    author = User.main_admin_user(),
     objectives=[Objective.query.get(2)],
     subject = maths
 )
 
 
-db.session.add(q)
-
-
-q = Question(
+q = Question.CreateQuestion(
     question =
 r'''
 \[ \frac{1}{\Bigl(\sqrt{\phi \sqrt{5}}-\phi\Bigr) e^{\frac25 \pi}} =
@@ -445,23 +434,16 @@ r'''
 ''',
     
     answer = "",
-    time_created = datetime.utcnow(),
-    last_updated = datetime.utcnow(),
-    locked = datetime.utcnow(),
     extension = False,
     visually_impaired = False,
-    author_id = User.main_admin_user().id,
+    author = User.main_admin_user(),
     objectives=[Objective.query.get(1)],
     subject = maths
 )
 
 
-db.session.add(q)
 
-db.session.commit()
-
-
-q = Question(
+q = Question.CreateQuestion(
     question =
 r'''
 \[\mathbf{V}_1 \times \mathbf{V}_2 =  \begin{vmatrix}
@@ -472,23 +454,15 @@ r'''
 ''',
     
     answer = "",
-    time_created = datetime.utcnow(),
-    last_updated = datetime.utcnow(),
-    locked = datetime.utcnow(),
     extension = False,
     visually_impaired = False,
-    author_id = User.main_admin_user().id,
+    author = User.main_admin_user(),
     objectives=[Objective.query.get(4)],
     subject = maths
 )
 
 
-db.session.add(q)
-
-db.session.commit()
-
-
-q = Question(
+q = Question.CreateQuestion(
     question =
 r'''
 \[  1 +  \frac{q^2}{(1-q)}+\frac{q^6}{(1-q)(1-q^2)}+\cdots =
@@ -497,24 +471,16 @@ r'''
 ''',
     
     answer = "",
-    time_created = datetime.utcnow(),
-    last_updated = datetime.utcnow(),
-    locked = datetime.utcnow(),
     extension = True,
     visually_impaired = True,
-    author_id = User.main_admin_user().id,
+    author = User.main_admin_user(),
     objectives=[Objective.query.get(3)],
     subject = maths
 )
 
 
-db.session.add(q)
 
-db.session.commit()
-
-
-
-q = Question(
+q = Question.CreateQuestion(
     question =
 r'''
 This is a question:
@@ -527,17 +493,9 @@ Isn't it great.
 ''',
     
     answer = "",
-    time_created = datetime.utcnow(),
-    last_updated = datetime.utcnow(),
-    locked = datetime.utcnow(),
     extension = True,
     visually_impaired = False,
-    author_id = User.main_admin_user().id,
+    author = User.main_admin_user(),
     objectives=[Objective.query.get(3), Objective.query.get(2)],
     subject = maths
 )
-
-
-db.session.add(q)
-
-db.session.commit()

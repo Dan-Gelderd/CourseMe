@@ -179,7 +179,7 @@ $(document).ready(function () {
               <ul class="dropdown-menu">
                 {% if module.is_courseable() %}
                 <li role="presentation" class="dropdown-header">Add this to an existing course</li>
-                {% for course in g.user.live_modules_authored_by_type('Course').all() %}
+                {% for course in g.user.visible_modules(restricted=False, authored=True, viewed=False, live=True, material_type='Course', subject=True, topic=None).all() %}
                 <li><button type="button" class="btn btn-link add-to-course">{{course.name}}<span hidden>{{course.id}}</span></button></li>  
                 {% endfor %}
                 <li role="presentation" class="divider"></li>
@@ -216,7 +216,7 @@ $(document).ready(function () {
         {% else %}  
 
           {% if usermodule.part_of_course() %}
-          <a href="{{url_for("module", id=usermodule.part_of_course().id)}}">  
+          <a href="{{url_for('module', id=usermodule.part_of_course().id)}}">  
             <span class="lead"><span class="glyphicon glyphicon-list-alt"></span> Course Progress</span>
             <!--DJG - could I use a progress element here?-->
             <div class="progress">

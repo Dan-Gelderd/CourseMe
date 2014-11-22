@@ -6,7 +6,7 @@
 private students
 <ul>
   {% for student in g.user.students %}
-  <li><a href={{url_for("objectives", id=student.id)}}>{{student.name}}</a></li>
+  <li><a href={{url_for("objectives", profile_id=student.id)}}>{{student.name}}</a></li>
   {% endfor %}
 </ul>
 

@@ -60,6 +60,8 @@ class User(db.Model):
     password = db.Column(db.String(120), nullable=False)      #DJG - What does index=True do?
     email = db.Column(db.String(120), index = True, unique = True, nullable=False)
     name = db.Column(db.String(64), nullable=False)
+    forename = db.Column(db.String(64))
+    surname = db.Column(db.String(64))    
     blurb = db.Column(db.String(240), default = "This is some blurb")
     role = db.Column(db.SmallInteger, default = ROLE_USER, nullable=False)
     last_seen =  db.Column(db.DateTime)
@@ -78,7 +80,7 @@ class User(db.Model):
     objectives_created = db.relationship("Objective", backref="created_by", lazy='dynamic')
     modules_authored = db.relationship("Module", backref="author", lazy = 'dynamic')
     questions_authored = db.relationship("Question", backref="author", lazy = 'dynamic')
-    institutions_created = db.relationship("Institution", primaryjoin="Institution.creator_id==User.id", backref="creator", lazy='dynamic')
+    institutions_admin = db.relationship("Institution", primaryjoin="Institution.administrator_id==User.id", backref="administrator", lazy='dynamic')
     groups_created = db.relationship("Group", primaryjoin="Group.creator_id==User.id", backref="creator", lazy='dynamic')
     schemes_of_work = db.relationship("SchemeOfWork", backref="creator", lazy='dynamic')
 
@@ -90,7 +92,7 @@ class User(db.Model):
                     lazy = 'dynamic',                                           #DJG - not the default, don't know why I need it: the attribute will return a pre-configured Query object for all read operations, onto which further filtering operations can be applied before iterating the results.
                     passive_updates=False)  
 
-    questions_selected = db.relationship('Question', secondary=question_selections, lazy='dynamic')
+    questions_selected = db.relationship('Question', secondary=question_selections)
 
     def is_authenticated(self):
         return True
@@ -110,7 +112,7 @@ class User(db.Model):
     def avatar(self, size=50):
         return 'http://www.gravatar.com/avatar/' + md5(self.email).hexdigest() + '?d=mm&s=' + str(size)
 
-    def is_enterprise_licenced(self):
+    def is_enterprise_licenced(self, message=False):
         if self:
             if self.role == ROLE_ADMIN:
                 return True
@@ -119,18 +121,20 @@ class User(db.Model):
                 if datetime.utcnow() <= licence_expiry_date :
                     return True
                 else:
-                    Message.AdminMessage(
-                        to_id = self.id,
-                        subject = "Enterprise Licence Expired",
-                        body = "You have tried to perform an action requiring an enterprise licence. Your licence expired on " + licence_expiry_date + ". To renew your licence contact CourseMe at " + User.main_admin_user().email
-                    )
+                    if message:         
+                        Message.AdminMessage(
+                            to_id = self.id,
+                            subject = "Enterprise Licence Expired",
+                            body = "You have tried to perform an action requiring an enterprise licence. Your licence expired on " + licence_expiry_date + ". To renew your licence contact CourseMe at " + User.main_admin_user().email
+                        )
                     return False
             else:
-                Message.AdminMessage(
-                    to_id = self.id,
-                    subject = "Enterprise Licence Needed",
-                    body = "You have tried to perform an action requiring an enterprise licence. To purchase a licence contact CourseMe at " + User.main_admin_user().email
-                    )
+                if message:         #DJG - message not working
+                    Message.AdminMessage(
+                        to_id = self.id,
+                        subject = "Enterprise Licence Needed",
+                        body = "You have tried to perform an action requiring an enterprise licence. To purchase a licence contact CourseMe at " + User.main_admin_user().email
+                        )
                 return False                
 
     def visible_objectives(self):
@@ -138,61 +142,86 @@ class User(db.Model):
         visible_objective_user_ids.append(self.id)
         return Objective.query.filter(Objective.created_by_id.in_(visible_objective_user_ids)).filter(Objective.subject_id == self.subject_id)      #DJG - what about visible courses?
 
-    def visible_questions(self):
-        if self.subject_id > 0 :
-            return Question.query.filter(Question.subject_id == self.subject_id)
-        else:
-            return Question.query
-
-
-    def live_modules_authored(self):
-        return Module.LiveModules().filter_by(author_id = self.id)
-
-    def live_modules_authored_by_type(self, type):
-        return self.live_modules_authored().filter_by(material_type = type)
-
-    def live_modules_viewed(self):
-        #return Module.LiveModules().filter(Module.id.in_(UserModule.query.filter_by(user=self).all()))
-        return Module.LiveModules().join(UserModule).filter(UserModule.user == self)    
-
-    def visible_modules(self):
-        #import pdb; pdb.set_trace()            #DJG - remove
-        query_authored_modules = self.live_modules_authored()
-        query_viewed_modules = self.live_modules_viewed()
+    def restricted_questions_view(self):
         institution_student = self.institution_student
-        query_student_modules = Module.LiveModules()
-        if institution_student:
-            if institution_student.view_institution_only:
-                query_student_modules = institution_student.view_institution_only.approved_modules
-        if self.view_institution_only:
-            query_select_modules = self.view_institution_only.approved_modules
+        if institution_student and institution_student.view_institution_only:
+            query_student = institution_student.view_institution_only.approved_questions
         else:
-            query_select_modules = Module.LiveModules()
-        query_approved_modules = query_select_modules.intersect(query_student_modules)
+            query_student = Question.query
         
-        return query_approved_modules.union(query_authored_modules, query_viewed_modules)
+        if self.view_institution_only:
+            query_select = self.view_institution_only.approved_questions
+        else:
+            query_select = Question.query
+        restricted_view = query_select.intersect(query_student)
+        return restricted_view
+
+    def visible_questions(self, restricted = True, authored = True, live = True, subject = True, topic= None, answers=False):
+        #union parts
+        query_restricted = self.restricted_questions_view() if restricted else Question.query.filter(1==0)
+        query_authored = self.questions_authored if authored else Question.query.filter(1==0)
+        #intersect parts
+        query_live = Question.LiveQuestions() if live else Question.query
+        query_subject = self.subject.questions if subject and self.subject else Question.query
+        query_topic = topic.questions if topic else Question.query
+        query_answers = Question.query.filter(Question.has_answer()) if answers else Question.query
+        return query_restricted.union(query_authored).intersect(query_live, query_subject, query_topic, query_answers)
+
+
+    def restricted_modules_view(self):
+        institution_student = self.institution_student
+        if institution_student and institution_student.view_institution_only:
+            query_student = institution_student.view_institution_only.approved_modules
+        else:
+            query_student = Module.query
+        
+        if self.view_institution_only:
+            query_select = self.view_institution_only.approved_modules
+        else:
+            query_select = Module.query
+        restricted_view = query_select.intersect(query_student)
+        return restricted_view
+
+
+    def visible_modules(self, restricted = True, authored = True, viewed = True, live = True, material_type = None, subject = True, topic= None):
+        #union parts
+        query_restricted = self.restricted_modules_view() if restricted else Module.query.filter(1==0)
+        query_authored = self.modules_authored if authored else Module.query.filter(1==0)
+        query_viewed = Module.query.join(UserModule).filter(UserModule.user == self) if viewed else Module.query.filter(1==0)
+        #intersect parts
+        query_live = Module.LiveModules() if live else Module.query
+        query_type = Module.query.filter_by(material_type = material_type) if material_type else Module.query        
+        query_subject = self.subject.modules if subject and self.subject else Module.query
+        query_topic = topic.modules if topic else Module.query
+        return query_restricted.union(query_authored, query_viewed).intersect(query_live, query_type, query_subject, query_topic)
+
         
     def enrolled_courses(self):
-        #return [Module.query.get(um.module_id) for um in UserModule.query.filter_by(user=self).filter(UserModule.enrolled).order_by(desc(UserModule.last_viewed)).all()]        #DJG - can we do better with filter on boolean type?
-        return self.live_modules_viewed().filter(UserModule.enrolled).filter(Module.material_type=='Course').order_by(desc(UserModule.last_viewed))
+        return self.visible_modules(False, False, True, True, material_type='Course', subject=False, topic=False).filter(UserModule.enrolled).order_by(desc(UserModule.last_viewed))
     
     def recent_modules(self, count):
         #import pdb; pdb.set_trace()        #DJG - remove
         if self:
-            #return self.live_modules_viewed().order_by(desc(UserModule.last_viewed)).limit(count).all()     #DJG - working but not on index page
+            #return self.visible_modules(restricted=False, authored=False, viewed=True, live=True, material_type=None, subject=False, topic=None).join(UserModule).order_by(desc(UserModule.last_viewed)).limit(count).all()     #DJG - working but not on index page
             return []
         else:
             return []
+
+    def member_institutions(self):
+        #DJG - must be able to do better than this avoiding two query calls! Try union of queries
+        institutions = []
+        institutions.extend(self.institutions_admin.all())
+        institutions.extend(self.institutions_member.all())
+        return institutions
     
     def relevant_institutions(self):
         #DJG - must be able to do better than this!
-        relevant_institutions = [Institution.main_courseme_institution()]
-        relevant_institutions.extend(self.institutions_created.all())
-        relevant_institutions.extend(self.institutions_member.all())
-        if self.institution_student: relevant_institutions.append(self.institution_student)
-        relevant_institutions = list(set(relevant_institutions))
-        print relevant_institutions         #DJG - remove this
-        return relevant_institutions
+        institutions = [Institution.main_courseme_institution()]
+        institutions.extend(self.institutions_admin.all())
+        institutions.extend(self.institutions_member.all())
+        if self.institution_student: institutions.append(self.institution_student)
+        institutions = list(set(institutions))
+        return institutions
     
     def live_messages(self):
         return self.received_messages.filter(bool(Message.deleted)).order_by(desc(Message.sent))
@@ -248,7 +277,7 @@ class User(db.Model):
             return False
         
     def question_selected(self, question):
-        return question in self.questions_selected.all()
+        return question in self.questions_selected
     
     def select_question(self, question):
         if not self.question_selected(question):
@@ -267,7 +296,7 @@ class User(db.Model):
         else:
             self.select_question(question)
             return "success"        
-        
+
     @staticmethod
     def make_unique_username(username):
         if User.query.filter_by(name = username).first() == None:
@@ -580,8 +609,42 @@ class Module(db.Model):                                             #DJG - chang
             i.approved_modules = i.approved_modules.append(self)
         
     @staticmethod
+    def CreateModule(name, description, notes, author, material_type, subject, objectives=[], modules=[], subtitles=False, easy_language=False, extension=False, for_teachers=False, visually_impaired=False, material_source=None, material_path=None):
+        if author and subject:
+            module = Module(
+                name=name,
+                description=description,
+                notes = notes,
+                subject = subject,
+                time_created=datetime.utcnow(),
+                last_updated=datetime.utcnow(),
+                author=author,
+                material_type=material_type,
+                material_source=material_source, 
+                material_path=material_path,
+                objectives=objectives,
+                modules=modules,
+                extension=extension,
+                subtitles=subtitles,
+                easy_language=easy_language,
+                for_teachers=for_teachers,
+                visually_impaired=visually_impaired)
+            
+            db.session.add(module)
+            db.session.commit()
+            
+            for institution in author.member_institutions():
+                institution.approved_modules.append(module)
+                db.session.add(institution)
+            db.session.commit()
+            return module
+        else:
+            return False
+        
+    @staticmethod
     def LiveModules():
         return Module.query.filter(Module.live)
+
 
     @staticmethod
     def RecommendChoices():
@@ -792,15 +855,19 @@ institution_approved_modules = db.Table('institution_approved_modules',
     db.Column('module_id', db.Integer, db.ForeignKey('module.id'))
 )
 
+institution_approved_questions = db.Table('institution_approved_questions',
+    db.Column('institution_id', db.Integer, db.ForeignKey('institution.id')),
+    db.Column('question_id', db.Integer, db.ForeignKey('question.id'))
+)
+
 class Institution(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     name = db.Column(db.String(120), index = True, unique = True, nullable=False)    
-    creator_id = db.Column(db.Integer, db.ForeignKey(User.id, use_alter=True, name='fk_institution_creator_id'), nullable=False)        #DJG - need , use_alter=True, name='fk_institution_creator_id' to avoid circular join references
-    #generic_user_id = db.Column(db.Integer, db.ForeignKey(User.id, use_alter=True, name='fk_institution_creator_id'), nullable=False)        #DJG - need , use_alter=True, name='fk_institution_creator_id' to avoid circular join references    
+    administrator_id = db.Column(db.Integer, db.ForeignKey(User.id, use_alter=True, name='fk_institution_creator_id'), nullable=False)        #DJG - need , use_alter=True, name='fk_institution_creator_id' to avoid circular join references
+    created_on = db.Column(db.DateTime)
     blurb = db.Column(db.String(400), default = "This is some blurb")    
     view_institution_only_id = db.Column(db.Integer, db.ForeignKey('institution.id'))    
 
-    #generic_user = db.relationship(User, primaryjoin="Institution.generic_user_id==User.id", backref=db.backref("institution_generic", uselist=False))
     view_institution_only = db.relationship("Institution", remote_side=[id], backref="institutions_viewing_approved")
 
     members = db.relationship(User, secondary=institution_members, lazy='dynamic',
@@ -809,6 +876,7 @@ class Institution(db.Model):
     students = db.relationship(User, primaryjoin="Institution.id==User.institution_student_id", backref="institution_student", lazy = 'dynamic')
     
     approved_modules = db.relationship('Module', secondary=institution_approved_modules, backref='approving_institutions', lazy = 'dynamic')
+    approved_questions = db.relationship('Question', secondary=institution_approved_questions, backref='approving_institutions', lazy = 'dynamic')
 
     def is_member(self, user):
         return self.members.filter(institution_members.c.member_id == user.id).count() > 0
@@ -816,23 +884,23 @@ class Institution(db.Model):
     def is_student(self, user):         #DJG - think there is an exist query that checks for existence
         return self.students.filter(User.id == user.id).count() > 0    
     
-    def is_approved(self, module):
-        return self.approved_modules.filter(institution_approved_modules.c.module_id == module.id).count() > 0
-
     def add_member(self, user):
         if user:
             if not self.is_member(user):
                 self.members.append(user)
                 message = Message(
-                    from_id = self.creator_id,
+                    from_id = self.administrator_id,
                     to_id = user.id,
                     subject = "You have been added to the institution " + self.name,
                     body = "You have been added to the institution " + self.name + ". All of your authored material will now appear on the approved list of modules for this institution and you can view the progress of all students of " + self.name + ". Your name will be listed on the institution profile page. If you want to leave this institution go to the institutions section of your profile page and click the button to leave.",
                     sent = datetime.utcnow())
                 db.session.add(message)            
-            for module in user.live_modules_authored().all():
+            for module in user.visible_modules(restricted=False, authored=True, viewed=False, live=True, material_type=None, subject=False, topic=None).all():
                 if not self.is_approved(module):
-                    self.approved_modules.append(module)
+                    self.approve_module(module)
+            for question in user.visible_questions(restricted = False, authored = True, live = True, subject = False, topic= None, answers=False).all():
+                if not self.is_approved_question(question):
+                    self.approve_question(question)
             db.session.add(self)
             db.session.commit()
         else:
@@ -844,7 +912,7 @@ class Institution(db.Model):
                 self.students.append(user)
                 if send_message:
                     message = Message.AdminMessage(
-                        to_id = self.creator_id,
+                        to_id = self.administrator_id,
                         subject = "New student - " + user.name + " - added to institution " + self.name,
                         body = "A new student, " + user.name + ", has been added to your institution " + self.name + ". You can review the student list and remove students on the institution profile page."
                         )           
@@ -853,24 +921,66 @@ class Institution(db.Model):
         else:
             pass
 
+
+    def is_approved(self, module):
+        return self.approved_modules.filter(institution_approved_modules.c.module_id == module.id).count() > 0
+
+    def is_approved_question(self, question):
+        return self.approved_questions.filter(institution_approved_questions.c.question_id == question.id).count() > 0
+
+    def approve_module(self, module):
+        if module and not self.is_approved(module):
+            self.approved_modules.append(module)
+            db.session.add(self)
+            db.session.commit()
+            if self == Institution.main_courseme_institution():     #DJG - all new approvals by CourseMe are pushed out to all institutions
+                for institution in Institution.query.all():
+                    institution.approve_module(module)
+                    Message.AdminMessage(institution.administrator.id,
+                                         subject = "New " + module.subject.name + " " + module.material_type + " approved by CourseMe",
+                                         body="CourseMe has approved a new " + module.subject.name + " " + module.material_type + ". This module has now been added to the approved module list for your Institution " + institution.name + ". You can review the list of approved modules and questions on your institution profile page.",
+                                         recommended_material_id=module.id)
+
+    def approve_question(self, question, message=True):
+        if question and not self.is_approved_question(question):
+            self.approved_questions.append(question)
+            db.session.add(self)
+            db.session.commit()
+            if self == Institution.main_courseme_institution():     #DJG - all new approvals by CourseMe are pushed out to all institutions
+                for institution in Institution.query.all():
+                    institution.approve_question(question)
+                    if message:
+                        Message.AdminMessage(
+                            institution.administrator.id,
+                            subject = "New " + question.subject.name + " question approved by " + self.name,
+                            body=self.name + " has approved a new " + question.subject.name + " question. This question has now been added to the approved question list for your Institution " + institution.name + ". You can review the list of approved modules and questions on your institution profile page."
+                            )
+
     @staticmethod 
     def main_courseme_institution():
         return Institution.query.get(1)
         #DJG - Not robust. Need some way to return the main system institution
     
     @staticmethod     
-    def create(name, creator, blurb=""):
+    def create(name, administrator, blurb=""):
         if Institution.query.filter_by(name=name).first():
             return False
         else:
             institution = Institution(
                 name = name,
-                creator_id = creator.id,    
-                blurb = blurb,
-                members = [creator]
+                administrator_id = administrator.id,    
+                created_on = datetime.utcnow(),
+                blurb = blurb
                 )
             db.session.add(institution)
             db.session.commit()
+            courseme = Institution.main_courseme_institution()      #Initialise an institution to have all of the same approved material as the main CourseMe institution
+            if courseme:
+                institution.approved_modules = courseme.approved_modules
+                institution.approved_questions = courseme.approved_questions
+            db.session.add(institution)
+            db.session.commit()
+            institution.add_member(administrator)       #This means that the administrator is a member of the institution and the add_member function will add all of their autgored material to the institution approved list
             return institution
         
 question_objectives = db.Table('question_objectives',
@@ -897,10 +1007,48 @@ class Question(db.Model):
     objectives = db.relationship('Objective', secondary=question_objectives,   #DJG - shouldn't I have  lazy='dynamic', here too?
         backref=db.backref('questions', lazy='dynamic'))
 
-    def as_dict(self):
+    def as_dict(self, user = None):
         result = self.__dict__
-        result['author'] = self.author.name
+        result['topics'] = list(set([o.topic.name for o in self.objectives]))       #DJG - put this before the objectives line or the self.objectives becomes the unicode list of objective names and can no longer look up the topic
         result['objectives'] = [o.name for o in self.objectives]
+        result['selected'] = 1 if (user and user.is_authenticated() and user.question_selected(self)) else 0
+        if (user and user.is_authenticated() and (user.is_enterprise_licenced() or user == self.author ) and bool(self.answer)):        #DJG - bool(answer appears to catch the empty answer cases while still allowing False and 0 as valid answers)
+            result['answer'] = result['answer']
+            result['has_answer'] = 1
+        else:
+            result['answer'] = None
+            result['has_answer'] = 0            
+        result['author'] = self.author.name
         del result['_sa_instance_state']
         return result
-   
+
+    def has_answer(self):
+        return bool(self.answer) 
+
+    @staticmethod     
+    def LiveQuestions():
+        return Question.query
+
+    @staticmethod
+    def CreateQuestion(question, answer, author, subject, objectives=[], easy_language=False, extension=False, visually_impaired=False, message=True):
+        if author and subject:
+            new_question = Question(
+                question=question,
+                answer=answer,
+                subject = subject,
+                time_created=datetime.utcnow(),
+                last_updated=datetime.utcnow(),
+                author=author,
+                objectives=objectives,
+                extension=extension,
+                visually_impaired=visually_impaired)
+            
+            db.session.add(new_question)
+            db.session.commit()
+            
+            for institution in author.member_institutions():
+                institution.approve_question(new_question, message)
+
+            return new_question
+        else:
+            return False

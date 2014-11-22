@@ -100,7 +100,6 @@
     
     $(document).ready( function () {                //DJG - https://datatables.net/manual/installation        
         
-        console.log({{catalogue | safe}});        
         var table = $('#table_id').DataTable( {
             //"dom": '<"toolbar">frtip',      //DJG - maybe a better way to add custom filter control       
 
@@ -129,6 +128,15 @@
                     "defaultContent": ''
                 }
             ]
+            
+/*            "aoColumns": [
+            { "sClass": "center",
+                "mData": "TaskID",
+                "mRender": function (data, type, full) {
+                    return '<input type="checkbox" name="check1" value="' + data + '">';
+                }
+            }]*/    //DJG - investigate http://datatables.net/forums/discussion/11875/add-checkbox-to-each-row-in-datatable-for-selecting-rows
+            
         } );
 
         // Add event listener for opening and closing details
@@ -192,7 +200,7 @@
 
 <div class="list-group">
     {% for mod in modules %}
-    <a href="{{url_for("module", id=mod.id)}}" class="list-group-item">
+    <a href="{{url_for('module', id=mod.id)}}" class="list-group-item">
         <h4 class="list-group-item-heading">{{mod.name}}</h4>
         <p class="list-group-item-text">{{mod.description}}</p>        
     </a>
