@@ -54,3 +54,7 @@ docs/_build/
 # database repository
 db_repository/
 *.db
+
+#pycharm
+.xml
+idea/
