@@ -593,8 +593,7 @@ def voteclick(id):
 @app.route('/add-module-to-course/<int:module_id>/<int:course_id>')
 @login_required
 def add_module_to_course(module_id, course_id):
-    result = {}
-    result['savedsuccess'] = False
+    result = {'savedsuccess': False}
     if not g.user.subject:
         flash("You need to select what subject you are interested in")
         return redirect(url_for('index'))
@@ -660,8 +659,7 @@ def course_enroll(course_id):
 @app.route('/delete_module/<int:id>')
 @login_required
 def delete_module(id):
-    result = {}
-    result['savedsuccess'] = False
+    result = {'savedsuccess': False}
     module = Module.query.get(id)
 
     if module:
@@ -669,7 +667,7 @@ def delete_module(id):
             module.delete()
             result['savedsuccess'] = True
         else:
-            flash("You are not authorised to delete this " + course.material_type)
+            flash("You are not authorised to delete this " + module.material_type)
     else:
         flash('No Module identified with id ' + id)
 

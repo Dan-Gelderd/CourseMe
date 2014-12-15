@@ -1,6 +1,8 @@
 {% extends "layout.html" %}
 {% block content %}
 
+<!-- DJG - use class="sr-only" for accessiblity -->
+
 <script type="text/javascript" src="/static/lib/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML,Safe"></script>
 
 <style type="text/css" class="init">
@@ -30,8 +32,8 @@
   </div>
 
   <div class="form-group">
-    <label class="sr-only" for="exampleInputPassword2">Password</label>
-    <input type="password" class="form-control" id="exampleInputPassword2" placeholder="Password">
+    <label for="search_input">Search</label>
+    <input class="form-control" id="search_input" placeholder="">
   </div>
   <div class="form-group pull-right">
     <a href="{{url_for('questions_print')}}" class="btn btn-default pull-right" id="print_questions">Print selected questions</a>
@@ -54,6 +56,17 @@
 
 <script>
 
+// Formatting function for row details
+//DJG - add style to give different background colour or text appearance
+function format ( d ) {
+    // `d` is the original data object for the row
+    return '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
+        '<tr>'+
+            '<td>Answer: </td>'+
+            '<td>'+d.answer+'</td>'+
+        '</tr>'+
+    '</table>';
+}
 
 //Add Class to column given heading
 function addColumnClass(colName, className) {
@@ -68,7 +81,7 @@ $(document).ready( function () {                //DJG - https://datatables.net/m
     var table = $('#table_id').DataTable( {
 
         "aoColumnDefs": [  
-            {"bVisible": false, "aTargets": [0, 1, 5, 6, 7]}  //DJG - targets grid columns to hide - just add the column to be disabled into the array
+            {"bVisible": false, "aTargets": [0, 5, 6, 7, 8]}  //DJG - targets grid columns to hide - just add the column to be disabled into the array
         ],
 
         data: {{catalogue | safe}},
@@ -76,9 +89,15 @@ $(document).ready( function () {                //DJG - https://datatables.net/m
         columns: [
 
             { data: 'id', name: 'id' },
-            { data: 'objectives', title: 'Objectives' },
             { data: 'question', title: 'Question', orderable: false },      //DJG - check this is turning off sorting for these columns
             { data: 'author', title: 'Author', orderable: false },
+            {
+                "title":          'Answer',
+                "class":          'details-control',
+                "orderable":      false,
+                "data":           null,
+                "defaultContent": ''
+            },
             {
                 "title":          'Include',
                 "class":          'include-question',
@@ -86,23 +105,25 @@ $(document).ready( function () {                //DJG - https://datatables.net/m
                 "data":           'selected',
                 "defaultContent": ''
             },
+
+            { data: 'objectives', title: 'Objectives' },
             { data: 'topics', name: 'Topics' },
             { data: 'answer', name: 'Answer' },
-            { data: 'has_answer', name: 'Has_Answer' },
+            { data: 'has_answer', name: 'Has_Answer' }
 
 
         ],
         
-        "order": [[ 1, 'asc' ]],
+        "order": [[ 5, 'asc' ]],            //DJG - column order
         
-        "displayLength": 10,
+        "displayLength": 50,
 
         "drawCallback": function ( settings ) {
             var api = this.api();
             var rows = api.rows( {page:'current'} ).nodes();
             var last=[null];
  
-            api.column(1, {page:'current'} ).data().each( function ( group, i ) {           //DJG - Is there a way to refer to columns here other than buy their index
+            api.column(5, {page:'current'} ).data().each( function ( group, i ) {           //DJG - Is there a way to refer to columns here other than buy their index
                 //DJG - not sure if this is right way to compare lists of strings
                 if ( last.sort().toString() !== group.sort().toString() ) {
                     $(rows).eq( i ).before(
@@ -125,11 +146,28 @@ $(document).ready( function () {                //DJG - https://datatables.net/m
     
         "createdRow": function ( row, data, index ) {           //DJG - could use this to add selected class to individual cells based on data
             if ( data.selected == 1 ) {
-                $('td', row).eq(2).addClass('success');
+                $('td', row).eq(3).addClass('success');
             }
         }    
     } );
-    
+
+    // Add event listener for opening and closing details
+    $('#table_id tbody').on('click', 'td.details-control', function () {
+        var tr = $(this).closest('tr');
+        var row = table.row( tr );
+
+        if ( row.child.isShown() ) {
+            // This row is already open - close it
+            row.child.hide();
+            tr.removeClass('shown');
+        }
+        else {
+            // Open this row
+            row.child( format(row.data()) ).show();
+            tr.addClass('shown');
+        }
+    } );
+
     $('#topic_select').on( 'change', function () {
         console.log('topic_select');
         table.column( 'Topics:name' )
@@ -150,7 +188,13 @@ $(document).ready( function () {                //DJG - https://datatables.net/m
                 .draw();
         }
     } );
-        
+
+    $('#search_input').on( 'change', function () {
+        console.log('search');
+        table.search( $(this).val(), true, false )       //DJG - needed to remove the regex bit of this code or empty string search would return none not all data - http://datatables.net/forums/discussion/21355/regex-and-server-side-processing-not-really-working
+            .draw();
+    } );
+
     $('#table_id tbody').on('click', 'td.include-question', function () {       //DJG - don't know if I need this or can just do '.include-question'.click...
         var cell = this
         question_id = table.row(this.parentNode).data().id;

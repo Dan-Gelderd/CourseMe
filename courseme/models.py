@@ -1,9 +1,14 @@
 # from flask import g         #DJG - Just added this to get the TopicChoices static method working. Could maybe otherwise add it as a method of User; doesn't work
-from courseme import db
-import json, operator
+import json
+import operator
 from datetime import datetime, timedelta
 import md5
+from flask.ext.restful import fields
+
 from sqlalchemy import desc
+
+from courseme import db
+
 
 ROLE_USER = 0
 ROLE_ADMIN = 1
@@ -96,7 +101,7 @@ class User(db.Model):
                                backref=db.backref('tutors', lazy='dynamic'),
                                # DJG - Does this need to be included to make the secondary table update when an objective is passed to session.delete()?
                                lazy='dynamic',
-                               #DJG - not the default, don't know why I need it: the attribute will return a pre-configured Query object for all read operations, onto which further filtering operations can be applied before iterating the results.
+                               # DJG - not the default, don't know why I need it: the attribute will return a pre-configured Query object for all read operations, onto which further filtering operations can be applied before iterating the results.
                                passive_updates=False)
 
     questions_selected = db.relationship('Question', secondary=question_selections)
@@ -168,7 +173,7 @@ class User(db.Model):
         # union parts
         query_restricted = self.restricted_questions_view() if restricted else Question.query.filter(1 == 0)
         query_authored = self.questions_authored if authored else Question.query.filter(1 == 0)
-        #intersect parts
+        # intersect parts
         query_live = Question.LiveQuestions() if live else Question.query
         query_subject = self.subject.questions if subject and self.subject else Question.query
         query_topic = topic.questions if topic else Question.query
@@ -198,7 +203,7 @@ class User(db.Model):
         query_authored = self.modules_authored if authored else Module.query.filter(1 == 0)
         query_viewed = Module.query.join(UserModule).filter(UserModule.user == self) if viewed else Module.query.filter(
             1 == 0)
-        #intersect parts
+        # intersect parts
         query_live = Module.LiveModules() if live else Module.query
         query_type = Module.query.filter_by(material_type=material_type) if material_type else Module.query
         query_subject = self.subject.modules if subject and self.subject else Module.query
@@ -214,7 +219,7 @@ class User(db.Model):
     def recent_modules(self, count):
         # import pdb; pdb.set_trace()        #DJG - remove
         if self:
-            #return self.visible_modules(restricted=False, authored=False, viewed=True, live=True, material_type=None, subject=False, topic=None).join(UserModule).order_by(desc(UserModule.last_viewed)).limit(count).all()     #DJG - working but not on index page
+            # return self.visible_modules(restricted=False, authored=False, viewed=True, live=True, material_type=None, subject=False, topic=None).join(UserModule).order_by(desc(UserModule.last_viewed)).limit(count).all()     #DJG - working but not on index page
             return []
         else:
             return []
@@ -367,7 +372,7 @@ class Objective(db.Model):
                                     backref=db.backref('followons', lazy='dynamic'),
                                     # DJG - Does this need to be included to make the secondary table update when an objective is passed to session.delete()?
                                     lazy='dynamic',
-                                    #DJG - not the default, don't know why I need it: the attribute will return a pre-configured Query object for all read operations, onto which further filtering operations can be applied before iterating the results.
+                                    # DJG - not the default, don't know why I need it: the attribute will return a pre-configured Query object for all read operations, onto which further filtering operations can be applied before iterating the results.
                                     passive_updates=False)  # DJG - Does this need to be included to make the secondary table update when an objective is passed to session.delete()?
 
     def require(self, objective):
@@ -406,8 +411,8 @@ class Objective(db.Model):
 
     def as_dict(self):
         # wouldn't handle relationships
-        #public_fields = ['name']
-        #return {key: getattr(self, key) for key in public_fields}  
+        # public_fields = ['name']
+        # return {key: getattr(self, key) for key in public_fields}
 
         data = {}
         data['id'] = self.id
@@ -484,7 +489,7 @@ class SchemeOfWork(db.Model):
         return self.objectives.filter(scheme_objectives.c.objective_id == objective.id).count() > 0
 
     def add_objective(self, objective):
-        if user:
+        if self:
             if not self.is_objective(objective):
                 self.objectives.append(objective)
                 db.session.add(self)
@@ -578,10 +583,10 @@ class Module(db.Model):  # DJG - change this class to material as it now capture
     subject_id = db.Column(db.Integer, db.ForeignKey('subject.id'), nullable=False)
 
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'),
-                          nullable=False)  #DJG - why is user lower case in ForeignKey('user.id')
+                          nullable=False)  # DJG - why is user lower case in ForeignKey('user.id')
 
     objectives = db.relationship('Objective', secondary=module_objectives,
-                                 #DJG - shouldn't I have lazy = dynamic here too?
+                                 # DJG - shouldn't I have lazy = dynamic here too?
                                  backref=db.backref('modules', lazy='dynamic'))
 
     modules = db.relationship("Module",
@@ -589,14 +594,14 @@ class Module(db.Model):  # DJG - change this class to material as it now capture
                               primaryjoin=(course_modules.c.course_id == id),
                               secondaryjoin=(course_modules.c.module_id == id),
                               backref=db.backref('courses', lazy='dynamic'),
-                              #DJG - Does this need to be included to make the secondary table update when an objective is passed to session.delete()?
+                              # DJG - Does this need to be included to make the secondary table update when an objective is passed to session.delete()?
                               lazy='dynamic',
                               passive_updates=False)
 
-    #def subject_id(self):
-    #    return self.objectives[0].subject_id
+    # def subject_id(self):
+    # return self.objectives[0].subject_id
 
-    def calculate_votes():
+    def calculate_votes(self):
         pass  #DJG - calculate the proper votes total by summing usermodules and store in this parameter, to be run periodically to keep votes count properly alligned; should print out a record if mismatched to developer log
 
     def icon_class(self):
@@ -678,7 +683,6 @@ class Module(db.Model):  # DJG - change this class to material as it now capture
     def LiveModules():
         return Module.query.filter(Module.live)
 
-
     @staticmethod
     def RecommendChoices():
         try:  #DJG - this exception handling is needed because the forms module references this method and so on database creation it creates an error since the table cannot be found and queries. Perhaps there is a better way to prevent the cyclic dependency on startup
@@ -719,7 +723,7 @@ class UserModule(db.Model):
         # import pdb; pdb.set_trace()
         if self:
             if self.module.material_type != "Course":
-                return 1  #DJG - need some better logic here about whether a lecture or exercise has been completed
+                return 1  # DJG - need some better logic here about whether a lecture or exercise has been completed
             else:
                 course_module_ids = [mod.id for mod in self.module.modules]
                 course_length = len(course_module_ids)
@@ -806,7 +810,7 @@ class Message(
         self.reported = datetime.utcnow()
         db.session.add(self)
         db.session.commit()
-        #DJG - do some kind of notification process
+        # DJG - do some kind of notification process
 
     @staticmethod
     def AdminMessage(to_id, subject, body="", recommended_material_id=0):
@@ -843,8 +847,8 @@ class Group(db.Model):
             if not self.is_member(user):
                 self.members.append(user)
                 # DJG - May not need to inform users if they are added to a group - purely an organisational tool for people to send messages and track proress
-                #message = Message(
-                #    from_id = self.creator_id,
+                # message = Message(
+                # from_id = self.creator_id,
                 #    to_id = user.id,
                 #    subject = "You have been added to the group " + self.name,
                 #    body = "You have been added to the group " + self.name + ". If you want to leave this group go to the groups section of your profile page and click the button to leave.",
@@ -955,7 +959,7 @@ class Institution(db.Model):
             if not self.is_student(user):
                 self.students.append(user)
                 if send_message:
-                    message = Message.AdminMessage(
+                    Message.AdminMessage(
                         to_id=self.administrator_id,
                         subject="New student - " + user.name + " - added to institution " + self.name,
                         body="A new student, " + user.name + ", has been added to your institution " + self.name + ". You can review the student list and remove students on the institution profile page."

@@ -47,7 +47,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
               </button>
-              <a class="navbar-brand" href={{ url_for('index') }}>CourseMe</a>
+              <a class="navbar-brand" href="{{ url_for('index') }}">CourseMe</a>
               <form class="navbar-form navbar-left" role="select">      <!-- DJG - Don't understand roles --> 
                 <div class="form-group">
                   <select id="select_subject" type="combobox" class="form-control" placeholder="Choose a subject">
@@ -102,7 +102,7 @@
                     <li><a href="{{ url_for('profile', id=g.user.id) }}">Profile</a></li>
                     <li><a href="{{ url_for('messages') }}">Messages</a></li>
                     <li><a href="{{ url_for('objectives', profile_id=g.user.id) }}">Learning Objectives</a></li>
-                    <li><a href="{{ url_for("groups") }}">Groups</a></li>
+                    <li><a href="{{ url_for('groups') }}">Groups</a></li>
                     <li class="divider"></li>
                     <li role="presentation" class="dropdown-header">My Material</li>
                     {% for mod in [] %}   <!--g.user.modules_authored %}-->
@@ -171,7 +171,7 @@
         <!--<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>-->
         <script src="/static/lib/bootstrap/js/bootstrap.min.js"></script>
         
-        <script type "text/javascript" src="/static/lib/angular/angular.min.js"></script>
+
         <script src="/static/js/app.js"></script>
         
         <script src="/static/js/dynamic-list.js"></script>

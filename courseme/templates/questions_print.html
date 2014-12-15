@@ -16,22 +16,19 @@ $(document).ready(function () {
   
 });
 </script>
-
+<div ng-app="app" ng-controller="AppCtrl as app">
 <div class="no-print">
 <form class="form-inline" role="form">
   <div class="form-group">
-    <label class="sr-only" for="exampleInputEmail2">Email address</label>
-    <input type="email" class="form-control" id="exampleInputEmail2" placeholder="Enter email">
+    <label for="show_numbers">Show Question Numbers</label>
+    <input class="form-control" id="show_numbers" ng-model="show_numbers" type="checkbox">
   </div>
   <div class="form-group">
-    <div class="input-group">
-      <div class="input-group-addon">@</div>
-      <input class="form-control" type="email" placeholder="Enter email">
-    </div>
+    <label for="show_answers">Print Answers</label>
+    <input class="form-control" id="show_answers" ng-model="show_answers" type="checkbox">
   </div>
-  <div class="form-group">
-    <label class="sr-only" for="exampleInputPassword2">Password</label>
-    <input type="password" class="form-control" id="exampleInputPassword2" placeholder="Password">
+  <div class="form-group pull-right">
+    <a href="{{url_for('questions')}}" class="btn btn-default pull-right" id="select_questions">Re-select questions</a>
   </div>
 </form>
 </div>
@@ -44,9 +41,37 @@ $(document).ready(function () {
         <span hidden class="question-id">{{question.id}}</span>
         {{question.question | safe}}
         <span class="input-group-btn no-print"><button class="btn btn-link" type="button" onclick="$(this).closest('li').remove()">&times;</button></span>
-    </li>    
+    </li>
+    <li class="list-group-item question-list-print" ng-show="show_answers">
+        {{question.answer | safe}}
+    </li>
     {% endfor %}    
 </ul>
+</div> <!--/angular app>-->
 
+
+<script type="text/javascript" src="/static/lib/angular/angular.min.js"></script>
+<script type='text/javascript'>
+var app = angular.module("app", []);
+
+app.controller("AppCtrl", function($scope){
+var app = this;
+
+$scope.show_numbers = true
+$scope.show_answers = false
+
+//$http.get("/api/story").success(function(data){
+//    app.stories = data.objects;
+//});
+
+//app.removeQuestion = function(){
+//    $http.post("/api/story", {title: "new story " + (1 + app.stories.length)})
+//        .success(function(data){
+//            app.stories.push(data);
+//        })
+//}
+
+});
+</script>
 
 {% endblock %}

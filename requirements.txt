@@ -1,3 +1,4 @@
+flask_util_js
 # run pip install -r requirements.txt from command line
 livereload
 tornado
@@ -17,3 +18,5 @@ flask-wtf
 markupsafe
 migrate
 flask-triangle
+Flask-RESTful
+WTForms-Alchemy
