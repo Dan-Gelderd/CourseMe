@@ -130,10 +130,10 @@ def objectives_admin():
     title = "CourseMe - Objectives"
     objectiveform = forms.EditObjective()
     objectiveform.edit_objective_topic.choices = Topic.TopicChoices(
-        g.user)  #DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
+        g.user)  # DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
     objectives = g.user.visible_objectives().all()
     objectives.sort(
-        key=operator.methodcaller("score"))  #DJG - isn't there a way of doing this within the order_by of the query
+        key=operator.methodcaller("score"))  # DJG - isn't there a way of doing this within the order_by of the query
     return render_template('objectivesadmin.html',
                            title=title,
                            objectiveform=objectiveform,
@@ -155,7 +155,7 @@ def objectives(profile_id, scheme_id=0):
         title = "CourseMe - Objectives"
         objectiveform = forms.EditObjective()
         objectiveform.edit_objective_topic.choices = Topic.TopicChoices(
-            g.user)  #DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
+            g.user)  # DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
         objectives = []
         if scheme_id == 0:
             objectives = g.user.visible_objectives().all()
@@ -167,7 +167,8 @@ def objectives(profile_id, scheme_id=0):
                 flash("Scheme of work not found")
                 return redirect(url_for('schemes'))
         objectives.sort(
-            key=operator.methodcaller("score"))  #DJG - isn't there a way of doing this within the order_by of the query
+            key=operator.methodcaller(
+                "score"))  # DJG - isn't there a way of doing this within the order_by of the query
         return render_template(
             'objectives.html',
             title=title,
@@ -208,7 +209,7 @@ def objectives_group(group_id, scheme_id=0, name_display=1):
             flash("Scheme of work not found")
             return redirect(url_for('schemes'))
     objectives.sort(
-        key=operator.methodcaller("score"))  #DJG - isn't there a way of doing this within the order_by of the query
+        key=operator.methodcaller("score"))  # DJG - isn't there a way of doing this within the order_by of the query
     return render_template(
         'objectives_group.html',
         title=title,
@@ -223,9 +224,9 @@ def objectives_group(group_id, scheme_id=0, name_display=1):
 def objective_add_update():
     form = forms.EditObjective()
     form.edit_objective_topic.choices = Topic.TopicChoices(
-        g.user)  #DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
+        g.user)  # DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
     form.edit_objective_prerequisites.choices = [(i, i) for i in form.edit_objective_prerequisites.data]
-    #import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
     #form will be the fields of the html form with the csrf
     #request.form will be the data posted back through the ajax request
     #DJG - don't know why the request.form object seems to have a second empty edit_objective_id attribute
@@ -328,7 +329,7 @@ def objective_add_update():
 
 @app.route('/objective-delete')
 def objective_delete():
-    #DJG - need to check user has authority to delete objective
+    # DJG - need to check user has authority to delete objective
     objective = Objective.query.get(request.args.get("objective_id"))
     db.session.delete(
         objective)  #DJG - secondary table should be updated automatically because of relationship definintion
@@ -345,7 +346,7 @@ def objective_get():
 @app.route('/objective-assess/<int:profile_id>/<int:objective_id>')
 @login_required
 def objective_assess(profile_id, objective_id):
-    objective = Objective.query.get(objective_id)  #DJG - may restrict search to just some set of visisble objectives
+    objective = Objective.query.get(objective_id)  # DJG - may restrict search to just some set of visisble objectives
     if not objective:
         flash("This objective does not exist")
         return redirect(url_for('objectives', id=g.user.id))
@@ -359,14 +360,14 @@ def objective_assess(profile_id, objective_id):
     else:
         userobjective = UserObjective.FindOrCreate(profile_id, g.user.id, objective_id)
         userobjective.assess()
-        #import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         return json.dumps({
             'assessed_display_class': userobjective.assessed_display_class(),
             'assessed': userobjective.completed
         })
 
 
-#modules
+# modules
 @app.route('/editmodule/<int:id>', methods=["GET", "POST"])
 @login_required
 def editmodule(id=0):
@@ -1159,12 +1160,27 @@ def select_question(id=0):
 @app.route('/questions-print', methods=['GET'])
 @login_required
 def questions_print():
+    # return app.send_static_file('print_questions.html')
     title = "CourseMe - Questions"
-    questions = g.user.questions_selected
+    if g.user.is_authenticated():
+        questions = g.user.questions_selected
+        catalogue = [question.as_dict(g.user) for question in questions]  #DJG - confused over best way to do this http://stackoverflow.com/questions/1958219/convert-sqlalchemy-row-object-to-python-dict
+    else:
+        questions =[]
+        catalogue = []
     return render_template('questions_print.html',
                            title=title,
-                           questions=questions
+                           questions=questions,
+                           catalogue=json.dumps(catalogue, cls=CustomEncoder, separators=(',', ':'))
     )
+
+
+@app.route('/selected-questions', methods=['GET'])
+@login_required
+def selected_questions():
+    questions = g.user.questions_selected
+    catalogue = [question.as_dict() for question in questions]  #DJG - confused over best way to do this http://stackoverflow.com/questions/1958219/convert-sqlalchemy-row-object-to-python-dict
+    return json.dumps(catalogue, separators=(',', ':'), cls=CustomEncoder)
 
 
 @app.route('/deselect-all-questions', methods=['GET'])

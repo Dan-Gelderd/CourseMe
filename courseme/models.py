@@ -3,7 +3,6 @@ import json
 import operator
 from datetime import datetime, timedelta
 import md5
-from flask.ext.restful import fields
 
 from sqlalchemy import desc
 
@@ -27,7 +26,7 @@ ENTERPRISE_LICENCE_DURATION = 1
 class Subject(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), nullable=False, unique=True)
-    time_created = db.Column(db.DateTime)
+    time_created = db.Column(db.DateTime, default=datetime.utcnow)
 
     topics = db.relationship("Topic", backref="subject", lazy='dynamic')
     objectives = db.relationship("Objective", backref="subject", lazy='dynamic')
@@ -420,7 +419,7 @@ class Objective(db.Model):
         data['subject'] = self.subject.name
         data['topic_id'] = self.topic_id
         data['prerequisites'] = [p.name for p in self.prerequisites.all()]
-        #return json.dumps(data, sort_keys=True, separators=(',',':'))      DJG - could convert to JSON in here
+        # return json.dumps(data, sort_keys=True, separators=(',',':'))      DJG - could convert to JSON in here
         return data
 
     def top_modules(self, exclude=None, material_type="Lecture", num=3):
@@ -602,7 +601,7 @@ class Module(db.Model):  # DJG - change this class to material as it now capture
     # return self.objectives[0].subject_id
 
     def calculate_votes(self):
-        pass  #DJG - calculate the proper votes total by summing usermodules and store in this parameter, to be run periodically to keep votes count properly alligned; should print out a record if mismatched to developer log
+        pass  # DJG - calculate the proper votes total by summing usermodules and store in this parameter, to be run periodically to keep votes count properly alligned; should print out a record if mismatched to developer log
 
     def icon_class(self):
         icon_classes = {"Course": "glyphicon glyphicon-list-alt",
@@ -685,7 +684,7 @@ class Module(db.Model):  # DJG - change this class to material as it now capture
 
     @staticmethod
     def RecommendChoices():
-        try:  #DJG - this exception handling is needed because the forms module references this method and so on database creation it creates an error since the table cannot be found and queries. Perhaps there is a better way to prevent the cyclic dependency on startup
+        try:  # DJG - this exception handling is needed because the forms module references this method and so on database creation it creates an error since the table cannot be found and queries. Perhaps there is a better way to prevent the cyclic dependency on startup
             return [(str(module.id), module.name) for module in Module.LiveModules().all()]
         except:
             return []
@@ -849,7 +848,7 @@ class Group(db.Model):
                 # DJG - May not need to inform users if they are added to a group - purely an organisational tool for people to send messages and track proress
                 # message = Message(
                 # from_id = self.creator_id,
-                #    to_id = user.id,
+                # to_id = user.id,
                 #    subject = "You have been added to the group " + self.name,
                 #    body = "You have been added to the group " + self.name + ". If you want to leave this group go to the groups section of your profile page and click the button to leave.",
                 #    sent = datetime.utcnow())

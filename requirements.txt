@@ -1,7 +1,6 @@
 flask_util_js
 # run pip install -r requirements.txt from command line
 livereload
-tornado
 pyzmq
 Fabric
 ipython
@@ -10,13 +9,11 @@ Flask-Script
 flask-sqlalchemy
 sqlalchemy-migrate
 flask-login
-flask-openid
 flask-mail
 flask-uploads
 flask-util-js
 flask-wtf
 markupsafe
 migrate
-flask-triangle
 Flask-RESTful
 WTForms-Alchemy

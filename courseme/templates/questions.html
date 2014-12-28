@@ -30,10 +30,13 @@
     <label for="answers_required">Answers available</label>
     <input class="form-control" id="answers_required" type="checkbox">
   </div>
-
   <div class="form-group">
     <label for="search_input">Search</label>
     <input class="form-control" id="search_input" placeholder="">
+  </div>
+  <div class="form-group">
+    <label for="my_questions">My questions</label>
+    <input class="form-control" id="my_questions" type="checkbox">
   </div>
   <div class="form-group pull-right">
     <a href="{{url_for('questions_print')}}" class="btn btn-default pull-right" id="print_questions">Print selected questions</a>
@@ -81,7 +84,7 @@ $(document).ready( function () {                //DJG - https://datatables.net/m
     var table = $('#table_id').DataTable( {
 
         "aoColumnDefs": [  
-            {"bVisible": false, "aTargets": [0, 5, 6, 7, 8]}  //DJG - targets grid columns to hide - just add the column to be disabled into the array
+            {"bVisible": false, "aTargets": [0, 5, 6, 7, 8, 9]}  //DJG - targets grid columns to hide - just add the column to be disabled into the array
         ],
 
         data: {{catalogue | safe}},
@@ -93,7 +96,7 @@ $(document).ready( function () {                //DJG - https://datatables.net/m
             { data: 'author', title: 'Author', orderable: false },
             {
                 "title":          'Answer',
-                "class":          'details-control',
+                "class":          'details-control',        //DJG - need way to disable if no answer available
                 "orderable":      false,
                 "data":           null,
                 "defaultContent": ''
@@ -102,15 +105,15 @@ $(document).ready( function () {                //DJG - https://datatables.net/m
                 "title":          'Include',
                 "class":          'include-question',
                 "orderable":      false,
-                "data":           'selected',
+                "data":           'selected',           //DJG - want to try and store this in an html5 custom data-attribute
                 "defaultContent": ''
             },
 
             { data: 'objectives', title: 'Objectives' },
             { data: 'topics', name: 'Topics' },
             { data: 'answer', name: 'Answer' },
-            { data: 'has_answer', name: 'Has_Answer' }
-
+            { data: 'has_answer', name: 'Has_Answer' },
+            { data: 'author_id', name: 'Author_Id' }
 
         ],
         
@@ -195,6 +198,20 @@ $(document).ready( function () {                //DJG - https://datatables.net/m
             .draw();
     } );
 
+    $('#my_questions').on( 'change', function () {
+        if($(this).is(':checked')){
+
+            table.column( 'Author_Id:name' )
+                .search( "{{g.user.id}}", true, false )       //DJG - needed to remove the regex bit of this code or empty string search would return none not all data - http://datatables.net/forums/discussion/21355/regex-and-server-side-processing-not-really-working
+                .draw();
+        }
+        else{
+            table.column( 'Author_Id:name' )
+                .search( "", true, false )       //DJG - needed to remove the regex bit of this code or empty string search would return none not all data - http://datatables.net/forums/discussion/21355/regex-and-server-side-processing-not-really-working
+                .draw();
+        }
+    } );
+
     $('#table_id tbody').on('click', 'td.include-question', function () {       //DJG - don't know if I need this or can just do '.include-question'.click...
         var cell = this
         question_id = table.row(this.parentNode).data().id;
@@ -212,7 +229,7 @@ $(document).ready( function () {                //DJG - https://datatables.net/m
         ) 
     });    
     
-    console.log({{catalogue | safe}})
+    console.log({{catalogue | safe}})       //DJG - this content really isn't safe; may need to manually reinsert <br> <i> <b> elements somehow
     
 } );
 

@@ -6,29 +6,96 @@
 <script type='text/javascript'>
 $(document).ready(function () {
 
-  //Allow re-ordering of questions   
-  $(function() {
-    $( "#questions_selected" ).sortable();
+    //Allow re-ordering of questions
+    $(function() {
+    $( "#questions_selected" ).sortable({
+        update: function(event, ui){renumberQuestions()}
+    });
     $( "#questions_selected" ).disableSelection();
-  });
+    });
 
-  
-  
+    function renumberQuestions() {
+        $(".question-number").each(function(index) {
+            console.log(index);
+            $(this).text(index+1);
+        })
+
+    };
+    renumberQuestions()
+
+
+    $('#show_numbers').change(function(){
+        if($(this).prop('checked')){
+            $('.question-number').removeClass("hidden")
+        }
+        else {
+            $('.question-number').addClass("hidden")
+        }
+    });
+
+    $('#show_answers').change(function(){
+        if($(this).prop('checked')){
+            $('.question-answer').removeClass("hidden")
+        }
+        else {
+            $('.question-answer').addClass("hidden")
+        }
+    });
+
+    $('#add_heading').click(function(event){
+        var header = $('#new_heading').val()
+        event.preventDefault();
+        new_li = document.createElement('li');
+        new_li.setAttribute('class', 'list-group-item question-list-print ui-sortable-handle');
+        new_row = document.createElement('div');
+        new_row.setAttribute('class', 'row');
+        new_col1 = document.createElement('div');
+        new_col1.setAttribute('class', 'col-lg-11');
+        new_col2 = document.createElement('div');
+        new_col2.setAttribute('class', 'col-lg-1');
+        new_header = document.createElement('h3');
+        new_header.setAttribute('class', 'question-header');
+        new_header.innerHTML = header;
+        new_span_button = document.createElement('span');
+        new_span_button.setAttribute('class', 'input-group-btn no-print');
+        new_button = document.createElement('button');
+        new_button.setAttribute('class', 'btn btn-link');
+        new_button.setAttribute('type', 'button');
+        new_button.innerHTML = "&times;";
+        new_button.onclick = function() {
+            $(this).closest('li').remove();
+        };
+        new_span_button.appendChild(new_button);
+        new_col1.appendChild(new_header);
+        new_col2.appendChild(new_span_button);
+        new_row.appendChild(new_col1);
+        new_row.appendChild(new_col2);
+        new_li.appendChild(new_row);
+        $('#questions_selected').append(new_li);
+    });
+
 });
+
 </script>
-<div ng-app="app" ng-controller="AppCtrl as app">
+
 <div class="no-print">
 <form class="form-inline" role="form">
   <div class="form-group">
     <label for="show_numbers">Show Question Numbers</label>
-    <input class="form-control" id="show_numbers" ng-model="show_numbers" type="checkbox">
+    <input class="form-control" id="show_numbers" checked type="checkbox">
   </div>
   <div class="form-group">
     <label for="show_answers">Print Answers</label>
-    <input class="form-control" id="show_answers" ng-model="show_answers" type="checkbox">
+    <input class="form-control" id="show_answers" checked type="checkbox">
+  </div>
+  <div class="input-group pull-right">
+    <input type="text" class="form-control" placeholder="New header..." id="new_heading">
+    <span class="input-group-btn">
+        <button class="btn btn-default" id="add_heading">Add heading</button>
+    </span>
   </div>
   <div class="form-group pull-right">
-    <a href="{{url_for('questions')}}" class="btn btn-default pull-right" id="select_questions">Re-select questions</a>
+    <a href="{{url_for('questions')}}" class="btn btn-default" id="select_questions">Re-select questions</a>
   </div>
 </form>
 </div>
@@ -38,40 +105,22 @@ $(document).ready(function () {
 <ul class="list-group" id="questions_selected">
     {% for question in questions %}
     <li class="list-group-item question-list-print">
-        <span hidden class="question-id">{{question.id}}</span>
-        {{question.question | safe}}
-        <span class="input-group-btn no-print"><button class="btn btn-link" type="button" onclick="$(this).closest('li').remove()">&times;</button></span>
-    </li>
-    <li class="list-group-item question-list-print" ng-show="show_answers">
-        {{question.answer | safe}}
+        <div class="row">
+            <div class="col-lg-1"><span class="question-number">1.</span></div>
+            <div class="col-lg-10">{{question.question | safe}}</div>           <!--DJG - not really safe yet -->
+            <div class="col-lg-1"><span class="input-group-btn no-print"><button class="btn btn-link" type="button" onclick="$(this).closest('li').remove();  renumberQuestions()">&times;</button></span></div>
+        </div>
+        <div class="row question-answer">
+            <div class="col-lg-12">
+                <hr>
+                <p class="pull-right"><i>Answer:</i> {{question.answer | safe}}</p>
+            </div>
+        </div>
+
     </li>
     {% endfor %}    
 </ul>
-</div> <!--/angular app>-->
+</div>
 
-
-<script type="text/javascript" src="/static/lib/angular/angular.min.js"></script>
-<script type='text/javascript'>
-var app = angular.module("app", []);
-
-app.controller("AppCtrl", function($scope){
-var app = this;
-
-$scope.show_numbers = true
-$scope.show_answers = false
-
-//$http.get("/api/story").success(function(data){
-//    app.stories = data.objects;
-//});
-
-//app.removeQuestion = function(){
-//    $http.post("/api/story", {title: "new story " + (1 + app.stories.length)})
-//        .success(function(data){
-//            app.stories.push(data);
-//        })
-//}
-
-});
-</script>
 
 {% endblock %}

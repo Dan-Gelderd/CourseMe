@@ -5,18 +5,15 @@ from datetime import datetime
 
 
 maths = Subject(
-        name = "Mathematics",    
-        time_created = datetime.utcnow()
+        name = "Mathematics"
 )
 
 biology = Subject(
-        name = "Biology",    
-        time_created = datetime.utcnow()
+        name = "Biology"
 )
 
 misc = Subject(
-        name = "Miscelaneous",    
-        time_created = datetime.utcnow()
+        name = "Miscelaneous"
 )
 
 db.session.add(maths)

@@ -1,15 +1,7 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<!--<!DOCTYPE html>
-<html>
-<head>
-<title>MathJax Dynamic Math Test Page</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<meta http-equiv="X-UA-Compatible" content="IE=edge" />-->
-
-<!--<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML,Safe"></script>-->
 <script type="text/javascript" src="/static/lib/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML,Safe"></script>
 
 <script type='text/javascript'>
@@ -41,7 +33,7 @@ $(document).ready(function () {
     
         if ({{edit_id}}>0) {
           //DJG - hit the test button
-          console.log('hit test question');
+          //console.log('hit test question');
           testQuestion();
         }
           
@@ -108,7 +100,7 @@ function testQuestion() {
 <div class="row">
   <div class="col-md-12">
 
-    <form class="form" action={{ url_for('edit_question', id=edit_id) }} method="POST" id="edit_question_form">
+    <form class="form" action={{ url_for("edit_question", id=edit_id) }} method="POST" id="edit_question_form">
         {{ form.hidden_tag() }}
         {{ form.edit_question_id }}
         <div class="form-group" id="question_form_group">

@@ -1,19 +1,13 @@
-import os
 from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
 from flask.ext.uploads import UploadSet, configure_uploads, patch_request_class
 from flask_restless import APIManager
-from config import basedir
 import md5      #DJG - depricated, explore hashlib or passlib or some password storing package
 from flask_util_js import FlaskUtilJs       #DJG - for stuff like url_for in javascript
-from flask.ext.triangle import Triangle
-from flask.ext import restful
-
 
 
 app = Flask(__name__)
-Triangle(app)
 
 app.config.from_object('config')
 
