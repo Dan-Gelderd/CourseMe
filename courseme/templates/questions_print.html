@@ -4,14 +4,6 @@
 <script type="text/javascript" src="/static/lib/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML,Safe"></script>
 
 <script type='text/javascript'>
-function renumberQuestions() {
-    $(".question-number").each(function(index) {
-        console.log(index);
-        $(this).text(index+1);
-    })
-
-};
-
 $(document).ready(function () {
 
     //Allow re-ordering of questions
@@ -22,7 +14,13 @@ $(document).ready(function () {
     $( "#questions_selected" ).disableSelection();
     });
 
+    function renumberQuestions() {
+        $(".question-number").each(function(index) {
+            console.log(index);
+            $(this).text(index+1);
+        })
 
+    };
     renumberQuestions()
 
 
@@ -110,7 +108,7 @@ $(document).ready(function () {
         <div class="row">
             <div class="col-lg-1"><span class="question-number">1.</span></div>
             <div class="col-lg-10">{{question.question | safe}}</div>           <!--DJG - not really safe yet -->
-            <div class="col-lg-1"><span class="input-group-btn no-print"><button class="btn btn-link" type="button" onclick="$(this).closest('li').remove(); renumberQuestions();">&times;</button></span></div>
+            <div class="col-lg-1"><span class="input-group-btn no-print"><button class="btn btn-link" type="button" onclick="$(this).closest('li').remove();  renumberQuestions()">&times;</button></span></div>
         </div>
         <div class="row question-answer">
             <div class="col-lg-12">
