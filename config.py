@@ -9,7 +9,7 @@ SQLALCHEMY_COMMIT_ON_TEARDOWN = True
 
 DEBUG = True
 SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
-    'sqlite:///' + os.path.join(basedir, 'courseme.db')
+    'sqlite:///' + os.path.join(basedir, 'courseme-dev.db')
 
 UPLOADS_DEFAULT_DEST = os.path.join(basedir, 'uploads')      #DJG - This is a guess copied from above, what does it do?
 UPLOADS_DEFAULT_URL = "/"
