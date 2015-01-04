@@ -46,7 +46,7 @@
           <a href={{ url_for('profile', id=message.from_id) }}> {{ message.from_user.name }}</a>
         </small>
         <small>
-          {{ moment(message.sent).format('MMMM Do YYYY h:mm a') }}
+          {{ moment(message.sent).format('LLL') }}    <!--DJG - moment not working properly -->
         </small>
       </h4>
       <p>{{ message.body }}</p>
