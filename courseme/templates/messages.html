@@ -45,6 +45,9 @@
         <small>
           <a href={{ url_for('profile', id=message.from_id) }}> {{ message.from_user.name }}</a>
         </small>
+        <small>
+          {{ moment(message.sent).format('MMMM Do YYYY h:mm a') }}
+        </small>
       </h4>
       <p>{{ message.body }}</p>
       {% if message.recommended_material %}
