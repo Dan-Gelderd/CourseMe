@@ -315,6 +315,14 @@ class User(db.Model):
             self.select_question(question)
             return "success"
 
+    def objectives_to_assess(self, student):
+        if self == student:
+            return []
+        elif student.permission(self):
+            return []
+        else:
+            return []
+
     @staticmethod
     def make_unique_username(username):
         if User.query.filter_by(name=username).first() == None:

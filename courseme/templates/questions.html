@@ -43,6 +43,13 @@
   </div>
   <div class="form-group pull-right">
     <a href="{{url_for('deselect_all_questions')}}" class="btn btn-default pull-right" id="deselect_all_questions">Deselect all</a>
+  </div>
+  <br/>
+  <div class="input-group pull-right">
+    <input type="text" class="form-control" placeholder="Select student..." id="select_student">
+    <span class="input-group-btn">
+        <button class="btn btn-default" id="suggest_questions">Suggest questions</button>
+    </span>
   </div>  
 </form>
 
@@ -80,7 +87,8 @@ function addColumnClass(colName, className) {
 
 
 $(document).ready( function () {                //DJG - https://datatables.net/manual/installation        
-    
+
+  
     var table = $('#table_id').DataTable( {
 
         "aoColumnDefs": [  
@@ -192,7 +200,7 @@ $(document).ready( function () {                //DJG - https://datatables.net/m
         }
     } );
 
-    $('#search_input').on( 'change', function () {
+    $('#search_input').on( 'input', function () {
         console.log('search');
         table.search( $(this).val(), true, false )       //DJG - needed to remove the regex bit of this code or empty string search would return none not all data - http://datatables.net/forums/discussion/21355/regex-and-server-side-processing-not-really-working
             .draw();
@@ -230,8 +238,22 @@ $(document).ready( function () {                //DJG - https://datatables.net/m
     });    
     
     console.log({{catalogue | safe}})       //DJG - this content really isn't safe; may need to manually reinsert <br> <i> <b> elements somehow
+
+    var students = [];
+    {% for student in g.user.all_students() %}
+        students.push('{{ student.name }}')    
+    {% endfor %}    
+
+    $("#select_student").autocomplete({
+        source: students
+    });
+   
+    $('#suggest_questions').on('click', function(event) {
+        event.preventDefault();        
+        console.log("suggest qs");
+    });
     
-} );
+});
 
 
 
