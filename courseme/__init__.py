@@ -5,11 +5,11 @@ from flask.ext.uploads import UploadSet, configure_uploads, patch_request_class
 from flask_restless import APIManager
 import md5      #DJG - depricated, explore hashlib or passlib or some password storing package
 from flask_util_js import FlaskUtilJs       #DJG - for stuff like url_for in javascript
-
+from config import config
 
 app = Flask(__name__)
 
-app.config.from_object('config')
+app.config.from_object(config['development'])
 
 fujs = FlaskUtilJs(app)
 
