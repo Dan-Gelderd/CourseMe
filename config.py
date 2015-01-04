@@ -7,7 +7,7 @@ class Config:
     CSRF_ENABLED = True
     SECRET_KEY = os.environ.get('SECRET KEY') or 'you-will-never-guess'
 
-    SQLALCHEMY_MIGRATE_REPO = os.path.join(basedir, 'db_repository')
+    #SQLALCHEMY_MIGRATE_REPO = os.path.join(basedir, 'db_repository')       #DJG - Not needed now using Flask-Migrate with Flask-Script
     #SQLALCHEMY_COMMIT_ON_TEARDOWN = True       #DJG - Should be set to true but causes session errors http://stackoverflow.com/questions/23301968/invalid-transaction-persisting-across-requests
 
     UPLOADS_DEFAULT_DEST = os.path.join(basedir, 'uploads')  # DJG - This is a guess copied from above, what does it do?
@@ -23,7 +23,7 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'courseme.db')
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'courseme-dev.sqlite')
 
 
 class TestingConfig(Config):
