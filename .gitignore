@@ -54,6 +54,7 @@ docs/_build/
 # database repository
 db_repository/
 *.db
+*.sqlite
 
 #pycharm
 .xml
