@@ -6,6 +6,7 @@ from models import User, ROLE_USER, ROLE_ADMIN, Objective, SchemeOfWork, UserObj
     Group, Message, Question, Subject, Topic
 from datetime import datetime
 import json, operator
+from .email import send_email
 # import pdb; pdb.set_trace()        #DJG - remove
 
 class CustomEncoder(json.JSONEncoder):
@@ -1191,6 +1192,11 @@ def deselect_all_questions():
     db.session.commit()
     return redirect(url_for('questions'))
 
+
+@app.route('/invitation/<email>')
+@login_required
+def invitation_email(email):
+    send_email(email, 'Invitation email', 'mail/invitation_email', user=g.user)
 
 @app.route('/angular', methods=['GET'])
 def test_angular():
