@@ -2,11 +2,13 @@ from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
 from flask.ext.uploads import UploadSet, configure_uploads, patch_request_class
+from flask_mail import Mail
 from flask_restless import APIManager
 import md5      #DJG - depricated, explore hashlib or passlib or some password storing package
 from flask_util_js import FlaskUtilJs       #DJG - for stuff like url_for in javascript
 from config import config
 from flask.ext.moment import Moment
+
 
 app = Flask(__name__)
 
@@ -19,6 +21,8 @@ db = SQLAlchemy(app)
 moment = Moment(app)
 
 api_manager = APIManager(app, flask_sqlalchemy_db=db)
+
+mail = Mail(app)
 
 lm = LoginManager()
 lm.init_app(app)

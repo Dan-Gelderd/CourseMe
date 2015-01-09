@@ -16,6 +16,9 @@ class Config:
     RECAPTCHA_PUBLIC_KEY = '6LeYIbsSAAAAACRPIllxA7wvXjIE411PfdB2gt2J'
     RECAPTCHA_PRIVATE_KEY = '6LeYIbsSAAAAAJezaIq3Ft_hSTo0YtyeFG-JgRtu'
 
+    COURSEME_MAIL_SUBJECT_PREFIX = '[CourseMe]'
+    COURSEME_MAIL_SENDER='CourseMe Info <info.courseme@gmail.com>'
+
     @staticmethod
     def init_app(app):
         pass
@@ -26,6 +29,7 @@ class DevelopmentConfig(Config):
     MAIL_SERVER = 'smtp.googlemail.com'
     MAIL_PORT = 587
     MAIL_USE_TLS = True
+    MAIL_USE_SSL=False
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'courseme-dev.sqlite')
