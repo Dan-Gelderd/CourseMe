@@ -8,7 +8,7 @@
 //    event.preventDefault();
 //    var sender_id = $(this).closest(".access-request-id-container").find(".access-request-id").text();
 //    $.post(
-//      flask_util.url_for('allow_access', {request_id: sender_id }),
+//      flask_util.url_for('main.allow_access', {request_id: sender_id }),
 //      function(json) {
 //          var result = $.parseJSON(json);
 //          location.reload(true)
@@ -21,7 +21,7 @@
 //    event.preventDefault();
 //    var sender_id = $(this).closest(".access-request-id-container").find(".access-request-id").text();
 //    $.post(
-//      flask_util.url_for('deny_access', {request_id: sender_id }),
+//      flask_util.url_for('main.deny_access', {request_id: sender_id }),
 //      function(json) {
 //          var result = $.parseJSON(json);
 //          location.reload(true)
@@ -37,13 +37,13 @@
 <ul class="media-list">
   {% for message in g.user.live_messages().all() %}
   <li class="media">
-    <a class="pull-left" href="{{ url_for('profile', id=message.from_id) }}">
+    <a class="pull-left" href="{{ url_for('main.profile', id=message.from_id) }}">
       <img class="media-object" src="#" alt="...">
     </a>
     <div class="media-body">
       <h4 class="media-heading">{{ message.subject }}
         <small>
-          <a href={{ url_for('profile', id=message.from_id) }}> {{ message.from_user.name }}</a>
+          <a href="{{ url_for('main.profile', id=message.from_id) }}"> {{ message.from_user.name }}</a>
         </small>
         <small>
           {{ moment(message.sent).format('LLL') }}    <!--DJG - moment not working properly -->
@@ -52,7 +52,7 @@
       <p>{{ message.body }}</p>
       {% if message.recommended_material %}
       <h5 class="media-heading">Reccommendation:</h5>
-      <p>{{ message.from_user.name }} has recommended <a href={{ url_for('module', id=message.recommended_material.id) }}>{{ message.recommended_material.name }}</a> for you</p>
+      <p>{{ message.from_user.name }} has recommended <a href="{{ url_for('main.module', id=message.recommended_material.id) }}">{{ message.recommended_material.name }}</a> for you</p>
       {% endif %}
       {% if message.request_access and not g.user.permission(message.from_user) %}
       <h5 class="media-heading">Access Request:</h5>

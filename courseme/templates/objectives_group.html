@@ -36,12 +36,12 @@
         <tr>
             <th></th>
             {% for profile in profiles %}
-            <th class="DJG_rotate_headers"><a href="{{url_for('objectives', profile_id=profile.id, scheme_id=scheme_id)}}" id="{{profile.id}}_name_display" class="name-display" {% if name_display != 0 %} title="{{profile.email}}" {% endif %}>
+            <th class="DJG_rotate_headers"><a href="{{url_for('main.objectives', profile_id=profile.id, scheme_id=scheme_id)}}" id="{{profile.id}}_name_display" class="name-display" {% if name_display != 0 %} title="{{profile.email}}" {% endif %}>
             {% if name_display==0 %} {{profile.email}} {% else %} {{profile.name}} {% endif %}
             </a></th>
             {% endfor %}
             {% for profile in profiles %}
-            <th class="DJG_rotate_headers"><a href="{{url_for('objectives', profile_id=profile.id, scheme_id=scheme_id)}}" title="{{profile.email}} Self Assessment">
+            <th class="DJG_rotate_headers"><a href="{{url_for('main.objectives', profile_id=profile.id, scheme_id=scheme_id)}}" title="{{profile.email}} Self Assessment">
             {% if name_display==0 %} {{profile.email}}_SA {% else %} {{profile.name}}_SA {% endif %}
             </a></th>
             {% endfor %}        
@@ -90,7 +90,7 @@ $(document).ready(function () {
         var profile_id = cell.id.split('_')[1]
         console.log("assess objective " + objective_id + " clicked")
         $.getJSON(
-            flask_util.url_for('objective_assess', {profile_id: profile_id, objective_id: objective_id}), 
+            flask_util.url_for('main.objective_assess', {profile_id: profile_id, objective_id: objective_id}),
             function(result) {
                 $(cell).removeClass("objective_not objective_partial warning objective_complete success");  //DJG - when objective classes are properly customised can remove the warning and succsess classes here   
                 $(cell).addClass(result.assessed_display_class)
@@ -102,17 +102,17 @@ $(document).ready(function () {
     $("#objectives_to_view").on('change', function () {
         var scheme_id = $(this).val();
         console.log(scheme_id);
-        window.location.href = flask_util.url_for('objectives_group', {group_id: {{group.id}}, scheme_id: scheme_id});
+        window.location.href = flask_util.url_for('main.objectives_group', {group_id: {{group.id}}, scheme_id: scheme_id});
     });
 
     $("#profiles_to_view").on('change', function () {
         var group_id = $(this).val();
-        window.location.href = flask_util.url_for('objectives_group', {group_id: group_id, scheme_id: {{scheme_id}}});
+        window.location.href = flask_util.url_for('main.objectives_group', {group_id: group_id, scheme_id: {{scheme_id}}});
     });
 
     $("#name_display").on('change', function () {
         var name_display = $(this).val();
-        window.location.href = flask_util.url_for('objectives_group', {group_id: {{group.id}}, scheme_id: {{scheme_id}}, name_display: name_display});
+        window.location.href = flask_util.url_for('main.objectives_group', {group_id: {{group.id}}, scheme_id: {{scheme_id}}, name_display: name_display});
     });
  
     

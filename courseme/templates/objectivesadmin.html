@@ -9,7 +9,7 @@ $(document).ready(function () {
         var objective_id = this.id.split('_')[0]
         //console.log("edit button " + objective_id + " clicked")       //DJG - testing click event
         $.getJSON(                                      //DJG - as we are bringing all the objectives in anyway with jinja2 could we make this purely server side? Maybe not now we move to a separate js file which can't access the objectives variable passed to the template?
-            flask_util.url_for('objective_get'),
+            flask_util.url_for('main.objective_get'),
             {objective_id: objective_id}, 
             function(json) {
                 //console.log(json);        //DJG - test returned data
@@ -23,7 +23,7 @@ $(document).ready(function () {
         var objective_id = this.id.split('_')[0]
         console.log("delete button " + objective_id + " clicked")
         $.get(
-            flask_util.url_for('objective_delete'),
+            flask_util.url_for('main.objective_delete'),
             {objective_id: objective_id}, 
             function(data) {
                 location.reload(true)
@@ -70,6 +70,6 @@ $(document).ready(function () {
 
 <button class="btn btn-default btn-sm btn-success" id="create_objective">Create New Objective</button>
 
-<a href="{{url_for("schemes")}}"  class="btn btn-default btn-sm btn-success" id="define_scheme">Define your own schemes of work</a>
+<a href="{{url_for('main.schemes')}}"  class="btn btn-default btn-sm btn-success" id="define_scheme">Define your own schemes of work</a>
 
 {% endblock %}

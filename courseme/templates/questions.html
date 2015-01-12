@@ -39,10 +39,10 @@
     <input class="form-control" id="my_questions" type="checkbox">
   </div>
   <div class="form-group pull-right">
-    <a href="{{url_for('questions_print')}}" class="btn btn-default pull-right" id="print_questions">Print selected questions</a>
+    <a href="{{url_for('main.questions_print')}}" class="btn btn-default pull-right" id="print_questions">Print selected questions</a>
   </div>
   <div class="form-group pull-right">
-    <a href="{{url_for('deselect_all_questions')}}" class="btn btn-default pull-right" id="deselect_all_questions">Deselect all</a>
+    <a href="{{url_for('main.deselect_all_questions')}}" class="btn btn-default pull-right" id="deselect_all_questions">Deselect all</a>
   </div>
   <br/>
   <div class="input-group pull-right">
@@ -225,7 +225,7 @@ $(document).ready( function () {                //DJG - https://datatables.net/m
         question_id = table.row(this.parentNode).data().id;
         console.log(question_id);
         $.getJSON(
-                  flask_util.url_for('select_question', {id: question_id}),
+                  flask_util.url_for('main.select_question', {id: question_id}),
                   function(json) {
                     console.log(json);
                     if (json.savedsuccess = "true") {

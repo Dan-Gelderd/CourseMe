@@ -187,7 +187,7 @@
         
         $('.module-name-column').click(function() {
             module_id = table.row(this.parentNode).data().id;
-            window.location.href = flask_util.url_for('module', {id: module_id });
+            window.location.href = flask_util.url_for('main.module', {id: module_id });
         });
     
     } );
@@ -200,7 +200,7 @@
 
 <div class="list-group">
     {% for mod in modules %}
-    <a href="{{url_for('module', id=mod.id)}}" class="list-group-item">
+    <a href="{{url_for('main.module', id=mod.id)}}" class="list-group-item">
         <h4 class="list-group-item-heading">{{mod.name}}</h4>
         <p class="list-group-item-text">{{mod.description}}</p>        
     </a>

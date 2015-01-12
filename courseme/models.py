@@ -6,7 +6,7 @@ import md5
 
 from sqlalchemy import desc
 
-from courseme import db
+from courseme import db, lm
 
 
 ROLE_USER = 0
@@ -104,6 +104,10 @@ class User(db.Model):
                                passive_updates=False)
 
     questions_selected = db.relationship('Question', secondary=question_selections)
+
+    @lm.user_loader
+    def load_user(id):
+        return User.query.get(int(id))
 
     def is_authenticated(self):
         return True
