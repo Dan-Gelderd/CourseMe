@@ -74,7 +74,7 @@ $(document).ready(function () {
 
         
         $.post(  
-            flask_util.url_for('editmodule', {id: {{ edit_id }} }),  
+            flask_util.url_for('main.editmodule', {id: {{ edit_id }} }),
             data,  
             function(json) {
                 
@@ -90,7 +90,7 @@ $(document).ready(function () {
                             
                 if(result.savedsuccess)
                 {
-                    window.location.href = flask_util.url_for('module', {id: result.module_id});
+                    window.location.href = flask_util.url_for('main.module', {id: result.module_id});
                 }
                 else
                 {       
@@ -117,10 +117,10 @@ $(document).ready(function () {
     $("#cancel").click(function(event){
         event.preventDefault();     //DJG - don't want submit button to post the form as well as the ajax request or get 400 bad request error. Not sure if this is the right way to fix it.
         if ({{edit_id}} > 0) {
-            window.location.href = flask_util.url_for('module', {id: {{edit_id}} }); 
+            window.location.href = flask_util.url_for('main.module', {id: {{edit_id}} });
         }
         else{
-            window.location.href = flask_util.url_for('index');
+            window.location.href = flask_util.url_for('main.index');
         }
     });
 
@@ -128,11 +128,11 @@ $(document).ready(function () {
     $("#delete").click(function(event){
         event.preventDefault();     //DJG - don't want submit button to post the form as well as the ajax request or get 400 bad request error. Not sure if this is the right way to fix it.
         if ({{edit_id}} > 0) {
-            $.getJSON(flask_util.url_for('delete_module', {id: {{edit_id}} }),
+            $.getJSON(flask_util.url_for('main.delete_module', {id: {{edit_id}} }),
                 function(result) {
                     if(result.savedsuccess)
                     {
-                        window.location.href = flask_util.url_for('index');
+                        window.location.href = flask_util.url_for('main.index');
                     }
                     else
                     {       

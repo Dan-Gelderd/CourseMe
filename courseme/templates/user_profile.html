@@ -11,7 +11,7 @@ $(document).ready(function () {
   $("#restrict_modules_select").change(function() {
     console.log("Select changed - " + this.value);
     $.getJSON(
-      flask_util.url_for('restrict_modules_viewed', {user_id: {{g.user.id}}, institution_id: this.value}),
+      flask_util.url_for('main.restrict_modules_viewed', {user_id: {{g.user.id}}, institution_id: this.value}),
       function(json) {
         console.log(json);
         //DJG - need to handle cases
@@ -54,7 +54,7 @@ $(document).ready(function () {
         <ul class="list-group">
         {% for u in profile.tutors.all() %}
           <li class="list-group-item">
-            <a href="{{url_for("profile", id=u.id)}}">{{u.name}}</a>
+            <a href="{{url_for('main.profile', id=u.id)}}">{{u.name}}</a>
             <span class="input-group-btn access-request-id-container"><span class="hidden access-request-id">{{u.id}}</span><button class="btn btn-link deny-access">&times;</button></span>            
           </li>
         {% endfor %}
@@ -69,7 +69,7 @@ $(document).ready(function () {
         <div class="panel-heading">Members of {{profile.institution_student.name}}</div>
         <ul class="list-group">
         {% for u in profile.institution_tutors().all() %}
-          <li class="list-group-item"><a href="{{url_for("profile", id=u.id)}}">{{u.name}}</a></li>
+          <li class="list-group-item"><a href="{{url_for('main.profile', id=u.id)}}">{{u.name}}</a></li>
         {% endfor %}
         </ul>
       </div>  

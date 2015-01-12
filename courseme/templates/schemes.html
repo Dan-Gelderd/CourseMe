@@ -33,7 +33,7 @@ $(document).ready(function () {
         }
         else {
             $.getJSON(
-                flask_util.url_for('scheme_get', {id: scheme_id }),
+                flask_util.url_for('main.scheme_get', {id: scheme_id }),
                 function(result) {
                     console.log(result);        //DJG - test returned data
                     if(result.error!=undefined) {
@@ -58,7 +58,7 @@ $(document).ready(function () {
         console.log('save');
         var data = $("#edit_scheme_form").serializeArray(); 
         $.post(  
-            flask_util.url_for('scheme_save'),
+            flask_util.url_for('main.scheme_save'),
             data, 
             function(json) {
                 var result = $.parseJSON(json);
@@ -81,7 +81,7 @@ $(document).ready(function () {
         event.preventDefault();
         scheme_id = $("#edit_scheme_id").val();
         $.getJSON(  
-            flask_util.url_for('scheme_delete', {id: scheme_id }),
+            flask_util.url_for('main.scheme_delete', {id: scheme_id }),
             function(result) {
                 location.reload(true);
             }    

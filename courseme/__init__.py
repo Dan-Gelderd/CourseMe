@@ -6,32 +6,44 @@ from flask_mail import Mail
 from flask_restless import APIManager
 import md5      #DJG - depricated, explore hashlib or passlib or some password storing package
 from flask_util_js import FlaskUtilJs       #DJG - for stuff like url_for in javascript
-from config import config
 from flask.ext.moment import Moment
+from flask.ext.bootstrap import Bootstrap
+from config import config
 
 
-app = Flask(__name__)
-
-app.config.from_object(config['development'])
-
-fujs = FlaskUtilJs(app)
-
-db = SQLAlchemy(app)
-
-moment = Moment(app)
-
-api_manager = APIManager(app, flask_sqlalchemy_db=db)
-
-mail = Mail(app)
-
+bootstrap = Bootstrap()
+mail = Mail()
+moment = Moment()
+db = SQLAlchemy()
 lm = LoginManager()
-lm.init_app(app)
-lm.login_view = 'login'
-#lm.session_protection = "strong"   DJG - Need to consider this
-
+lm.login_view = 'auth.login'
+lm.session_protection = "strong"   #DJG - Need to consider this
+api_manager = APIManager()
+fujs = FlaskUtilJs()
 lectures = UploadSet('lectures', extensions=('mp4'))
-configure_uploads(app, (lectures))
-patch_request_class(app, 8 * 1024 * 1024)        # 16 megabytes
+
+def create_app(config_name):
+    app = Flask(__name__)
+    app.config.from_object(config[config_name])
+    config[config_name].init_app(app)
+
+    bootstrap.init_app(app)
+    mail.init_app(app)
+    moment.init_app(app)
+    db.init_app(app)
+    lm.init_app(app)
+    api_manager.init_app(app, flask_sqlalchemy_db=db)
+    fujs.init_app(app)
+    configure_uploads(app, (lectures))
+    patch_request_class(app, 8 * 1024 * 1024)        # 16 megabytes
+
+    from main import main as main_blueprint
+    app.register_blueprint(main_blueprint)
+
+    from auth import auth as auth_blueprint
+    app.register_blueprint(auth_blueprint, url_prefix='/auth')
+
+    return app
 
 # if not app.debug:
 #     import logging
@@ -46,6 +58,3 @@ patch_request_class(app, 8 * 1024 * 1024)        # 16 megabytes
 def hash_string(string):
     salted_hash = string + app.config['SECRET_KEY']
     return md5.new(salted_hash).hexdigest()
-
-from courseme import models
-from courseme import views

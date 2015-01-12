@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<form action="{{ url_for('login') }}" class="form" method="POST">
+<form action="{{ url_for('auth.login') }}" class="form" method="POST">
     {{form.hidden_tag()}}   <!--needed for cross-site request forgery prevention-->
     
 <!--    <div style="display: none">
@@ -26,7 +26,7 @@
     
     <button class="btn btn-success" type="submit">Login</button>
     <a href="#" class="btn btn-info" type="submit">Need some type of forgot password function</a>
-    <a href="{{ url_for('signup') }}">Not registered, go to sign up page</a>                  
+    <a href="{{ url_for('auth.signup') }}">Not registered, go to sign up page</a>
     
 </form>
 

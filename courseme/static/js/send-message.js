@@ -5,7 +5,7 @@ $(document).ready(function () {
         var data = $("#send_message_form").serializeArray();     //DJG - http://stackoverflow.com/questions/6627936/jquery-post-with-serialize-and-extra-data
         
         $.post(  
-            flask_util.url_for('send_message'),  
+            flask_util.url_for('main.send_message'),
             data,  
             function(json) {
                 
@@ -59,7 +59,7 @@ $(document).ready(function () {
     event.preventDefault();
     var sender_id = $(this).closest(".access-request-id-container").find(".access-request-id").text();
     $.post(
-      flask_util.url_for('allow_access', {request_id: sender_id }),
+      flask_util.url_for('main.allow_access', {request_id: sender_id }),
       function(json) {
           var result = $.parseJSON(json);
           location.reload(true)
@@ -72,7 +72,7 @@ $(document).ready(function () {
     var sender_id = $(this).closest(".access-request-id-container").find(".access-request-id").text();
     console.log(sender_id)
     $.post(
-      flask_util.url_for('deny_access', {request_id: sender_id }),
+      flask_util.url_for('main.deny_access', {request_id: sender_id }),
       function(json) {
           var result = $.parseJSON(json);
           location.reload(true)

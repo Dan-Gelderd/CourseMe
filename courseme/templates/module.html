@@ -115,7 +115,7 @@ $(document).ready(function () {
     var module_id = {{module.id}};
     var course_id = parseInt($(this).find('span')[0].innerText);
     $.getJSON(
-              flask_util.url_for('add_module_to_course', {module_id: module_id, course_id: course_id}),
+              flask_util.url_for('main.add_module_to_course', {module_id: module_id, course_id: course_id}),
               function(json) {
                 console.log(json);
                 if (json.savedsuccess = "false") {
@@ -127,13 +127,13 @@ $(document).ready(function () {
 
   $("#btn_find_courses").on('click', function ( event ) {
     var module_id = {{module.id}};
-    window.location.href = flask_util.url_for('index')        //DJG - for full functionality need to actually filter courses containing this module on index page
+    window.location.href = flask_util.url_for('main.index')        //DJG - for full functionality need to actually filter courses containing this module on index page
   });
 
   $("#btn_enroll_course").on('click', function ( event ) {
     var course_id = {{module.id}};
     $.getJSON(
-              flask_util.url_for('course_enroll', {course_id: course_id}),
+              flask_util.url_for('main.course_enroll', {course_id: course_id}),
               function(json) {
                 console.log(json);
                 if (json.savedsuccess = "False") {
@@ -161,7 +161,7 @@ $(document).ready(function () {
 </script>
 
   {% if g.user.id == module.author_id %}
-    <a href="{{url_for("editmodule", id=module.id)}}"><div class="well well-sm"><em>Edit material</em></div></a>
+    <a href="{{url_for('main.editmodule', id=module.id)}}"><div class="well well-sm"><em>Edit material</em></div></a>
   {% endif %}
   
   <div class="row" id="module_name_course_info">
@@ -216,7 +216,7 @@ $(document).ready(function () {
         {% else %}  
 
           {% if usermodule.part_of_course() %}
-          <a href="{{url_for('module', id=usermodule.part_of_course().id)}}">  
+          <a href="{{url_for('main.module', id=usermodule.part_of_course().id)}}">
             <span class="lead"><span class="glyphicon glyphicon-list-alt"></span> Course Progress</span>
             <!--DJG - could I use a progress element here?-->
             <div class="progress">
@@ -275,24 +275,24 @@ $(document).ready(function () {
                   <dd>
                     <ul class="list-unstyled">
                       {% for lecture in objective.top_modules(module, "Lecture") %}
-                      <li><a href="{{url_for("module", id=lecture.id)}}">{{lecture.name}}</a></li>
+                      <li><a href="{{url_for('main.module', id=lecture.id)}}">{{lecture.name}}</a></li>
                       {% endfor %}
-                      <li><a href="{{url_for("index")}}"><i>Search all...</i></a></li>  
+                      <li><a href="{{url_for('main.index')}}"><i>Search all...</i></a></li>
                     </ul>
                   </dd>
                   <dt>Exercises</dt>
                   <dd>
                     <ul class="list-unstyled">
                       {% for exercise in objective.top_modules(module, "Exercise") %}
-                      <li><a href="{{url_for("module", id=exercise.id)}}">{{exercise.name}}</a></li>
+                      <li><a href="{{url_for('main.module', id=exercise.id)}}">{{exercise.name}}</a></li>
                       {% endfor %}
-                      <li><a href="{{url_for("index")}}"><i>Search all...</i></a></li>    
+                      <li><a href="{{url_for('main.index')}}"><i>Search all...</i></a></li>
                     </ul>
                   </dd>
                   <dt>Interactive Tools</dt>
                   <dd>
                     <ul class="list-unstyled">
-                      <li><a href="{{url_for("index")}}"><i>Search all...</i></a></li>  
+                      <li><a href="{{url_for('main.index')}}"><i>Search all...</i></a></li>
                     </ul>
                   </dd>
                 </dl>

@@ -85,7 +85,7 @@ $(document).ready(function () {
         var objective_id = cell.id.split('_')[0]
         console.log("assess objective " + objective_id + " clicked")
         $.getJSON(
-            flask_util.url_for('objective_assess', {profile_id: {{profile.id}}, objective_id: objective_id}), 
+            flask_util.url_for('main.objective_assess', {profile_id: {{profile.id}}, objective_id: objective_id}),
             function(result) {
                 $(cell).removeClass("objective_not objective_partial warning objective_complete success");  //DJG - when objective classes are properly customised can remove the warning and succsess classes here   
                 $(cell).addClass(result.assessed_display_class);
@@ -97,17 +97,17 @@ $(document).ready(function () {
     $("#objectives_to_view").on('change', function () {
         var scheme_id = $(this).val();
         console.log(scheme_id);
-        window.location.href = flask_util.url_for('objectives', {profile_id: {{profile.id}}, scheme_id: scheme_id});
+        window.location.href = flask_util.url_for('main.objectives', {profile_id: {{profile.id}}, scheme_id: scheme_id});
     });
 
     $("#profiles_to_view").on('change', function () {
         var group_id = $(this).val();
         console.log(group_id)
         if (group_id == -1) {           //DJG - should all javascript if statements use ==? think I am using = elsewhere
-            window.location.href = flask_util.url_for('objectives', {profile_id: {{g.user.id}}, scheme_id: {{scheme_id}}});
+            window.location.href = flask_util.url_for('main.objectives', {profile_id: {{g.user.id}}, scheme_id: {{scheme_id}}});
         }
         else {
-            window.location.href = flask_util.url_for('objectives_group', {group_id: group_id, scheme_id: {{scheme_id}}, name_display: 1});
+            window.location.href = flask_util.url_for('main.objectives_group', {group_id: group_id, scheme_id: {{scheme_id}}, name_display: 1});
         }
 
     });

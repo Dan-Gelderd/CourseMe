@@ -33,7 +33,7 @@ $(document).ready(function () {
         }
         else {
             $.getJSON(
-                flask_util.url_for('group_get', {id: group_id }),
+                flask_util.url_for('main.group_get', {id: group_id }),
                 function(result) {
                     console.log(result);        //DJG - test returned data
                     if(result.error!=undefined) {
@@ -58,7 +58,7 @@ $(document).ready(function () {
         console.log('save');
         var data = $("#edit_group_form").serializeArray(); 
         $.post(  
-            flask_util.url_for('group_save'),
+            flask_util.url_for('main.group_save'),
             data, 
             function(json) {
                 var result = $.parseJSON(json);
@@ -81,7 +81,7 @@ $(document).ready(function () {
         event.preventDefault();
         group_id = $("#edit_group_id").val();
         $.getJSON(  
-            flask_util.url_for('group_delete', {id: group_id }),
+            flask_util.url_for('main.group_delete', {id: group_id }),
             function(result) {
                 location.reload(true);
             }    

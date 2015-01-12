@@ -66,11 +66,11 @@ $(document).ready(function () {
         event.preventDefault();     //DJG - don't want submit button to post the form as well as the ajax request or get 400 bad request error. Not sure if this is the right way to fix it.
 
         edit_id = {{edit_id}}
-        $.getJSON(flask_util.url_for('delete_question', {id: edit_id }),
+        $.getJSON(flask_util.url_for('main.delete_question', {id: edit_id }),
             function(result) {
                 if(result.savedsuccess)
                 {
-                    window.location.href = flask_util.url_for('questions');
+                    window.location.href = flask_util.url_for('main.questions');
                 }
                 else
                 {       
@@ -100,7 +100,7 @@ function testQuestion() {
 <div class="row">
   <div class="col-md-12">
 
-    <form class="form" action={{ url_for("edit_question", id=edit_id) }} method="POST" id="edit_question_form">
+    <form class="form" action={{ url_for('main.edit_question', id=edit_id) }} method="POST" id="edit_question_form">
         {{ form.hidden_tag() }}
         {{ form.edit_question_id }}
         <div class="form-group" id="question_form_group">

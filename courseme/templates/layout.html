@@ -47,7 +47,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
               </button>
-              <a class="navbar-brand" href="{{ url_for('index') }}">CourseMe</a>
+              <a class="navbar-brand" href="{{ url_for('main.index') }}">CourseMe</a>
               <form class="navbar-form navbar-left" role="select">      <!-- DJG - Don't understand roles --> 
                 <div class="form-group">
                   <select id="select_subject" type="combobox" class="form-control" placeholder="Choose a subject">
@@ -68,15 +68,15 @@
                 <li class="dropdown">
                   <a href="#" class="dropdown-toggle" data-toggle="dropdown">Quick Links<b class="caret"></b></a>
                   <ul class="dropdown-menu">
-                    <li><a href="{{ url_for('editmodule', id=0) }}">Create new material</a></li>
+                    <li><a href="{{ url_for('main.editmodule', id=0) }}">Create new material</a></li>
                     {% if g.user.is_authenticated() %}
                     <li role="presentation" class="divider"></li>
                     <li role="presentation" class="dropdown-header">Recent modules</li>
                     {% for mod in g.user.recent_modules(10) %}
-                    <li><a href="{{ url_for('module', id=mod.id) }}"><span class="glyphicon glyphicon-list-alt"></span> {{mod.name}}</a></li>
+                    <li><a href="{{ url_for('main.module', id=mod.id) }}"><span class="glyphicon glyphicon-list-alt"></span> {{mod.name}}</a></li>
                     {% endfor %}
                     <li role="presentation" class="divider"></li>
-                    <li><a href="{{ url_for('edit_question', id=0) }}">Create question</a></li>
+                    <li><a href="{{ url_for('main.edit_question', id=0) }}">Create question</a></li>
                     {% endif %} 
                   </ul>
                 </li>
@@ -90,27 +90,27 @@
               </form>
               
               <ul class="nav navbar-nav navbar-right">
-                <li><a href="{{ url_for('objectives_admin') }}">Objectives Map</a></li>
+                <li><a href="{{ url_for('main.objectives_admin') }}">Objectives Map</a></li>
                 {% if g.user.is_authenticated() and g.user.has_students() %}
-                <li><a href="{{ url_for('students') }}">Students</a></li>                
+                <li><a href="{{ url_for('main.students') }}">Students</a></li>
                 {% endif %}
                 <li class="dropdown">
                   {% if g.user.is_authenticated() %}
                   <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-user"></span> {{ g.user.name }}<b class="caret"></b></a>
                   <ul class="dropdown-menu">
-                    <li><a href="{{ url_for('logout') }}">Sign Out</a></li>
-                    <li><a href="{{ url_for('profile', id=g.user.id) }}">Profile</a></li>
-                    <li><a href="{{ url_for('messages') }}">Messages</a></li>
-                    <li><a href="{{ url_for('objectives', profile_id=g.user.id) }}">Learning Objectives</a></li>
-                    <li><a href="{{ url_for('groups') }}">Groups</a></li>
+                    <li><a href="{{ url_for('auth.logout') }}">Sign Out</a></li>
+                    <li><a href="{{ url_for('main.profile', id=g.user.id) }}">Profile</a></li>
+                    <li><a href="{{ url_for('main.messages') }}">Messages</a></li>
+                    <li><a href="{{ url_for('main.objectives', profile_id=g.user.id) }}">Learning Objectives</a></li>
+                    <li><a href="{{ url_for('main.groups') }}">Groups</a></li>
                     <li class="divider"></li>
                     <li role="presentation" class="dropdown-header">My Material</li>
                     {% for mod in [] %}   <!--g.user.modules_authored %}-->
-                    <li><a href="{{ url_for('module', id=mod.id) }}"><span class="{{mod.icon_class()}}"></span> {{mod.name}}</a></li>
+                    <li><a href="{{ url_for('main.module', id=mod.id) }}"><span class="{{mod.icon_class()}}"></span> {{mod.name}}</a></li>
                     {% endfor %}
                   </ul>
                   {% else %}
-                  <a href="{{ url_for('login') }}"><span class="glyphicon glyphicon-user"></span> Sign in</a>                  
+                  <a href="{{ url_for('auth.login') }}"><span class="glyphicon glyphicon-user"></span> Sign in</a>
                   {% endif %}    
                 </li>
               </ul>
@@ -188,9 +188,9 @@
                     var subject_id = $(this).val();
                     console.log(subject_id);
                     $.post(
-                        flask_util.url_for('select_subject', {id: subject_id}),
+                        flask_util.url_for('main.select_subject', {id: subject_id}),
                         function() {
-                            window.location.href = flask_util.url_for('index');
+                            window.location.href = flask_util.url_for('main.index');
                         }       
                     );                        
                 });

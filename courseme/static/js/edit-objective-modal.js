@@ -52,7 +52,7 @@ $(document).ready(function () {
         
         
         $.post(  
-            flask_util.url_for('objective_add_update'),  
+            flask_util.url_for('main.objective_add_update'),
             data,  
             function(json) {
                 

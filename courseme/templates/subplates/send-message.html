@@ -6,7 +6,7 @@
                 <h4 class="modal-title">Send New Message</h4>
             </div>
             <div class="modal-body">
-                <form class="form" action="{{ url_for('send_message') }}" method="POST" id="send_message_form">
+                <form class="form" action="{{ url_for('main.send_message') }}" method="POST" id="send_message_form">
                     {{ messageform.hidden_tag() }}
                     <div class="form-group" id="message_type_form_group">
                         {{ messageform.message_type.label }}
