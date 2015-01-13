@@ -56,7 +56,7 @@ def signup():
             login_user(user, remember=form.remember_me.data)
             flash("Successfully signed up.")
             return redirect(request.args.get("next") or url_for("main.index"))
-    return render_template('signup.html', form=form, title=title)
+    return render_template('auth/signup.html', form=form, title=title)
 
 
 @auth.route("/login", methods=["GET", "POST"])
@@ -75,7 +75,7 @@ def login():
         flash("Logged in successfully.")
         return redirect(request.args.get("next") or url_for("main.index"))
          # DJG - next redirect doesn't seem to work eg. createmodule page
-    return render_template('login.html', form=form, title=title)
+    return render_template('auth/login.html', form=form, title=title)
 
 
 @auth.route('/logout')
