@@ -33,22 +33,17 @@ def signup():
     title = 'CourseMe - Sign up'
     form = forms.SignupForm()
     if form.validate_on_submit():
-        email_exist = User.query.filter_by(email=form.email.data).count()
-        if email_exist:
-            form.email.errors.append('This email address has already been registered')
-            redirect(url_for('.login'))
-        else:
-            user = User(email=form.email.data,
-                        password=form.password.data,
-                        name=form.username.data,
-                        time_registered=datetime.utcnow(),
-                        last_seen=datetime.utcnow(),
-                        role=ROLE_USER)
-            db.session.add(user)
-            db.session.commit()
-            login_user(user, remember=form.remember_me.data)
-            flash("Successfully signed up.")
-            return redirect(request.args.get("next") or url_for("main.index"))
+        user = User(email=form.email.data,
+                    password=form.password.data,
+                    name=form.username.data,
+                    forename=form.forename.data,
+                    surname=form.surname.data,
+                    role=ROLE_USER)
+        db.session.add(user)
+        db.session.commit()
+        login_user(user, remember=form.remember_me.data)
+        flash("Successfully signed up.")
+        return redirect(request.args.get("next") or url_for("main.index"))
     return render_template('auth/signup.html', form=form, title=title)
 
 

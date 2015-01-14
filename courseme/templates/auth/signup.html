@@ -1,13 +1,17 @@
 {% extends "layout.html" %}
 {% block content %}
+{% import "bootstrap/wtf.html" as wtf %}
 
+<div class="col-md-4">{{wtf.quick_form(form)}}</div>
+
+<!--
 <form action="{{ url_for('auth.signup') }}" class="form" method="POST">
-    {{form.hidden_tag()}}   <!--needed for cross-site request forgery prevention-->
+    {{form.hidden_tag()}}   &lt;!&ndash;needed for cross-site request forgery prevention&ndash;&gt;
     
-<!--    <div style="display: none">
+&lt;!&ndash;    <div style="display: none">
         <input id="csrf_token" name="csrf_token" type="hidden" value="1383635238.9##d8f7f433e854cc682ade261cd9bb7113a147ee29" />
     </div>  DJG - don't get this bit
--->
+&ndash;&gt;
     
     <div class="form-group {% if form.email.errors %} has-error {% endif %}">
         {{ form.email.label }}
@@ -47,6 +51,6 @@
     </div>
     
     <button class="btn btn-success" type="submit">Sign Up</button>
-</form>
+</form>-->
 
 {% endblock %}
