@@ -1,13 +1,13 @@
-"""initial migrate
+"""empty message
 
-Revision ID: 8e662b3aa54
+Revision ID: 17b9863c3c31
 Revises: None
-Create Date: 2015-01-04 20:50:57.741000
+Create Date: 2015-01-14 09:20:23.331000
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '8e662b3aa54'
+revision = '17b9863c3c31'
 down_revision = None
 
 from alembic import op
@@ -44,12 +44,12 @@ def upgrade():
     )
     op.create_table('user',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('password', sa.String(length=120), nullable=False),
-    sa.Column('email', sa.String(length=120), nullable=False),
+    sa.Column('password_hash', sa.String(length=128), nullable=True),
+    sa.Column('email', sa.String(length=128), nullable=False),
     sa.Column('name', sa.String(length=64), nullable=False),
     sa.Column('forename', sa.String(length=64), nullable=True),
     sa.Column('surname', sa.String(length=64), nullable=True),
-    sa.Column('blurb', sa.String(length=240), nullable=True),
+    sa.Column('blurb', sa.String(length=256), nullable=True),
     sa.Column('role', sa.SmallInteger(), nullable=False),
     sa.Column('last_seen', sa.DateTime(), nullable=True),
     sa.Column('time_registered', sa.DateTime(), nullable=True),
@@ -73,49 +73,6 @@ def upgrade():
     sa.ForeignKeyConstraint(['subject_id'], [u'subject.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
-    )
-    op.create_table('institution_members',
-    sa.Column('institution_id', sa.Integer(), nullable=True),
-    sa.Column('member_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['institution_id'], ['institution.id'], ),
-    sa.ForeignKeyConstraint(['member_id'], ['user.id'], )
-    )
-    op.create_table('question',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('question', sa.String(length=5000), nullable=True),
-    sa.Column('answer', sa.String(length=5000), nullable=True),
-    sa.Column('time_created', sa.DateTime(), nullable=True),
-    sa.Column('last_updated', sa.DateTime(), nullable=True),
-    sa.Column('submitted', sa.DateTime(), nullable=True),
-    sa.Column('published', sa.DateTime(), nullable=True),
-    sa.Column('locked', sa.DateTime(), nullable=True),
-    sa.Column('extension', sa.Boolean(), nullable=True),
-    sa.Column('visually_impaired', sa.Boolean(), nullable=True),
-    sa.Column('votes', sa.Integer(), nullable=True),
-    sa.Column('subject_id', sa.Integer(), nullable=False),
-    sa.Column('author_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['author_id'], ['user.id'], ),
-    sa.ForeignKeyConstraint(['subject_id'], [u'subject.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('student_tutor',
-    sa.Column('tutor_id', sa.Integer(), nullable=True),
-    sa.Column('student_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['student_id'], ['user.id'], ),
-    sa.ForeignKeyConstraint(['tutor_id'], ['user.id'], )
-    )
-    op.create_table('group_members',
-    sa.Column('group_id', sa.Integer(), nullable=True),
-    sa.Column('member_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['group_id'], ['group.id'], ),
-    sa.ForeignKeyConstraint(['member_id'], ['user.id'], )
-    )
-    op.create_table('scheme_of_work',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.String(length=120), nullable=True),
-    sa.Column('creator_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['creator_id'], [u'user.id'], ),
-    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('module',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -144,6 +101,43 @@ def upgrade():
     sa.ForeignKeyConstraint(['subject_id'], ['subject.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('student_tutor',
+    sa.Column('tutor_id', sa.Integer(), nullable=True),
+    sa.Column('student_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['student_id'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['tutor_id'], ['user.id'], )
+    )
+    op.create_table('group_members',
+    sa.Column('group_id', sa.Integer(), nullable=True),
+    sa.Column('member_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['group_id'], ['group.id'], ),
+    sa.ForeignKeyConstraint(['member_id'], ['user.id'], )
+    )
+    op.create_table('question',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('question', sa.String(length=5000), nullable=True),
+    sa.Column('answer', sa.String(length=5000), nullable=True),
+    sa.Column('time_created', sa.DateTime(), nullable=True),
+    sa.Column('last_updated', sa.DateTime(), nullable=True),
+    sa.Column('submitted', sa.DateTime(), nullable=True),
+    sa.Column('published', sa.DateTime(), nullable=True),
+    sa.Column('locked', sa.DateTime(), nullable=True),
+    sa.Column('extension', sa.Boolean(), nullable=True),
+    sa.Column('visually_impaired', sa.Boolean(), nullable=True),
+    sa.Column('votes', sa.Integer(), nullable=True),
+    sa.Column('subject_id', sa.Integer(), nullable=False),
+    sa.Column('author_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['author_id'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['subject_id'], [u'subject.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('scheme_of_work',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=120), nullable=True),
+    sa.Column('creator_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['creator_id'], [u'user.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('objective',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=50), nullable=False),
@@ -160,16 +154,16 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
     )
-    op.create_table('module_objectives',
-    sa.Column('module_id', sa.Integer(), nullable=True),
-    sa.Column('objective_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['module_id'], ['module.id'], ),
-    sa.ForeignKeyConstraint(['objective_id'], ['objective.id'], )
-    )
-    op.create_table('institution_approved_questions',
+    op.create_table('institution_members',
     sa.Column('institution_id', sa.Integer(), nullable=True),
-    sa.Column('question_id', sa.Integer(), nullable=True),
+    sa.Column('member_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['institution_id'], ['institution.id'], ),
+    sa.ForeignKeyConstraint(['member_id'], ['user.id'], )
+    )
+    op.create_table('question_objectives',
+    sa.Column('question_id', sa.Integer(), nullable=True),
+    sa.Column('objective_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['objective_id'], ['objective.id'], ),
     sa.ForeignKeyConstraint(['question_id'], ['question.id'], )
     )
     op.create_table('question_selections',
@@ -178,22 +172,29 @@ def upgrade():
     sa.ForeignKeyConstraint(['question_id'], ['question.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], )
     )
-    op.create_table('user_objective',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=True),
-    sa.Column('assessor_id', sa.Integer(), nullable=True),
-    sa.Column('objective_id', sa.Integer(), nullable=True),
-    sa.Column('completed', sa.SmallInteger(), nullable=True),
-    sa.ForeignKeyConstraint(['assessor_id'], [u'user.id'], ),
-    sa.ForeignKeyConstraint(['objective_id'], [u'objective.id'], ),
-    sa.ForeignKeyConstraint(['user_id'], [u'user.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    op.create_table('course_modules',
+    sa.Column('course_id', sa.Integer(), nullable=True),
+    sa.Column('module_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['course_id'], ['module.id'], ),
+    sa.ForeignKeyConstraint(['module_id'], ['module.id'], )
     )
-    op.create_table('question_objectives',
+    op.create_table('objective_heirarchy',
+    sa.Column('prerequisite_id', sa.Integer(), nullable=True),
+    sa.Column('followon_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['followon_id'], ['objective.id'], ),
+    sa.ForeignKeyConstraint(['prerequisite_id'], ['objective.id'], )
+    )
+    op.create_table('institution_approved_questions',
+    sa.Column('institution_id', sa.Integer(), nullable=True),
     sa.Column('question_id', sa.Integer(), nullable=True),
-    sa.Column('objective_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['objective_id'], ['objective.id'], ),
+    sa.ForeignKeyConstraint(['institution_id'], ['institution.id'], ),
     sa.ForeignKeyConstraint(['question_id'], ['question.id'], )
+    )
+    op.create_table('module_objectives',
+    sa.Column('module_id', sa.Integer(), nullable=True),
+    sa.Column('objective_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['module_id'], ['module.id'], ),
+    sa.ForeignKeyConstraint(['objective_id'], ['objective.id'], )
     )
     op.create_table('user_module',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -209,12 +210,6 @@ def upgrade():
     sa.ForeignKeyConstraint(['module_id'], [u'module.id'], ),
     sa.ForeignKeyConstraint(['user_id'], [u'user.id'], ),
     sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('scheme_objectives',
-    sa.Column('scheme_id', sa.Integer(), nullable=True),
-    sa.Column('objective_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['objective_id'], ['objective.id'], ),
-    sa.ForeignKeyConstraint(['scheme_id'], ['scheme_of_work.id'], )
     )
     op.create_table('message',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -233,47 +228,52 @@ def upgrade():
     sa.ForeignKeyConstraint(['to_id'], [u'user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('course_modules',
-    sa.Column('course_id', sa.Integer(), nullable=True),
-    sa.Column('module_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['course_id'], ['module.id'], ),
-    sa.ForeignKeyConstraint(['module_id'], ['module.id'], )
-    )
-    op.create_table('objective_heirarchy',
-    sa.Column('prerequisite_id', sa.Integer(), nullable=True),
-    sa.Column('followon_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['followon_id'], ['objective.id'], ),
-    sa.ForeignKeyConstraint(['prerequisite_id'], ['objective.id'], )
-    )
     op.create_table('institution_approved_modules',
     sa.Column('institution_id', sa.Integer(), nullable=True),
     sa.Column('module_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['institution_id'], ['institution.id'], ),
     sa.ForeignKeyConstraint(['module_id'], ['module.id'], )
     )
+    op.create_table('user_objective',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=True),
+    sa.Column('assessor_id', sa.Integer(), nullable=True),
+    sa.Column('objective_id', sa.Integer(), nullable=True),
+    sa.Column('completed', sa.SmallInteger(), nullable=True),
+    sa.ForeignKeyConstraint(['assessor_id'], [u'user.id'], ),
+    sa.ForeignKeyConstraint(['objective_id'], [u'objective.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], [u'user.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('scheme_objectives',
+    sa.Column('scheme_id', sa.Integer(), nullable=True),
+    sa.Column('objective_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['objective_id'], ['objective.id'], ),
+    sa.ForeignKeyConstraint(['scheme_id'], ['scheme_of_work.id'], )
+    )
     ### end Alembic commands ###
 
 
 def downgrade():
     ### commands auto generated by Alembic - please adjust! ###
+    op.drop_table('scheme_objectives')
+    op.drop_table('user_objective')
     op.drop_table('institution_approved_modules')
+    op.drop_table('message')
+    op.drop_table('user_module')
+    op.drop_table('module_objectives')
+    op.drop_table('institution_approved_questions')
     op.drop_table('objective_heirarchy')
     op.drop_table('course_modules')
-    op.drop_table('message')
-    op.drop_table('scheme_objectives')
-    op.drop_table('user_module')
-    op.drop_table('question_objectives')
-    op.drop_table('user_objective')
     op.drop_table('question_selections')
-    op.drop_table('institution_approved_questions')
-    op.drop_table('module_objectives')
+    op.drop_table('question_objectives')
+    op.drop_table('institution_members')
     op.drop_table('objective')
-    op.drop_table('module')
     op.drop_table('scheme_of_work')
+    op.drop_table('question')
     op.drop_table('group_members')
     op.drop_table('student_tutor')
-    op.drop_table('question')
-    op.drop_table('institution_members')
+    op.drop_table('module')
     op.drop_table('topic')
     op.drop_index(op.f('ix_user_email'), table_name='user')
     op.drop_table('user')

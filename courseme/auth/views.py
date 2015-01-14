@@ -1,10 +1,9 @@
 from flask import render_template, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_user, logout_user, current_user, login_required
-from courseme import db, lm, hash_string, lectures
+from courseme import db, lm
 from . import auth
 import forms
-from .. models import User, ROLE_USER, ROLE_ADMIN, Objective, SchemeOfWork, UserObjective, Module, UserModule, Institution, \
-    Group, Message, Question, Subject, Topic
+from .. models import User, ROLE_USER, ROLE_ADMIN, Subject
 from datetime import datetime
 import json, operator
 from .. email import send_email
@@ -19,16 +18,10 @@ class CustomEncoder(json.JSONEncoder):
         return encoded_object
 
 
-# admin
-@lm.user_loader
-def load_user(id):
-    return User.query.get(int(id))
-
-
 @auth.before_app_request
 def before_request():
     g.user = current_user  # DJG - Could scrap this and just use current_user directly?
-    g.subjects = Subject.query.all()
+    g.subjects = Subject.query.all()        #DJG - Needed to populate the subject dropdown at the top of each page - look for alternatives
     if g.user.is_authenticated():
         g.user.last_seen = datetime.utcnow()
         db.session.add(g.user)
@@ -46,7 +39,7 @@ def signup():
             redirect(url_for('.login'))
         else:
             user = User(email=form.email.data,
-                        password=hash_string(form.password.data),
+                        password=form.password.data,
                         name=form.username.data,
                         time_registered=datetime.utcnow(),
                         last_seen=datetime.utcnow(),
@@ -67,13 +60,13 @@ def login():
         user = User.user_by_email(form.email.data)
         if user is None:
             form.email.errors.append('Email not registered')
-            return render_template('login.html', form=form, title=title)
-        if user.password != hash_string(form.password.data):
+            return render_template('auth/login.html', form=form, title=title)
+        if not user.verify_password(form.password.data):
             form.password.errors.append('Incorrect password')
-            return render_template('login.html', form=form, title=title)
+            return render_template('auth/login.html', form=form, title=title)
         login_user(user, remember=form.remember_me.data)
         flash("Logged in successfully.")
-        return redirect(request.args.get("next") or url_for("main.index"))
+        return redirect(request.args.get('next') or url_for('main.index'))
          # DJG - next redirect doesn't seem to work eg. createmodule page
     return render_template('auth/login.html', form=form, title=title)
 
