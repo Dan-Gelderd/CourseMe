@@ -74,7 +74,6 @@ class User(db.Model):
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     time_registered = db.Column(db.DateTime, default=datetime.utcnow)
     enterprise_licence = db.Column(db.DateTime)
-    view_system_only = db.Column(db.Boolean, default=False)
     time_deleted = db.Column(db.DateTime)
 
     subject_id = db.Column(db.Integer, db.ForeignKey('subject.id'))

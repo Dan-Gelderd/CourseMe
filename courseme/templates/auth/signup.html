@@ -2,7 +2,7 @@
 {% block content %}
 {% import "bootstrap/wtf.html" as wtf %}
 
-<div class="col-md-4">{{wtf.quick_form(form)}}</div>
+<div class="row"><div class="col-md-5">{{wtf.quick_form(form)}}</div></div>        <!--DJG - need a way to include novalidate -->
 
 <!--
 <form action="{{ url_for('auth.signup') }}" class="form" method="POST">

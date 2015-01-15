@@ -20,15 +20,15 @@ class SignupForm(Form):
     username = StringField('Username', validators=[
         DataRequired(),
         Length(min=1, message='Username is too short'),
-        Regexp('^[A-Za-z][A-Za-z0-9_.]*$', 0, 'Usernames must have only letters, numbers, dots or underscores')])
+        Regexp('^[A-Za-z][A-Za-z0-9_.\- ]*$', 0, 'Usernames must have only letters, numbers, dots, dashes, underscores, or spaces')])
     forename = StringField('Forename', validators=[
         Optional(),
         Length(min=1, message='Forename is too short'),
-        Regexp('^[A-Za-z][A-Za-z0-9_.]*$', 0, 'Forenames must have only letters, numbers, dots or underscores')])
+        Regexp('^[A-Za-z][A-Za-z0-9_.\- ]*$', 0, 'Forenames must have only letters, numbers, dots, dashes, underscores, or spaces')])
     surname = StringField('Surname', validators=[
         Optional(),
         Length(min=1, message='Forename is too short'),
-        Regexp('^[A-Za-z][A-Za-z0-9_.]*$', 0, 'Surnames must have only letters, numbers, dots or underscores')])
+        Regexp('^[A-Za-z][A-Za-z0-9_.\- ]*$', 0, 'Surnames must have only letters, numbers, dots, dashes, underscores, or spaces')])
     agree = BooleanField('By signing up your agree to follow our <a href="#">Terms and Conditions</a>',
                          validators=[DataRequired(u'You must agree the Terms of Service')])
     remember_me = BooleanField('remember_me', default=False)
