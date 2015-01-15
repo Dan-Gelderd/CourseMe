@@ -3,10 +3,10 @@ import json
 import operator
 from datetime import datetime, timedelta
 import md5
+from flask import current_app
 from werkzeug.security import generate_password_hash, check_password_hash
-
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from sqlalchemy import desc
-
 from courseme import db, lm
 
 
@@ -69,6 +69,7 @@ class User(db.Model):
     name = db.Column(db.String(64), nullable=False)
     forename = db.Column(db.String(64))
     surname = db.Column(db.String(64))
+    confirmed = db.Column(db.Boolean, default=False)
     blurb = db.Column(db.String(256), default="This is some blurb")
     role = db.Column(db.SmallInteger, default=ROLE_USER, nullable=False)
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
@@ -134,6 +135,22 @@ class User(db.Model):
 
     def get_id(self):
         return unicode(self.id)
+
+    def generate_confirmation_token(self, expiration=3600*24*2):
+        s = Serializer(current_app.config['SECRET_KEY'], expiration)
+        return s.dumps({'confirm': self.id})
+
+    def confirm(self, token):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.load(token)
+        except:
+            return False
+        if data.get('confirm') != self.id:
+            return False
+        self.confirmed = True
+        db.session.add(self)
+        return True
 
     def avatar(self, size=50):
         return 'http://www.gravatar.com/avatar/' + md5(self.email).hexdigest() + '?d=mm&s=' + str(size)
