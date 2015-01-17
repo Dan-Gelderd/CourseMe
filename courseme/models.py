@@ -3,9 +3,10 @@ import json
 import operator
 from datetime import datetime, timedelta
 import md5
-
+from flask import current_app
+from werkzeug.security import generate_password_hash, check_password_hash
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from sqlalchemy import desc
-
 from courseme import db, lm
 
 
@@ -63,17 +64,17 @@ question_selections = db.Table('question_selections',
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    password = db.Column(db.String(120), nullable=False)  # DJG - What does index=True do?
-    email = db.Column(db.String(120), index=True, unique=True, nullable=False)
+    password_hash = db.Column(db.String(128))  # DJG - want nullable to be false but won't allow me to migrate without a default value
+    email = db.Column(db.String(128), index=True, unique=True, nullable=False)
     name = db.Column(db.String(64), nullable=False)
     forename = db.Column(db.String(64))
     surname = db.Column(db.String(64))
-    blurb = db.Column(db.String(240), default="This is some blurb")
+    confirmed = db.Column(db.Boolean, default=False)
+    blurb = db.Column(db.String(256), default="This is some blurb")
     role = db.Column(db.SmallInteger, default=ROLE_USER, nullable=False)
-    last_seen = db.Column(db.DateTime)
-    time_registered = db.Column(db.DateTime)
+    last_seen = db.Column(db.DateTime, default=datetime.utcnow)
+    time_registered = db.Column(db.DateTime, default=datetime.utcnow)
     enterprise_licence = db.Column(db.DateTime)
-    view_system_only = db.Column(db.Boolean, default=False)
     time_deleted = db.Column(db.DateTime)
 
     subject_id = db.Column(db.Integer, db.ForeignKey('subject.id'))
@@ -105,6 +106,20 @@ class User(db.Model):
 
     questions_selected = db.relationship('Question', secondary=question_selections)
 
+    def __repr__(self):
+        return '<User %r>' % (self.name)
+
+    @property
+    def password(self):
+        raise AttributeError('password is not a readable attribute')
+
+    @password.setter
+    def password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def verify_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
     @lm.user_loader
     def load_user(id):
         return User.query.get(int(id))
@@ -121,8 +136,37 @@ class User(db.Model):
     def get_id(self):
         return unicode(self.id)
 
-    def __repr__(self):
-        return '<User %r>' % (self.name)
+    def generate_confirmation_token(self, expiration=3600*24*2):
+        s = Serializer(current_app.config['SECRET_KEY'], expiration)
+        return s.dumps({'confirm': self.id})
+
+    def confirm(self, token):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except:
+            return False
+        if data.get('confirm') != self.id:
+            return False
+        self.confirmed = True
+        db.session.add(self)
+        return True
+
+    def generate_reset_token(self, expiration=3600):
+        s = Serializer(current_app.config['SECRET_KEY'], expiration)
+        return s.dumps({'reset': self.id})
+
+    def reset_password(self, token, new_password):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except:
+            return False
+        if data.get('reset') != self.id:
+            return False
+        self.password = new_password
+        db.session.add(self)
+        return True
 
     def avatar(self, size=50):
         return 'http://www.gravatar.com/avatar/' + md5(self.email).hexdigest() + '?d=mm&s=' + str(size)
@@ -213,7 +257,6 @@ class User(db.Model):
         query_topic = topic.modules if topic else Module.query
         return query_restricted.union(query_authored, query_viewed).intersect(query_live, query_type, query_subject,
                                                                               query_topic)
-
 
     def enrolled_courses(self):
         return self.visible_modules(False, False, True, True, material_type='Course', subject=False,

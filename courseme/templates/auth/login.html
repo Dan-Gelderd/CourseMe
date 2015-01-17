@@ -1,33 +1,16 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<form action="{{ url_for('auth.login') }}" class="form" method="POST">
-    {{form.hidden_tag()}}   <!--needed for cross-site request forgery prevention-->
-    
-<!--    <div style="display: none">
-        <input id="csrf_token" name="csrf_token" type="hidden" value="1383635238.9##d8f7f433e854cc682ade261cd9bb7113a147ee29" />
-    </div>  DJG - don't get this bit
--->
+{% import "bootstrap/wtf.html" as wtf %}
 
-    
-    <div class="form-group {% if form.email.errors %} has-error {% endif %}">
-        {{ form.email.label }}
-        {{ form.email(class="form-control") }}
-        <p class="help-block">{{ form.email.errors[0] }}</p>
+<div class="row">
+    <div class="col-md-5">
+        {{wtf.quick_form(form)}}        <!--DJG - need a way to include novalidate -->
+        <br>
+        <p>Forgot your password? <a href="{{ url_for('auth.password_reset_request') }}">Click here to reset it</a>.</p>
+        <p>New user? <a href="{{ url_for('auth.signup') }}">Click here to register</a>.</p>
     </div>
+</div>
 
-    <div class="form-group {% if form.password.errors %} has-error {% endif %}">
-        {{ form.password.label }}
-        {{ form.password(class="form-control") }}
-        <p class="help-block">{{ form.password.errors[0] }}</p>
-    </div>
-
-    <p>{{form.remember_me}} Remember Me</p>
-    
-    <button class="btn btn-success" type="submit">Login</button>
-    <a href="#" class="btn btn-info" type="submit">Need some type of forgot password function</a>
-    <a href="{{ url_for('auth.signup') }}">Not registered, go to sign up page</a>
-    
-</form>
 
 {% endblock %}

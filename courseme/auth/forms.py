@@ -1,14 +1,15 @@
 from flask.ext.wtf import Form, RecaptchaField
-from wtforms import TextField, TextAreaField, PasswordField, BooleanField, HiddenField, FileField, SelectMultipleField, \
-    SelectField, RadioField
-from wtforms.validators import DataRequired, Length, Email, Regexp, EqualTo, url
+from wtforms import TextAreaField, PasswordField, BooleanField, HiddenField, FileField, SelectMultipleField, \
+    SelectField, RadioField, SubmitField, StringField
+from wtforms.validators import DataRequired, Length, Email, Regexp, EqualTo, url, Optional
 from wtforms.fields.html5 import URLField
 from wtforms.fields import FieldList
-from .. models import Module, Objective
+from wtforms import ValidationError
+from .. models import Module, Objective, User
 
 
 class SignupForm(Form):
-    email = TextField('Email address', validators=[
+    email = StringField('Email', validators=[
         DataRequired('Please provide a valid email address'),
         Email(message=(u'That\'s not a valid email address'))])
     password = PasswordField('Pick a secure password', validators=[
@@ -16,89 +17,64 @@ class SignupForm(Form):
         Length(min=6, message=(u'Password must be at least 6 characters'))])
     confirm_password = PasswordField('Confirm password', validators=[
         EqualTo('password', message='Password confirmation did not match')])
-    username = TextField('Username', validators=[DataRequired()])
-    forename = TextField('Forename')
-    surname = TextField('Surname')
+    username = StringField('Username', validators=[
+        DataRequired(),
+        Length(min=1, message='Username is too short'),
+        Regexp('^[A-Za-z][A-Za-z0-9_.\- ]*$', 0, 'Usernames must have only letters, numbers, dots, dashes, underscores, or spaces')])
+    forename = StringField('Forename', validators=[
+        Optional(),
+        Length(min=1, message='Forename is too short'),
+        Regexp('^[A-Za-z][A-Za-z0-9_.\- ]*$', 0, 'Forenames must have only letters, numbers, dots, dashes, underscores, or spaces')])
+    surname = StringField('Surname', validators=[
+        Optional(),
+        Length(min=1, message='Forename is too short'),
+        Regexp('^[A-Za-z][A-Za-z0-9_.\- ]*$', 0, 'Surnames must have only letters, numbers, dots, dashes, underscores, or spaces')])
     agree = BooleanField('By signing up your agree to follow our <a href="#">Terms and Conditions</a>',
                          validators=[DataRequired(u'You must agree the Terms of Service')])
-    remember_me = BooleanField('remember_me', default=False)
+    remember_me = BooleanField('Remember me', default=True)
     recaptcha = RecaptchaField()
+    submit = SubmitField('Sign-up')
+
+    def validate_email(self, field):
+        if User.query.filter_by(email=field.data).first():
+            raise ValidationError('This email address has already been registered')
 
 
 class LoginForm(Form):
-    email = TextField('Email address', validators=[
+    email = StringField('Email', validators=[
         DataRequired('Please enter the email address you used to sign up'),
-        Email(message=(u'That\'s not a valid email address'))])
+        Email(message=(u"That\'s not a valid email address"))])
     password = PasswordField('Enter password', validators=[
-        DataRequired('Please enter your password'),
-        Length(min=6, message=(u'Password must be at least 6 characters'))])
-    remember_me = BooleanField('remember_me', default=False)
+        DataRequired('Please enter your password')])
+    remember_me = BooleanField('Remember me', default=True)
+    submit = SubmitField('Login')
+
+    def validate_email(self, field):
+        if not User.user_by_email(field.data):
+            raise ValidationError('This email address is not recognised')
 
 
-class EditObjective(Form):
-    edit_objective_id = HiddenField()
-    edit_objective_name = TextField('Objective', validators=[
-        DataRequired('Enter a description of the objective'),
-        Length(min=4, message=(u'Description must be at least 4 characters'))])
-    edit_objective_topic = SelectField('Topic', choices=[])
-    edit_objective_prerequisites = SelectMultipleField('Prerequisites', choices=[])
-    # authors = FieldList(TextField('Name'))      #DJG - Try this as way of geting proper ordered list back from form
+class PasswordResetRequestForm(Form):
+    email = StringField('Email', validators=[
+        DataRequired('Please enter the email address you used to sign up'),
+        Email('Please enter the email address you used to sign up')])
+    submit = SubmitField('Reset Password')
 
+    def validate_email(self, field):
+        if not User.user_by_email(field.data):
+            raise ValidationError('This email address is not recognised')
 
-class EditModule(Form):
-    edit_module_id = HiddenField()  # DJG - don't know if I need this
-    name = TextField('Module name', validators=[DataRequired('Please enter a name for your module')])
-    description = TextAreaField('Brief description')
-    notes = TextAreaField('Notes')
-    module_objectives = SelectMultipleField('Objectives', choices=[])
-    material_type = RadioField('Material Type',
-                               choices=[('Lecture', 'Lecture'), ('Exercise', 'Exercise'),
-                                        ('Course', 'Course (select individual modules to include later)')],
-                               default='Lecture',
-                               validators=[DataRequired('Please specify what type of material you are creating')])
-    material_source = RadioField('Material Source',
-                                 choices=[('upload', 'Upload video'), ('youtube', 'youtube link')],
-                                 default='upload')  # validators = [DataRequired('Please specify how you are providing the material')])
-    material_upload = FileField(
-        'Select File')  # DJG - would be nice to have these be DataRequired when they apply     #validators=[DataRequired('Please upload your material')])
-    material_youtube = URLField(
-        'Enter URL')  # validators=[url, DataRequired('Please provide a link to your material')])
-    subtitles = BooleanField('Subtitles', default=False)
-    easy_language = BooleanField('Simple Language', default=False)
-    extension = BooleanField('Extension Material', default=False)
-    for_teachers = BooleanField('Ideas for Teachers', default=False)
+class PasswordResetForm(Form):
+    email = StringField('Email', validators=[
+        DataRequired('Please enter the email address you used to sign up'),
+        Email('Please enter the email address you used to sign up')])
+    password = PasswordField('New Password', validators=[
+        DataRequired('Please enter a new password'),
+        EqualTo('password2', message='Passwords do not match')])
+    password2 = PasswordField('Confirm password', validators=[
+        DataRequired('Please reenter your new password')])
+    submit = SubmitField('Reset Password')
 
-
-class EditQuestion(Form):
-    edit_question_id = HiddenField()
-    question = TextAreaField('Question')
-    answer = TextAreaField('Answer')
-    # objective = SelectField('Objectives', choices=Objective.Choices())
-    extension = BooleanField('Extension Material', default=False)
-    visually_impaired = BooleanField('Audio Assistance', default=False)
-    question_objectives = SelectMultipleField('Objectives', choices=[])
-
-
-class EditGroup(Form):
-    edit_group_id = HiddenField()
-    edit_group_name = TextField('Group Name', validators=[DataRequired('Enter a group name')])
-    edit_group_members = SelectMultipleField('Members', choices=[])
-
-
-class EditScheme(Form):
-    edit_scheme_id = HiddenField()
-    edit_scheme_name = TextField('Scheme Name', validators=[DataRequired('Enter a name for this scheme of work')])
-    edit_scheme_objectives = SelectMultipleField('Objectives', choices=[])
-
-
-class SendMessage(Form):
-    message_type = RadioField('Group or Individual Message',
-                              choices=[('Individual', 'Individual'), ('Group', 'Group')],
-                              default='Individual',
-                              validators=[DataRequired(
-                                  'Please specify whether you are sending an individual or a group message')])
-    message_to = TextField('To', validators=[DataRequired('Enter a recipient or group of recipients for your message')])
-    message_subject = TextField('Message Subject')
-    message_body = TextAreaField('Message Content')
-    request_access = BooleanField("Request to view students' progress", default=False)
-    recommended_material = SelectField('Recommend Material', choices=Module.RecommendChoices())
+    def validate_email(self, field):
+        if not User.user_by_email(field.data):
+            raise ValidationError('This email address is not recognised')
