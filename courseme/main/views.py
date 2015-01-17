@@ -1,7 +1,7 @@
 from flask import render_template, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from . import main
-from .. import db, lm, hash_string, lectures
+from .. import db, lectures
 import forms
 from .. models import User, ROLE_USER, ROLE_ADMIN, Objective, SchemeOfWork, UserObjective, Module, UserModule, Institution, \
     Group, Message, Question, Subject, Topic

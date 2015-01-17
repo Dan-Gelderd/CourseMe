@@ -4,7 +4,6 @@ from flask.ext.login import LoginManager
 from flask.ext.uploads import UploadSet, configure_uploads, patch_request_class
 from flask_mail import Mail
 from flask_restless import APIManager
-import md5      #DJG - depricated, explore hashlib or passlib or some password storing package
 from flask_util_js import FlaskUtilJs       #DJG - for stuff like url_for in javascript
 from flask.ext.moment import Moment
 from flask.ext.bootstrap import Bootstrap
@@ -44,17 +43,3 @@ def create_app(config_name):
     app.register_blueprint(auth_blueprint, url_prefix='/auth')
 
     return app
-
-# if not app.debug:
-#     import logging
-#     from logging.handlers import RotatingFileHandler
-#     file_handler = RotatingFileHandler('tmp/courseme.log', 'a', 1 * 1024 * 1024, 10)
-#     file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'))
-#     app.logger.setLevel(logging.INFO)
-#     file_handler.setLevel(logging.INFO)
-#     app.logger.addHandler(file_handler)
-#     app.logger.info('microblog startup')
-
-def hash_string(string):
-    salted_hash = string + app.config['SECRET_KEY']
-    return md5.new(salted_hash).hexdigest()
