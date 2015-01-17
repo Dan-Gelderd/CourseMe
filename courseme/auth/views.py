@@ -53,16 +53,13 @@ def login():
     form = forms.LoginForm()
     if form.validate_on_submit():
         user = User.user_by_email(form.email.data)
-        if user is None:
-            form.email.errors.append('Email not registered')
-            return render_template('auth/login.html', form=form, title=title)
-        if not user.verify_password(form.password.data):
+        if user and user.verify_password(form.password.data):
+            login_user(user, remember=form.remember_me.data)
+            flash("Logged in successfully.")
+            return redirect(request.args.get('next') or url_for('main.index'))
+            # DJG - next redirect doesn't seem to work eg. createmodule page
+        else:
             form.password.errors.append('Incorrect password')
-            return render_template('auth/login.html', form=form, title=title)
-        login_user(user, remember=form.remember_me.data)
-        flash("Logged in successfully.")
-        return redirect(request.args.get('next') or url_for('main.index'))
-         # DJG - next redirect doesn't seem to work eg. createmodule page
     return render_template('auth/login.html', form=form, title=title)
 
 
@@ -70,3 +67,38 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('main.index'))
+
+
+@auth.route('/reset', methods=['GET', 'POST'])
+def password_reset_request():
+    if not current_user.is_anonymous():
+        return redirect(url_for('main.index'))
+    form = forms.PasswordResetRequestForm()
+    if form.validate_on_submit():
+        user = User.user_by_email(form.email.data)
+        if user:
+            token = user.generate_reset_token()
+            send_email(user.email, 'Reset Your Password',
+                       'auth/email/reset_password',
+                       user=user, token=token,
+                       next=request.args.get('next'))
+        flash('An email with instructions to reset your password has been '
+              'sent to you.')
+        return redirect(url_for('auth.login'))
+    return render_template('auth/reset_password.html', form=form)
+
+@auth.route('/reset/<token>', methods=['GET', 'POST'])
+def password_reset(token):
+    if not current_user.is_anonymous():
+        return redirect(url_for('main.index'))
+    form = forms.PasswordResetForm()
+    if form.validate_on_submit():
+        user = User.user_by_email(form.email.data)
+        if user is None:
+            return redirect(url_for('main.index'))
+        if user.reset_password(token, form.password.data):
+            flash('Your password has been updated.')
+            return redirect(url_for('auth.login'))
+        else:
+            return redirect(url_for('main.index'))
+    return render_template('auth/reset_password.html', form=form)

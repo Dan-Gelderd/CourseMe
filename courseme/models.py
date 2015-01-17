@@ -152,6 +152,22 @@ class User(db.Model):
         db.session.add(self)
         return True
 
+    def generate_reset_token(self, expiration=3600):
+        s = Serializer(current_app.config['SECRET_KEY'], expiration)
+        return s.dumps({'reset': self.id})
+
+    def reset_password(self, token, new_password):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except:
+            return False
+        if data.get('reset') != self.id:
+            return False
+        self.password = new_password
+        db.session.add(self)
+        return True
+
     def avatar(self, size=50):
         return 'http://www.gravatar.com/avatar/' + md5(self.email).hexdigest() + '?d=mm&s=' + str(size)
 
@@ -241,7 +257,6 @@ class User(db.Model):
         query_topic = topic.modules if topic else Module.query
         return query_restricted.union(query_authored, query_viewed).intersect(query_live, query_type, query_subject,
                                                                               query_topic)
-
 
     def enrolled_courses(self):
         return self.visible_modules(False, False, True, True, material_type='Course', subject=False,
