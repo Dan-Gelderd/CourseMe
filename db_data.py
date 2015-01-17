@@ -1,8 +1,7 @@
 #!flask/bin/python
-from courseme import db, hash_string
+from courseme import db
 from courseme.models import Module, User, ROLE_USER, ROLE_ADMIN, Objective, Institution, Question, Subject, Topic
 from datetime import datetime
-
 
 maths = Subject(
         name = "Mathematics"
@@ -53,7 +52,7 @@ db.session.add(calculus)
 db.session.commit()
 
 user = User(email="support@courseme.com",
-            password=hash_string("111111"),
+            password="111111",
             name="CourseMe",
             time_registered=datetime.utcnow(),
             last_seen=datetime.utcnow(),
@@ -61,7 +60,7 @@ user = User(email="support@courseme.com",
 db.session.add(user)
 
 me = User(email="dan.gelderd@courseme.com",
-            password=hash_string("111111"),
+            password="111111",
             name="Dan",
             forename="Dan",
             blurb="I built the CourseMe website and now am fabulously rich.",
@@ -71,7 +70,7 @@ me = User(email="dan.gelderd@courseme.com",
 db.session.add(me)
 
 user = User(email="dan@server.fake",
-            password=hash_string("111111"),
+            password="111111",
             name="Dan",
             time_registered=datetime.utcnow(),
             last_seen=datetime.utcnow(),
@@ -79,7 +78,7 @@ user = User(email="dan@server.fake",
 db.session.add(user)
 
 user = User(email="liz@server.fake",
-            password=hash_string("111111"),
+            password="111111",
             name="Liz",
             time_registered=datetime.utcnow(),
             last_seen=datetime.utcnow(),
@@ -87,7 +86,7 @@ user = User(email="liz@server.fake",
 db.session.add(user)
 
 head = User(email="head@server.fake",
-            password=hash_string("111111"),
+            password="111111",
             name="Head of School",
             blurb="I have been Headmaster at High School for five years. I'm great.",
             time_registered=datetime.utcnow(),
@@ -110,7 +109,7 @@ school = Institution.create(
 
 for i in range(1, 3):
     teacher = User(email="teacher" + str(i) + "@server.fake",
-            password=hash_string("111111"),
+            password="111111",
             name="Mrs. Blogs " + str(i),
             blurb="I have been a teacher at High School for five years. I'm great.",
             time_registered=datetime.utcnow(),
@@ -123,7 +122,7 @@ for i in range(1, 3):
 
 for i in range(1, 100):
     student = User(email="student" + str(i) + "@server.fake",
-            password=hash_string("111111"),
+            password="111111",
             name="Student"+str(i),
             forename="Richie",
             surname="Rich",
@@ -138,7 +137,7 @@ db.session.add(school)
 db.session.commit() 
 
 parent = User(email="parent@server.fake",
-            password=hash_string("111111"),
+            password="111111",
             name="Parent",
             time_registered=datetime.utcnow(),
             last_seen=datetime.utcnow(),

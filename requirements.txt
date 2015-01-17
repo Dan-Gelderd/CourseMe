@@ -15,7 +15,8 @@ flask-wtf
 markupsafe
 migrate
 Flask-RESTful
+Flask-RESTless
 WTForms-Alchemy
 flask-bootstrap
 flask-migrate
-flask_util_js
+flask-moment

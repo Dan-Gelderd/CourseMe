@@ -22,6 +22,10 @@ def test():
     tests = unittest.TestLoader().discover('tests')
     unittest.TextTestRunner(verbosity=2).run(tests)
 
+@manager.command
+def test_data():
+    """Add dummy data for development."""
+    import db_data
 
 if __name__ == '__main__':
     manager.run()
