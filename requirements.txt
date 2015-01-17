@@ -1,4 +1,3 @@
-flask_util_js
 # run pip install -r requirements.txt from command line
 livereload
 pyzmq
@@ -17,3 +16,6 @@ markupsafe
 migrate
 Flask-RESTful
 WTForms-Alchemy
+flask-bootstrap
+flask-migrate
+flask_util_js
