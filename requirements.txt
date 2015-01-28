@@ -20,3 +20,4 @@ WTForms-Alchemy
 flask-bootstrap
 flask-migrate
 flask-moment
+coverage
