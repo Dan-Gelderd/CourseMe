@@ -6,18 +6,12 @@ import forms
 from .. models import User, ROLE_USER, ROLE_ADMIN, Objective, SchemeOfWork, UserObjective, Module, UserModule, Institution, \
     Group, Message, Question, Subject, Topic
 from datetime import datetime
-import json, operator
+import operator
 from ..email import send_email
+
+import courseme.util.json as json
+
 # import pdb; pdb.set_trace()        #DJG - remove
-
-class CustomEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, datetime):
-            encoded_object = obj.isoformat()
-        else:
-            encoded_object = json.JSONEncoder.default(self, obj)
-        return encoded_object
-
 
 @main.route('/')
 @main.route('/index')
@@ -34,7 +28,7 @@ def index():
                            title=title,
                            modules=modules,
                            # DJG - temporary; unless there is a way to pass datatables a list of objects
-                           catalogue=json.dumps(catalogue, cls=CustomEncoder, separators=(',', ':')))
+                           catalogue=json.dumps(catalogue))
 
 
 @main.route('/select-subject/<int:id>', methods=["POST"])
@@ -247,10 +241,10 @@ def objective_add_update():
                         db.session.commit()
                         result['savedsuccess'] = True
 
-        return json.dumps(result, separators=(',', ':'))
+        return json.dumps(result)
 
     form.errors['savedsuccess'] = False
-    return json.dumps(form.errors, separators=(',', ':'))
+    return json.dumps(form.errors)
 
                 # form_header = "Edit " + material_type + ":"
                 # material_source = module.material_source
@@ -283,7 +277,7 @@ def objective_delete():
 @main.route('/objective-get')
 def objective_get():
     objective = Objective.query.get(request.args.get("objective_id"))
-    return json.dumps(objective.as_dict(), sort_keys=True, separators=(',', ':'))
+    return json.dumps(objective.as_dict(), sort_keys=True)
 
 
 @main.route('/objective-assess/<int:profile_id>/<int:objective_id>')
@@ -391,7 +385,7 @@ def editmodule(id=0):
                     is_are = 'is not already defined as an objetive' if len(
                         undefined_objectives) == 1 else 'are not already defined as objetives'
                     result['objectives'] = ["'" + "', '".join(undefined_objectives) + "' " + is_are]
-                    return json.dumps(result, separators=(',', ':'))
+                    return json.dumps(result)
 
                 material_source = moduleform.material_source.data
                 if module:
@@ -461,11 +455,11 @@ def editmodule(id=0):
                 result['module_id'] = module.id
                 flash(material_type + " saved as " + module.name)
 
-            return json.dumps(result, separators=(',', ':'))
+            return json.dumps(result)
 
         else:
             moduleform.errors['savedsuccess'] = False
-            return json.dumps(moduleform.errors, separators=(',', ':'))
+            return json.dumps(moduleform.errors)
 
 
 @main.route('/module/<int:id>')
@@ -562,7 +556,7 @@ def add_module_to_course(module_id, course_id):
     else:
         flash('No Module identified with id ' + module_id)
 
-    return json.dumps(result, separators=(',', ':'))
+    return json.dumps(result)
 
 
 @main.route('/course-enroll/<int:course_id>', methods=['POST'])
@@ -584,7 +578,7 @@ def course_enroll(course_id):
     else:
         flash('No Course identified with id ' + course_id)
 
-    return json.dumps(result, separators=(',', ':'))
+    return json.dumps(result)
 
 
 @main.route('/delete_module/<int:id>')
@@ -602,7 +596,7 @@ def delete_module(id):
     else:
         flash('No Module identified with id ' + id)
 
-    return json.dumps(result, separators=(',', ':'))
+    return json.dumps(result)
 
 
 @main.route('/profile/<int:id>')
@@ -655,7 +649,7 @@ def group_get(id):
     group = Group.query.get(id)
     if group:
         if group.creator == g.user:
-            return json.dumps(group.as_dict(), separators=(',', ':'))
+            return json.dumps(group.as_dict())
         else:
             flash('You are not authorised to view this group')
             return json.dumps({'error': 'unauthorised'})
@@ -703,10 +697,10 @@ def group_save():
             db.session.commit()
             result['savedsuccess'] = True
             flash('New Group saved as ' + group.name)
-        return json.dumps(result, separators=(',', ':'))
+        return json.dumps(result)
     else:
         form.errors['savedsuccess'] = False
-        return json.dumps(form.errors, separators=(',', ':'))
+        return json.dumps(form.errors)
 
 
 @main.route('/group_delete/<int:id>')
@@ -726,7 +720,7 @@ def group_delete(id):
     else:
         flash('This group does not exist')
         result['error'] = "not found"
-    return json.dumps(result, separators=(',', ':'))
+    return json.dumps(result)
 
 
 @main.route('/schemes')
@@ -747,7 +741,7 @@ def scheme_get(id):
     scheme = SchemeOfWork.query.get(id)
     if scheme:
         if scheme.creator == g.user:
-            return json.dumps(scheme.as_dict(), separators=(',', ':'))
+            return json.dumps(scheme.as_dict())
         else:
             flash('You are not authorised to view this scheme of work')
             return json.dumps({'error': 'unauthorised'})
@@ -795,10 +789,10 @@ def scheme_save():
             db.session.commit()
             result['savedsuccess'] = True
             flash('New scheme of work saved as ' + scheme.name)
-        return json.dumps(result, separators=(',', ':'))
+        return json.dumps(result)
     else:
         form.errors['savedsuccess'] = False
-        return json.dumps(form.errors, separators=(',', ':'))
+        return json.dumps(form.errors)
 
 
 @main.route('/scheme_delete/<int:id>')
@@ -818,7 +812,7 @@ def scheme_delete(id):
     else:
         flash('This scheme of work does not exist')
         result['error'] = "not found"
-    return json.dumps(result, separators=(',', ':'))
+    return json.dumps(result)
 
 
 @main.route('/restrict_modules_viewed/<int:user_id>/<int:institution_id>')
@@ -846,7 +840,7 @@ def restrict_modules_viewed(user_id, institution_id):
         flash('You are not logged in as this user')
         result["user_error"] = True
 
-    return json.dumps(result, separators=(',', ':'))
+    return json.dumps(result)
 
 
 @main.route('/send_message', methods=['POST'])
@@ -894,10 +888,10 @@ def send_message():
         else:
             result["recommended_material"] = "Module not found"
 
-        return json.dumps(result, separators=(',', ':'))
+        return json.dumps(result)
     else:
         form.errors['savedsuccess'] = False
-        return json.dumps(form.errors, separators=(',', ':'))
+        return json.dumps(form.errors)
 
 
 @main.route('/allow_access/<int:request_id>', methods=['POST'])
@@ -910,7 +904,7 @@ def allow_access(request_id):
     else:
         flash("Tutor not found")
         result['savedsuccess'] = False
-    return json.dumps(result, separators=(',', ':'))
+    return json.dumps(result)
 
 
 @main.route('/deny_access/<int:request_id>', methods=['POST'])
@@ -923,7 +917,7 @@ def deny_access(request_id):
     else:
         flash("Tutor not found")
         result['savedsuccess'] = False
-    return json.dumps(result, separators=(',', ':'))
+    return json.dumps(result)
 
 
 @main.route('/edit-question/<int:id>', methods=['GET', 'POST'])
@@ -993,7 +987,7 @@ def edit_question(id=0):
                 is_are = 'is not already defined as an objetive' if len(
                     undefined_objectives) == 1 else 'are not already defined as objetives'
                 result['objectives'] = ["'" + "', '".join(undefined_objectives) + "' " + is_are]
-                return json.dumps(result, separators=(',', ':'))
+                return json.dumps(result)
             else:
                 proceed = True
 
@@ -1030,7 +1024,7 @@ def edit_question(id=0):
 
         else:
             form.errors['savedsuccess'] = False
-            return json.dumps(form.errors, separators=(',', ':'))
+            return json.dumps(form.errors)
 
 
 @main.route('/delete-question/<int:id>', methods=['GET', 'POST'])
@@ -1044,7 +1038,7 @@ def delete_question(id=0):
             db.session.delete(question)
             db.session.commit()
             result['savedsuccess'] = True
-            return json.dumps(result, separators=(',', ':'))
+            return json.dumps(result)
         else:
             flash('You are not authorised to delete this question')
             return redirect(url_for('.questions'))
@@ -1068,7 +1062,7 @@ def questions():
     return render_template('questions.html',
                            title=title,
                            questions=questions,
-                           catalogue=json.dumps(catalogue, cls=CustomEncoder, separators=(',', ':'))
+                           catalogue=json.dumps(catalogue)
     )
 
 
@@ -1081,7 +1075,7 @@ def select_question(id=0):
     if question:
         result['selected_class'] = g.user.toggle_select_question(question)
         result['savedsuccess'] = True
-        return json.dumps(result, separators=(',', ':'))
+        return json.dumps(result)
     else:
         flash('This question does not exist')
         return redirect(url_for('.questions'))
@@ -1101,7 +1095,7 @@ def questions_print():
     return render_template('questions_print.html',
                            title=title,
                            questions=questions,
-                           catalogue=json.dumps(catalogue, cls=CustomEncoder, separators=(',', ':'))
+                           catalogue=json.dumps(catalogue)
     )
 
 
@@ -1110,7 +1104,7 @@ def questions_print():
 def selected_questions():
     questions = g.user.questions_selected
     catalogue = [question.as_dict() for question in questions]  #DJG - confused over best way to do this http://stackoverflow.com/questions/1958219/convert-sqlalchemy-row-object-to-python-dict
-    return json.dumps(catalogue, separators=(',', ':'), cls=CustomEncoder)
+    return json.dumps(catalogue)
 
 
 @main.route('/deselect-all-questions', methods=['GET'])

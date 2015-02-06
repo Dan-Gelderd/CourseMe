@@ -5,17 +5,11 @@ from . import auth
 import forms
 from .. models import User, ROLE_USER, ROLE_ADMIN, Subject
 from datetime import datetime
-import json, operator
+import operator
 from .. email import send_email
 # import pdb; pdb.set_trace()        #DJG - remove
 
-class CustomEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, datetime):
-            encoded_object = obj.isoformat()
-        else:
-            encoded_object = json.JSONEncoder.default(self, obj)
-        return encoded_object
+import courseme.util.json as json
 
 
 @auth.before_app_request
