@@ -28,8 +28,8 @@ def index():
     else:
         modules = Module.LiveModules().all()
 
-    catalogue = [mod.as_dict() for mod in
-                 modules]  # DJG - confused over best way to do this http://stackoverflow.com/questions/1958219/convert-sqlalchemy-row-object-to-python-dict
+    catalogue = [mod.as_dict() for mod in modules]
+    # DJG - confused over best way to do this http://stackoverflow.com/questions/1958219/convert-sqlalchemy-row-object-to-python-dict
     return render_template('index.html',
                            title=title,
                            modules=modules,
