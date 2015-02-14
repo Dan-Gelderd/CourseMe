@@ -13,6 +13,12 @@ import courseme.util.json as json
 
 # import pdb; pdb.set_trace()        #DJG - remove
 
+@main.route('/layout')
+def layout():
+    title = "CourseMe"
+    return render_template('layout.html',
+                           title=title)
+
 @main.route('/')
 @main.route('/index')
 def index():
