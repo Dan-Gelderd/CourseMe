@@ -5,7 +5,7 @@ from .. models import User, ROLE_USER, ROLE_ADMIN, Institution
 from .. email import send_email
 import courseme.util.json as json
 
-@institutions.route('/create-institution', methods=['GET, POST'])
+@institutions.route('/create', methods=['GET, POST'])
 def create_institution():
     title = "CourseMe - Institution"
     form = forms.CreateInstitution()
