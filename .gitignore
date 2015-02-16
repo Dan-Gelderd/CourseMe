@@ -60,3 +60,6 @@ db_repository/
 #pycharm
 .xml
 .idea/
+
+#vim
+.*.swp
