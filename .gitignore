@@ -63,3 +63,6 @@ db_repository/
 
 #vim
 .*.swp
+
+# generated ctags file
+tags
