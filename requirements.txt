@@ -21,3 +21,4 @@ flask-bootstrap
 flask-migrate
 flask-moment
 coverage
+schema==0.3.1
