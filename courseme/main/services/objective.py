@@ -23,14 +23,15 @@ class ObjectiveService(BaseService):
     }
 
     def by_name(self, name):
+        """Lookup Objective by name.  Returns None if not found."""
         return Objective.query.filter(Objective.name == name).first()
 
     def available_to(self, user, matching_names=None):
         """List of Objectives available to the given User
 
         :param user: User
-        :param matching: optional list of Objective names to further restrict
-                         availability.
+        :param matching_names: optional list of Objective names to further
+                               restrict availability.
 
         TODO: matching should probably match on ID, rather than name.  It's
               based on the name because that's what the form that ultimately
@@ -49,14 +50,14 @@ class ObjectiveService(BaseService):
 
         return q.all()
 
-    def _require_topic(self, t_id):
-        if t_id is not None:
-            return self.services.topics.require_by_id(t_id)
-        else:
-            return None
-
     def create(self, objective_data, by_user):
-        """Create a new Objective from the given data"""
+        """Create a new Objective from the given data
+
+        :param objective_data: is a dictionary of data used to populate the
+                               initial Objective.  It must match the schema
+                               defined within.
+        :param by_user: the `User` who is creating the `Objective`.
+        """
 
         creation_schema = merge(self._base_schema, {
             'subject_id': s.Use(int),
@@ -80,7 +81,13 @@ class ObjectiveService(BaseService):
 
 
     def update(self, objective_data, by_user):
-        """Update an existing Objective from the given data"""
+        """Update an existing Objective from the given data.
+
+        :param objective_data: is a dictionary of data with the updated state
+                               of the Objective.  It must match the schema
+                               defined within.
+        :param by_user: the `User` who is creating the `Objective`.
+        """
 
         update_schema = merge(self._base_schema, {
             'id': s.Use(int),
@@ -139,9 +146,11 @@ class ObjectiveService(BaseService):
                     u', '.join(diff)))
 
         if check_cyclic_against:
-            cycles = [p.name for p in available if p.is_required_indirect(check_cyclic_against)]
+            cycles = [p.name for p in available \
+                            if p.is_required_indirect(check_cyclic_against)]
             if cycles:
                 raise ValidationError(
-                    prerequisites=u"Cyclic pre-requisites: {}".format(u', '.join(cycles)))
+                    prerequisites=u"Cyclic pre-requisites: {}".format(
+                        u', '.join(cycles)))
 
         return available
