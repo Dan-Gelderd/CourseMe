@@ -6,6 +6,7 @@ from wtforms.fields.html5 import URLField
 from wtforms.fields import FieldList
 from .. models import Module, Objective
 
+from courseme.util.wtform_utils import blank_to_none
 
 class SignupForm(Form):
     email = TextField('Email address', validators=[
@@ -36,7 +37,7 @@ class LoginForm(Form):
 
 
 class EditObjective(Form):
-    edit_objective_id = HiddenField()
+    edit_objective_id = HiddenField(filters=[blank_to_none])
     edit_objective_name = TextField('Objective', validators=[
         DataRequired('Enter a description of the objective'),
         Length(min=4, message=(u'Description must be at least 4 characters'))])

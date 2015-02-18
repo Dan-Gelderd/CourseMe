@@ -9,9 +9,14 @@ from datetime import datetime
 import operator
 from ..email import send_email
 
+from courseme.main.services import Services
 import courseme.util.json as json
+from courseme.errors import ValidationError, NotAuthorised, NotFound
+from courseme.util import merge
 
 # import pdb; pdb.set_trace()        #DJG - remove
+
+_service_layer = Services()
 
 @main.route('/')
 @main.route('/index')
@@ -141,7 +146,7 @@ def objectives_group(group_id, scheme_id=0, name_display=1):
 
 
 @main.route('/objective-add-update', methods=['POST'])
-def objective_add_update():
+def objective_add_update(service_layer=_service_layer):
     form = forms.EditObjective()
     form.edit_objective_topic.choices = Topic.TopicChoices(
         g.user)  # DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
@@ -153,95 +158,65 @@ def objective_add_update():
     #if request.method == 'POST':
     #    form.dynamic_list_select.choices = g.user.visible_objectives()     #DJG - this was part of an attempt to use a wtf selectmultiplefield to capture the prerequisite list in the hope this would be passed through the post request as an array of strings and so avoid using the comma delimited approach here. The coices need to be a list of tuples so this isn't in the right format.
     if form.validate():
-        obj_id = form.edit_objective_id.data
-        name = form.edit_objective_name.data
-        topic = Topic.query.get(form.edit_objective_topic.data)
-        topic_id = topic.id if topic else None
-        prerequisites = []
-        select_list = form.edit_objective_prerequisites.data
-        if select_list: prerequisites = g.user.visible_objectives().filter(Objective.name.in_(select_list)).all()
-        undefined_prerequisites = list(set(select_list) - set(obj.name for obj in prerequisites))
-        result = {'savedsuccess': False}
-        if not obj_id:
-            #The objective id is not found on the form so this is an add objective case
-            check_obj = g.user.visible_objectives().filter_by(name=name).first()
-            if check_obj is not None:
-                #The new objective name is already taken
-                result['edit_objective_name'] = [
-                    "Objective '" + name + "' already exists"]  #Need to make the new result attributes the same as the form.errors attributes which will be the form input field ids
-            elif undefined_prerequisites:
-                #A new objective can be created with the new name
-                #Need to check all the prerequisites exist already                
-                is_are = 'is not already defined as an objective' if len(
-                    undefined_prerequisites) == 1 else 'are not already defined as objectives'
-                result['new_prerequisite'] = ["'" + "', '".join(undefined_prerequisites) + "' " + is_are]
-                #No need to check for cyclic prerequisites as the new objective cannot be a prerequisite to anything already
-            elif topic and topic.subject_id != g.user.subject_id:
-                result['edit_objective_subject'] = [g.user.subject_id]
+
+        # some helpers for constructing responses ... will revisit this...
+        def success():
+            return json.dumps({'savedsuccess': True})
+
+        def failure(**kwargs):
+            return json.dumps(merge(kwargs, {'savedsuccess': False}))
+
+        # re-naming the form's fields and adding some filters to the form's
+        # fields could make this a little more concise.  But the form is being
+        # used elsewhere, so I didn't want to change it right now.  Instead,
+        # this list maps form field names to corresponding objective field
+        # names.  This is use to construct the data dict that the service layer
+        # uses, and to translate any validation errors back to the form's
+        # parlance.
+
+        form_field_mappings = {
+            'id': 'edit_objective_id',
+            'topic_id': 'edit_objective_topic',
+            'prerequisites': 'edit_objective_prerequisites',
+            'name': 'edit_objective_name',
+            'subject_id': 'edit_objective_subject'
+        }
+
+        def lookup_form_data(field):
+            return getattr(form, form_field_mappings[field]).data
+
+        obj_id = lookup_form_data('id')
+        topic_id = lookup_form_data('topic_id')
+        topic_id = None if topic_id == u'0' else topic_id
+
+        data = dict((f, lookup_form_data(f)) for f in ['name', 'prerequisites'])
+        data['topic_id'] = topic_id
+
+        try:
+            if not obj_id:
+                data['subject_id'] = g.user.subject_id
+                service_layer.objectives.create(data, g.user)
+                return success()
             else:
-                objective = Objective(name=name,
-                                      subject_id=g.user.subject_id,
-                                      topic_id=topic_id,
-                                      prerequisites=prerequisites,
-                                      created_by_id=g.user.id
-                )
-                db.session.add(objective)
-                db.session.commit()
-                result['savedsuccess'] = True
+                data['id'] = obj_id
+                service_layer.objectives.update(data, g.user)
+                return success()
 
-        else:
-            #The objective id is found on the form so this is an update objective case
-            #No need for any checks around the subject because this cannot be edited for an existing objective
-            objective = Objective.query.get(obj_id)
-            #DJG - should handle the case where no objective matches the id on the form request
-            proceed = True
-            #Check whether the user has the authority to edit it
-            if g.user.role != ROLE_ADMIN and objective.created_by_id != g.user.id:
-                result['edit_objective_name'] = ["You do not have authority to edit this objective"]
-                proceed = False
+        except ValidationError, e:
+            errors = dict((form_field_mappings[f], [err]) for f,err in e.errors.items())
 
-            #Authorised to edit
-            #Check whether the name has changed and if so check it is valid
-            if proceed:
-                if name != objective.name:
-                    #Name has changed - need to check if new name already exists
-                    check_obj = g.user.visible_objectives().filter_by(
-                        name=name).first()  #DJG - code repeat of above, how to avoid this
-                    if check_obj is not None:
-                        #The new objective name is already taken
-                        result['edit_objective_name'] = ["Objective '" + name + "' already exists"]
-                        proceed = False
-
-            #Name not changed or new name not taken            
-            if proceed:
-                #Need to check user.subject is the same as the existing objective subject
-                if g.user.subject_id != objective.subject_id or (topic and topic.subject_id != objective.subject_id):
-                    result['edit_objective_subject'] = [objective.subject_id]
-                    proceed = False
-
-            #User subject same as exsting objective subject
-            if proceed:
-                #Need to check all the prerequisites exist already            
-                if undefined_prerequisites:  #DJG - code repeat of above, how to avoid this
-                    is_are = 'is not already defined as an objective' if len(
-                        undefined_prerequisites) == 1 else 'are not already defined as objectives'
-                    result['new_prerequisite'] = ["'" + "', '".join(undefined_prerequisites) + "' " + is_are]
-                else:
-                    #Need to check for cyclic prerequisites
-                    cyclic_prerequisites = [p.name for p in prerequisites if p.is_required_indirect(objective)]
-                    if cyclic_prerequisites:
-                        is_are = 'is' if len(cyclic_prerequisites) == 1 else 'are'
-                        result['new_prerequisite'] = ["'" + "', '".join(
-                            cyclic_prerequisites) + "' " + is_are + " dependent on the current objective"]
-                    else:
-                        objective.name = name
-                        objective.prerequisites = prerequisites
-                        objective.topic_id = topic_id
-                        db.session.add(objective)
-                        db.session.commit()
-                        result['savedsuccess'] = True
-
-        return json.dumps(result)
+            # handle some prereq invalidation errors being held under a
+            # different key, 'new_prerequisite'.
+            if 'edit_objective_prerequisites' in errors:
+                errors['new_prerequisite'] = errors['edit_objective_prerequisites']
+            return failure(**errors)
+        except NotAuthorised, e:
+            return failure(edit_objective_name=["You do not have authority"])
+        except NotFound, e:
+            if e.model == Objective:
+                return failure(edit_objective_id = ["Not found"])
+            else:
+                return failure(errors=[e.message])
 
     form.errors['savedsuccess'] = False
     return json.dumps(form.errors)
