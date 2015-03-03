@@ -145,23 +145,8 @@ def objectives_group(group_id, scheme_id=0, name_display=1):
 def objective_add_update(service_layer=_service_layer):
     form = forms.EditObjective(topic_choices=Topic.TopicChoices(g.user))
     form.prerequisites.choices = [(i, i) for i in form.prerequisites.data]
-    # import pdb; pdb.set_trace()
-    #form will be the fields of the html form with the csrf
-    #request.form will be the data posted back through the ajax request
-    #DJG - don't know why the request.form object seems to have a second empty edit_objective_id attribute
-    #if request.method == 'POST':
-    #    form.dynamic_list_select.choices = g.user.visible_objectives()     #DJG - this was part of an attempt to use a wtf selectmultiplefield to capture the prerequisite list in the hope this would be passed through the post request as an array of strings and so avoid using the comma delimited approach here. The coices need to be a list of tuples so this isn't in the right format.
-
-    # some helpers for constructing responses ... will revisit this...
-    def success():
-        return json.dumps({'savedsuccess': True})
-
-    def failure(**kwargs):
-        result = { 'savedsuccess': False, 'errors': kwargs }
-        return json.dumps(result)
 
     if form.validate():
-
         data = form.data
 
         if data['topic_id'] == u'0':
@@ -171,40 +156,23 @@ def objective_add_update(service_layer=_service_layer):
             if not data['id']:
                 data['subject_id'] = g.user.subject_id
                 service_layer.objectives.create(data, g.user)
-                return success()
+                return _ajax_success()
             else:
                 service_layer.objectives.update(data, g.user)
-                return success()
+                return _ajax_success()
 
         except ValidationError, e:
-            return failure(**e.errors)
+            return _ajax_failure(**e.errors)
         except NotAuthorised, e:
-            return failure(name="You do not have authority")
+            return _ajax_failure(status_code=401, name="You do not have authority")
         except NotFound, e:
             if e.model == Objective:
-                return failure(id="Not found")
+                return _ajax_failure(status_code=404, id="Not found")
             else:
-                return failure(errors=[e.message])
+                return _ajax_failure(errors=[e.message])
 
-    return failure(**form.errors)
+    return _ajax_failure(**form.errors)
 
-                # form_header = "Edit " + material_type + ":"
-                # material_source = module.material_source
-                # material_path = module.material_path if material_source == 'youtube' else ''
-                # #flash(material_path)
-                # moduleform = forms.EditModule(
-                #     name=module.name,
-                #     description=module.description,
-                #     notes=module.notes,
-                #     material_type=module.material_type,
-                #     material_source=material_source,
-                #     material_path=material_path,
-                #     subtitles=module.subtitles,
-                #     easy_language=module.easy_language,
-                #     extension=module.extension,
-                #     for_teachers=module.for_teachers
-                # )
-                # module_objectives = module.objectives
 
 @main.route('/objective-delete')
 def objective_delete():
@@ -1065,3 +1033,17 @@ def test_angular():
     return render_template('test_angular.html',
                            title=title
     )
+
+#### Private ####
+
+def _ajax_success(status_code=200, **data):
+    """Successfuly complete an AJAX request"""
+    result = {'success': True, 'data': data}
+    return json.dumps(result) ##, status_code
+
+def _ajax_failure(status_code=400, **errors):
+    """Complete an AJAX request with listed errors"""
+    result = {'success': False, 'errors': errors}
+    return json.dumps(result) ##, status_code
+
+

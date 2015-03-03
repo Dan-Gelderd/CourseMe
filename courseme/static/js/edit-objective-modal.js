@@ -57,12 +57,12 @@ $(document).ready(function () {
                 
                 var result = $.parseJSON(json);
                 console.log(result);
-                console.log(result["savedsuccess"]);
-                console.log(result.savedsuccess);                
+                console.log(result["success"]);
+                console.log(result.success);                
                 
                 $("#edit_objective_form").find(".help-block").text("");
                             
-                if(result.savedsuccess)
+                if(result.success)
                 {
                     $("#edit_objective_modal").modal('hide');
                     location.reload();
