@@ -53,9 +53,7 @@ def select_subject(id):
 @login_required
 def objectives_admin():
     title = "CourseMe - Objectives"
-    objectiveform = forms.EditObjective()
-    objectiveform.topic_id.choices = Topic.TopicChoices(
-        g.user)  # DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
+    objectiveform = forms.EditObjective(topic_choices=Topic.TopicChoices(g.user))
     objectives = g.user.visible_objectives().all()
     objectives.sort(
         key=operator.methodcaller("score"))  # DJG - isn't there a way of doing this within the order_by of the query
@@ -78,9 +76,7 @@ def objectives(profile_id, scheme_id=0):
         return redirect(url_for('.objectives', profile_id=g.user.id))
     else:
         title = "CourseMe - Objectives"
-        objectiveform = forms.EditObjective()
-        objectiveform.topic_id.choices = Topic.TopicChoices(
-            g.user)  # DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
+        objectiveform = forms.EditObjective(topic_choices=Topic.TopicChoices(g.user))
         objectives = []
         if scheme_id == 0:
             objectives = g.user.visible_objectives().all()
@@ -147,9 +143,7 @@ def objectives_group(group_id, scheme_id=0, name_display=1):
 
 @main.route('/objective-add-update', methods=['POST'])
 def objective_add_update(service_layer=_service_layer):
-    form = forms.EditObjective()
-    form.topic_id.choices = Topic.TopicChoices(
-        g.user)  # DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
+    form = forms.EditObjective(topic_choices=Topic.TopicChoices(g.user))
     form.prerequisites.choices = [(i, i) for i in form.prerequisites.data]
     # import pdb; pdb.set_trace()
     #form will be the fields of the html form with the csrf
@@ -259,9 +253,7 @@ def editmodule(id=0):
     title = 'CourseMe - Edit Module'
     moduleform = forms.EditModule()  #DJG - need the arguement because using validate not validate_on_submit?
     #import pdb; pdb.set_trace()            #DJG - remove
-    objectiveform = forms.EditObjective()
-    objectiveform.topic_id.choices = Topic.TopicChoices(
-        g.user)  #DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
+    objectiveform = forms.EditObjective(topic_choices=Topic.TopicChoices(g.user))
     module_objectives = []
     module = None
     if not g.user.subject:
@@ -873,9 +865,7 @@ def deny_access(request_id):
 def edit_question(id=0):
     title = "CourseMe - Questions"
     form = forms.EditQuestion()
-    objectiveform = forms.EditObjective()
-    objectiveform.edit_objective_topic.choices = Topic.TopicChoices(
-        g.user)  #DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
+    objectiveform = forms.EditObjective(topic_choices=Topic.TopicChoices(g.user))
     question_objectives = []
     question = None
     #import pdb; pdb.set_trace()

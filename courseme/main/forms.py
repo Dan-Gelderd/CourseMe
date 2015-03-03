@@ -41,9 +41,18 @@ class EditObjective(Form):
     name = TextField('Objective', validators=[
         DataRequired('Enter a description of the objective'),
         Length(min=4, message=(u'Description must be at least 4 characters'))])
-    topic_id = SelectField('Topic', choices=[])
+    topic_id = SelectField('Topic')
     prerequisites = SelectMultipleField('Prerequisites', choices=[])
     # authors = FieldList(TextField('Name'))      #DJG - Try this as way of geting proper ordered list back from form
+
+    def __init__(self, topic_choices, **kwargs):
+        """Construct a new EditObjective form.
+
+        :param topic_choices: a list of 2-tuples representing the IDs and
+                              labels of available Topics.
+        """
+        super(EditObjective, self).__init__(**kwargs)
+        self.topic_id.choices = topic_choices
 
 
 class EditModule(Form):
