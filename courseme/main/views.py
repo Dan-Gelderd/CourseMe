@@ -53,9 +53,7 @@ def select_subject(id):
 @login_required
 def objectives_admin():
     title = "CourseMe - Objectives"
-    objectiveform = forms.EditObjective()
-    objectiveform.edit_objective_topic.choices = Topic.TopicChoices(
-        g.user)  # DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
+    objectiveform = forms.EditObjective(topic_choices=Topic.TopicChoices(g.user))
     objectives = g.user.visible_objectives().all()
     objectives.sort(
         key=operator.methodcaller("score"))  # DJG - isn't there a way of doing this within the order_by of the query
@@ -78,9 +76,7 @@ def objectives(profile_id, scheme_id=0):
         return redirect(url_for('.objectives', profile_id=g.user.id))
     else:
         title = "CourseMe - Objectives"
-        objectiveform = forms.EditObjective()
-        objectiveform.edit_objective_topic.choices = Topic.TopicChoices(
-            g.user)  # DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
+        objectiveform = forms.EditObjective(topic_choices=Topic.TopicChoices(g.user))
         objectives = []
         if scheme_id == 0:
             objectives = g.user.visible_objectives().all()
@@ -147,97 +143,36 @@ def objectives_group(group_id, scheme_id=0, name_display=1):
 
 @main.route('/objective-add-update', methods=['POST'])
 def objective_add_update(service_layer=_service_layer):
-    form = forms.EditObjective()
-    form.edit_objective_topic.choices = Topic.TopicChoices(
-        g.user)  # DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
-    form.edit_objective_prerequisites.choices = [(i, i) for i in form.edit_objective_prerequisites.data]
-    # import pdb; pdb.set_trace()
-    #form will be the fields of the html form with the csrf
-    #request.form will be the data posted back through the ajax request
-    #DJG - don't know why the request.form object seems to have a second empty edit_objective_id attribute
-    #if request.method == 'POST':
-    #    form.dynamic_list_select.choices = g.user.visible_objectives()     #DJG - this was part of an attempt to use a wtf selectmultiplefield to capture the prerequisite list in the hope this would be passed through the post request as an array of strings and so avoid using the comma delimited approach here. The coices need to be a list of tuples so this isn't in the right format.
+    form = forms.EditObjective(topic_choices=Topic.TopicChoices(g.user))
+    form.prerequisites.choices = [(i, i) for i in form.prerequisites.data]
+
     if form.validate():
+        data = form.data
 
-        # some helpers for constructing responses ... will revisit this...
-        def success():
-            return json.dumps({'savedsuccess': True})
-
-        def failure(**kwargs):
-            return json.dumps(merge(kwargs, {'savedsuccess': False}))
-
-        # re-naming the form's fields and adding some filters to the form's
-        # fields could make this a little more concise.  But the form is being
-        # used elsewhere, so I didn't want to change it right now.  Instead,
-        # this list maps form field names to corresponding objective field
-        # names.  This is use to construct the data dict that the service layer
-        # uses, and to translate any validation errors back to the form's
-        # parlance.
-
-        form_field_mappings = {
-            'id': 'edit_objective_id',
-            'topic_id': 'edit_objective_topic',
-            'prerequisites': 'edit_objective_prerequisites',
-            'name': 'edit_objective_name',
-            'subject_id': 'edit_objective_subject'
-        }
-
-        def lookup_form_data(field):
-            return getattr(form, form_field_mappings[field]).data
-
-        obj_id = lookup_form_data('id')
-        topic_id = lookup_form_data('topic_id')
-        topic_id = None if topic_id == u'0' else topic_id
-
-        data = dict((f, lookup_form_data(f)) for f in ['name', 'prerequisites'])
-        data['topic_id'] = topic_id
+        if data['topic_id'] == u'0':
+            data['topic_id'] = None
 
         try:
-            if not obj_id:
+            if not data['id']:
                 data['subject_id'] = g.user.subject_id
                 service_layer.objectives.create(data, g.user)
-                return success()
+                return _ajax_success()
             else:
-                data['id'] = obj_id
                 service_layer.objectives.update(data, g.user)
-                return success()
+                return _ajax_success()
 
         except ValidationError, e:
-            errors = dict((form_field_mappings[f], [err]) for f,err in e.errors.items())
-
-            # handle some prereq invalidation errors being held under a
-            # different key, 'new_prerequisite'.
-            if 'edit_objective_prerequisites' in errors:
-                errors['new_prerequisite'] = errors['edit_objective_prerequisites']
-            return failure(**errors)
+            return _ajax_failure(**e.errors)
         except NotAuthorised, e:
-            return failure(edit_objective_name=["You do not have authority"])
+            return _ajax_failure(status_code=401, name="You do not have authority")
         except NotFound, e:
             if e.model == Objective:
-                return failure(edit_objective_id = ["Not found"])
+                return _ajax_failure(status_code=404, id="Not found")
             else:
-                return failure(errors=[e.message])
+                return _ajax_failure(errors=[e.message])
 
-    form.errors['savedsuccess'] = False
-    return json.dumps(form.errors)
+    return _ajax_failure(**form.errors)
 
-                # form_header = "Edit " + material_type + ":"
-                # material_source = module.material_source
-                # material_path = module.material_path if material_source == 'youtube' else ''
-                # #flash(material_path)
-                # moduleform = forms.EditModule(
-                #     name=module.name,
-                #     description=module.description,
-                #     notes=module.notes,
-                #     material_type=module.material_type,
-                #     material_source=material_source,
-                #     material_path=material_path,
-                #     subtitles=module.subtitles,
-                #     easy_language=module.easy_language,
-                #     extension=module.extension,
-                #     for_teachers=module.for_teachers
-                # )
-                # module_objectives = module.objectives
 
 @main.route('/objective-delete')
 def objective_delete():
@@ -286,9 +221,7 @@ def editmodule(id=0):
     title = 'CourseMe - Edit Module'
     moduleform = forms.EditModule()  #DJG - need the arguement because using validate not validate_on_submit?
     #import pdb; pdb.set_trace()            #DJG - remove
-    objectiveform = forms.EditObjective()
-    objectiveform.edit_objective_topic.choices = Topic.TopicChoices(
-        g.user)  #DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
+    objectiveform = forms.EditObjective(topic_choices=Topic.TopicChoices(g.user))
     module_objectives = []
     module = None
     if not g.user.subject:
@@ -900,9 +833,7 @@ def deny_access(request_id):
 def edit_question(id=0):
     title = "CourseMe - Questions"
     form = forms.EditQuestion()
-    objectiveform = forms.EditObjective()
-    objectiveform.edit_objective_topic.choices = Topic.TopicChoices(
-        g.user)  #DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
+    objectiveform = forms.EditObjective(topic_choices=Topic.TopicChoices(g.user))
     question_objectives = []
     question = None
     #import pdb; pdb.set_trace()
@@ -1102,3 +1033,18 @@ def test_angular():
     return render_template('test_angular.html',
                            title=title
     )
+
+#### Private ####
+
+def _ajax_success(status_code=200, **data):
+    """Successfuly complete an AJAX request"""
+    result = {'success': True, 'data': data}
+    return json.dumps(result), status_code
+
+def _ajax_failure(status_code=400, **errors):
+    """Complete an AJAX request with listed errors"""
+    assert status_code >= 400, "Error status code must be >= 400"
+    result = {'success': False, 'errors': errors}
+    return json.dumps(result), status_code
+
+
