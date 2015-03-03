@@ -59,6 +59,7 @@ class ObjectiveService(BaseService):
         """Create a new Objective from the given data"""
 
         creation_schema = merge(self._base_schema, {
+            s.Optional('id'): None,
             'subject_id': s.Use(int),
         })
 

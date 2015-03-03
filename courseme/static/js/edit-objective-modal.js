@@ -14,28 +14,25 @@ $(document).ready(function () {
     
     //Button to bring up new empty form modal to create a new objective with prerequisites
     $("#create_objective").click(function(){
-            $("#edit_objective_id").val("");
-            $("#edit_objective_name").val("");
-            $("#edit_objective_subject").attr("disabled", false);            
-            $("#edit_objective_form").find(".dynamic-list-new-item").val("");
-            $("#edit_objective_form").find(".help-block").text("");
-            $("#edit_objective_form").find(".has-error").removeClass("has-error");
-            $("#edit_objective_form").find(".dynamic-list-item").remove();
-            $("#edit_objective_modal").modal('show');
-            return false;
+        var form = $("#edit_objective_form");
+        $("#id", form).val("");
+        $("#name", form).val("");
+        $("#subject", form).attr("disabled", false);            
+        form.find(".dynamic-list-new-item").val("");
+        form.find(".help-block").text("");
+        form.find(".has-error").removeClass("has-error");
+        form.find(".dynamic-list-item").remove();
+        $("#edit_objective_modal").modal('show');
+        return false;
     });
 
     //Button to post the new or updated objective data to the server for validation and storage
     $("#save_objective").click(function(event){
         event.preventDefault(); 
         var prerequisites = new Array();
-        $("#edit_objective_form").find("#edit_objective_subject").attr("disabled", false);              //Serialize array won't include disabled elements
-        $("#edit_objective_form").find(".dynamic-list-item-data").each(function() {
-            prerequisites.push($(this).text());
-        });
+        $("#edit_objective_form").find("#subject").attr("disabled", false);              //Serialize array won't include disabled elements
         
         var data = $("#edit_objective_form").serializeArray();     //DJG - http://stackoverflow.com/questions/6627936/jquery-post-with-serialize-and-extra-data
-        data.push({name: 'prerequisites', value: prerequisites});
 
         console.log(prerequisites);
         console.log(data);          //DJG - not sure why edit_objective_id is getting repeated in the data array
@@ -72,18 +69,20 @@ $(document).ready(function () {
                 }
                 else
                 {       
-                    if(result.edit_objective_name!=undefined) {
-                        $("#error_edit_objective_name").text(result.edit_objective_name[0]);
+                    if(result.errors.name) {
+                        $("#error_edit_objective_name").text(result.errors.name);
                         $("#edit_objective_name_form_group").addClass("has-error");
                     }
-                    if(result.edit_objective_subject!=undefined) {
-                        $("#error_edit_objective_subject").text(result.edit_objective_subject[0]);
+
+                    if(result.errors.subject) {
+                        $("#error_edit_objective_subject").text(result.errors.subject);
                         $("#edit_objective_subject_form_group").addClass("has-error");
                     }
-                    if(result.new_prerequisite!=undefined) {
-                        $("#edit_objective_form").find(".dynamic-list-help").text(result.new_prerequisite[0]);
+
+                    if(result.errors.prerequisites) {
+                        $("#edit_objective_form").find(".dynamic-list-help").text(result.errors.prerequisites);
                         $("#edit_objective_form").find(".dynamic-list-form").addClass("has-error");
-                    }    
+                    }
                 }
             }
         );
@@ -105,15 +104,16 @@ $(document).ready(function () {
 });
 
 function loadEditObjectiveModal(objective) {
-    $("#edit_objective_id").val(objective.id);
-    $("#edit_objective_name").val(objective.name);
-    $("#edit_objective_topic").val(objective.topic_id);
-    //$("#edit_objective_subject").disabled = true;             DJG - think this is better
-    $("#edit_objective_form").find(".dynamic-list-new-item").val("");
-    $("#edit_objective_form").find(".help-block").text("");
-    $("#edit_objective_form").find(".has-error").removeClass("has-error");
-    $("#edit_objective_form").find(".dynamic-list-item").remove();
-    dynamicList_addList(objective.prerequisites, $("#edit_objective_form"));
+    var form = $("#edit_objective_form");
+    $("#id", form).val(objective.id);
+    $("#name", form).val(objective.name);
+    $("#topic_id", form).val(objective.topic_id);
+    //$("#subject", form).disabled = true;             DJG - think this is better
+    form.find(".dynamic-list-new-item").val("");
+    form.find(".help-block").text("");
+    form.find(".has-error").removeClass("has-error");
+    form.find(".dynamic-list-item").remove();
+    dynamicList_addList(objective.prerequisites, form);
     $("#edit_objective_modal").modal('show');
     return false;
 }

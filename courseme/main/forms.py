@@ -37,12 +37,12 @@ class LoginForm(Form):
 
 
 class EditObjective(Form):
-    edit_objective_id = HiddenField(filters=[blank_to_none])
-    edit_objective_name = TextField('Objective', validators=[
+    id = HiddenField(filters=[blank_to_none])
+    name = TextField('Objective', validators=[
         DataRequired('Enter a description of the objective'),
         Length(min=4, message=(u'Description must be at least 4 characters'))])
-    edit_objective_topic = SelectField('Topic', choices=[])
-    edit_objective_prerequisites = SelectMultipleField('Prerequisites', choices=[])
+    topic_id = SelectField('Topic', choices=[])
+    prerequisites = SelectMultipleField('Prerequisites', choices=[])
     # authors = FieldList(TextField('Name'))      #DJG - Try this as way of geting proper ordered list back from form
 
 
