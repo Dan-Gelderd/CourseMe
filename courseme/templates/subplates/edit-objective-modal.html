@@ -8,7 +8,6 @@
             <div class="modal-body">
                 <form class="form" action="" method="POST" id="edit_objective_form">
                     {{ objectiveform.hidden_tag() }}
-                    {{ objectiveform.id }}     <!-- This has the id objective_id as that is the attribute name defined on the form, this is populated with the id of the objective if editiong or left blank if not so the server knows whether this was an update or a new creation -->
                     <div class="form-group" id="edit_objective_name_form_group">
                         {{ objectiveform.name.label }}
                         {{ objectiveform.name(class="form-control", placeholder="The objective should be clear, separable and testable.") }}
