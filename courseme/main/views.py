@@ -1039,11 +1039,12 @@ def test_angular():
 def _ajax_success(status_code=200, **data):
     """Successfuly complete an AJAX request"""
     result = {'success': True, 'data': data}
-    return json.dumps(result) ##, status_code
+    return json.dumps(result), status_code
 
 def _ajax_failure(status_code=400, **errors):
     """Complete an AJAX request with listed errors"""
+    assert status_code >= 400, "Error status code must be >= 400"
     result = {'success': False, 'errors': errors}
-    return json.dumps(result) ##, status_code
+    return json.dumps(result), status_code
 
 

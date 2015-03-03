@@ -46,46 +46,30 @@ $(document).ready(function () {
         //console.log(jQuery.isPlainObject( data_json ));
         //console.log(typeof data_json);        
 
-        
-        
-        $.post(  
-            flask_util.url_for('main.objective_add_update'),
-            data,  
-            function(json) {
-                
-                console.log(json);
-                
-                var result = $.parseJSON(json);
-                console.log(result);
-                console.log(result["success"]);
-                console.log(result.success);                
-                
-                $("#edit_objective_form").find(".help-block").text("");
-                            
-                if(result.success)
-                {
-                    $("#edit_objective_modal").modal('hide');
-                    location.reload();
-                }
-                else
-                {       
-                    if(result.errors.name) {
-                        $("#error_edit_objective_name").text(result.errors.name);
-                        $("#edit_objective_name_form_group").addClass("has-error");
-                    }
 
-                    if(result.errors.subject) {
-                        $("#error_edit_objective_subject").text(result.errors.subject);
-                        $("#edit_objective_subject_form_group").addClass("has-error");
-                    }
-
-                    if(result.errors.prerequisites) {
-                        $("#edit_objective_form").find(".dynamic-list-help").text(result.errors.prerequisites);
-                        $("#edit_objective_form").find(".dynamic-list-form").addClass("has-error");
-                    }
+        $.post(flask_util.url_for('main.objective_add_update'), data)
+            .done(function(response) {  // on success
+                var result = $.parseJSON(response);
+                $("#edit_objective_modal").modal('hide');
+                location.reload();
+            })
+            .fail(function(response) {  // on failure
+                var result = $.parseJSON(response.responseText);
+                if(result.errors.name) {
+                    $("#error_edit_objective_name").text(result.errors.name);
+                    $("#edit_objective_name_form_group").addClass("has-error");
                 }
-            }
-        );
+
+                if(result.errors.subject) {
+                    $("#error_edit_objective_subject").text(result.errors.subject);
+                    $("#edit_objective_subject_form_group").addClass("has-error");
+                }
+
+                if(result.errors.prerequisites) {
+                    $("#edit_objective_form").find(".dynamic-list-help").text(result.errors.prerequisites);
+                    $("#edit_objective_form").find(".dynamic-list-form").addClass("has-error");
+                }
+            });
     });
     
 //    $(function() {            DJG - could use ajax to get the list of objectives here, better to move this bit to the individual templates as may also want to autopopulate other stuff and already have objective list there
