@@ -16,15 +16,13 @@ from courseme.util import merge
 
 # import pdb; pdb.set_trace()        #DJG - remove
 
-<<<<<<< HEAD
 @main.route('/layout')
 def layout():
     title = "CourseMe"
     return render_template('layout.html',
                            title=title)
-=======
+
 _service_layer = Services()
->>>>>>> origin/master
 
 @main.route('/')
 @main.route('/index')
