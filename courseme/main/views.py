@@ -170,7 +170,7 @@ def objective_add_update(service_layer=_service_layer):
         except ValidationError, e:
             return _ajax_failure(**e.errors)
         except NotAuthorised, e:
-            return _ajax_failure(status_code=401, name="You do not have authority")
+            return _ajax_failure(status_code=401, name="You are not authorised to edit this objective")
         except NotFound, e:
             if e.model == Objective:
                 return _ajax_failure(status_code=404, id="Not found")

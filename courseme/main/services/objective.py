@@ -12,6 +12,7 @@ from courseme.main.services.base import BaseService
 from courseme.util import merge
 from courseme.errors import NotAuthorised, ValidationError
 
+
 class ObjectiveService(BaseService):
 
     __model__ = Objective
@@ -87,7 +88,7 @@ class ObjectiveService(BaseService):
         :param objective_data: is a dictionary of data with the updated state
                                of the Objective.  It must match the schema
                                defined within.
-        :param by_user: the `User` who is creating the `Objective`.
+        :param by_user: the `User` who is updating the `Objective`.
         """
 
         update_schema = merge(self._base_schema, {
@@ -116,7 +117,8 @@ class ObjectiveService(BaseService):
         return objective
 
     def _check_update_auth(self, objective, user):
-        if not user.is_admin and objective.created_by_id != user.id:
+        #import pdb; pdb.set_trace()
+        if not user.is_admin() and objective.created_by_id != user.id:
             raise NotAuthorised
 
     def _validate_topic(self, topic_id, subject_id):
