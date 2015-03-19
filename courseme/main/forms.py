@@ -6,6 +6,7 @@ from wtforms.fields.html5 import URLField
 from wtforms.fields import FieldList
 from .. models import Module, Objective
 
+from courseme.util.wtform_utils import blank_to_none
 
 class SignupForm(Form):
     email = TextField('Email address', validators=[
@@ -36,13 +37,22 @@ class LoginForm(Form):
 
 
 class EditObjective(Form):
-    edit_objective_id = HiddenField()
-    edit_objective_name = TextField('Objective', validators=[
+    id = HiddenField(filters=[blank_to_none])
+    name = TextField('Objective', validators=[
         DataRequired('Enter a description of the objective'),
         Length(min=4, message=(u'Description must be at least 4 characters'))])
-    edit_objective_topic = SelectField('Topic', choices=[])
-    edit_objective_prerequisites = SelectMultipleField('Prerequisites', choices=[])
+    topic_id = SelectField('Topic')
+    prerequisites = SelectMultipleField('Prerequisites', choices=[])
     # authors = FieldList(TextField('Name'))      #DJG - Try this as way of geting proper ordered list back from form
+
+    def __init__(self, topic_choices, **kwargs):
+        """Construct a new EditObjective form.
+
+        :param topic_choices: a list of 2-tuples representing the IDs and
+                              labels of available Topics.
+        """
+        super(EditObjective, self).__init__(**kwargs)
+        self.topic_id.choices = topic_choices
 
 
 class EditModule(Form):
