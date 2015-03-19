@@ -60,3 +60,9 @@ db_repository/
 #pycharm
 .xml
 .idea/
+
+#vim
+.*.swp
+
+# generated ctags file
+tags

@@ -9,15 +9,22 @@ from datetime import datetime
 import operator
 from ..email import send_email
 
+from courseme.main.services import Services
 import courseme.util.json as json
+from courseme.errors import ValidationError, NotAuthorised, NotFound
+from courseme.util import merge
 
 # import pdb; pdb.set_trace()        #DJG - remove
 
+<<<<<<< HEAD
 @main.route('/layout')
 def layout():
     title = "CourseMe"
     return render_template('layout.html',
                            title=title)
+=======
+_service_layer = Services()
+>>>>>>> origin/master
 
 @main.route('/')
 @main.route('/index')
@@ -54,9 +61,7 @@ def select_subject(id):
 @login_required
 def objectives_admin():
     title = "CourseMe - Objectives"
-    objectiveform = forms.EditObjective()
-    objectiveform.edit_objective_topic.choices = Topic.TopicChoices(
-        g.user)  # DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
+    objectiveform = forms.EditObjective(topic_choices=Topic.TopicChoices(g.user))
     objectives = g.user.visible_objectives().all()
     objectives.sort(
         key=operator.methodcaller("score"))  # DJG - isn't there a way of doing this within the order_by of the query
@@ -79,9 +84,7 @@ def objectives(profile_id, scheme_id=0):
         return redirect(url_for('.objectives', profile_id=g.user.id))
     else:
         title = "CourseMe - Objectives"
-        objectiveform = forms.EditObjective()
-        objectiveform.edit_objective_topic.choices = Topic.TopicChoices(
-            g.user)  # DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
+        objectiveform = forms.EditObjective(topic_choices=Topic.TopicChoices(g.user))
         objectives = []
         if scheme_id == 0:
             objectives = g.user.visible_objectives().all()
@@ -147,128 +150,37 @@ def objectives_group(group_id, scheme_id=0, name_display=1):
 
 
 @main.route('/objective-add-update', methods=['POST'])
-def objective_add_update():
-    form = forms.EditObjective()
-    form.edit_objective_topic.choices = Topic.TopicChoices(
-        g.user)  # DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
-    form.edit_objective_prerequisites.choices = [(i, i) for i in form.edit_objective_prerequisites.data]
-    # import pdb; pdb.set_trace()
-    #form will be the fields of the html form with the csrf
-    #request.form will be the data posted back through the ajax request
-    #DJG - don't know why the request.form object seems to have a second empty edit_objective_id attribute
-    #if request.method == 'POST':
-    #    form.dynamic_list_select.choices = g.user.visible_objectives()     #DJG - this was part of an attempt to use a wtf selectmultiplefield to capture the prerequisite list in the hope this would be passed through the post request as an array of strings and so avoid using the comma delimited approach here. The coices need to be a list of tuples so this isn't in the right format.
+def objective_add_update(service_layer=_service_layer):
+    form = forms.EditObjective(topic_choices=Topic.TopicChoices(g.user))
+    form.prerequisites.choices = [(i, i) for i in form.prerequisites.data]
+
     if form.validate():
-        obj_id = form.edit_objective_id.data
-        name = form.edit_objective_name.data
-        topic = Topic.query.get(form.edit_objective_topic.data)
-        topic_id = topic.id if topic else None
-        prerequisites = []
-        select_list = form.edit_objective_prerequisites.data
-        if select_list: prerequisites = g.user.visible_objectives().filter(Objective.name.in_(select_list)).all()
-        undefined_prerequisites = list(set(select_list) - set(obj.name for obj in prerequisites))
-        result = {'savedsuccess': False}
-        if not obj_id:
-            #The objective id is not found on the form so this is an add objective case
-            check_obj = g.user.visible_objectives().filter_by(name=name).first()
-            if check_obj is not None:
-                #The new objective name is already taken
-                result['edit_objective_name'] = [
-                    "Objective '" + name + "' already exists"]  #Need to make the new result attributes the same as the form.errors attributes which will be the form input field ids
-            elif undefined_prerequisites:
-                #A new objective can be created with the new name
-                #Need to check all the prerequisites exist already                
-                is_are = 'is not already defined as an objective' if len(
-                    undefined_prerequisites) == 1 else 'are not already defined as objectives'
-                result['new_prerequisite'] = ["'" + "', '".join(undefined_prerequisites) + "' " + is_are]
-                #No need to check for cyclic prerequisites as the new objective cannot be a prerequisite to anything already
-            elif topic and topic.subject_id != g.user.subject_id:
-                result['edit_objective_subject'] = [g.user.subject_id]
+        data = form.data
+
+        if data['topic_id'] == u'0':
+            data['topic_id'] = None
+
+        try:
+            if not data['id']:
+                data['subject_id'] = g.user.subject_id
+                service_layer.objectives.create(data, g.user)
+                return _ajax_success()
             else:
-                objective = Objective(name=name,
-                                      subject_id=g.user.subject_id,
-                                      topic_id=topic_id,
-                                      prerequisites=prerequisites,
-                                      created_by_id=g.user.id
-                )
-                db.session.add(objective)
-                db.session.commit()
-                result['savedsuccess'] = True
+                service_layer.objectives.update(data, g.user)
+                return _ajax_success()
 
-        else:
-            #The objective id is found on the form so this is an update objective case
-            #No need for any checks around the subject because this cannot be edited for an existing objective
-            objective = Objective.query.get(obj_id)
-            #DJG - should handle the case where no objective matches the id on the form request
-            proceed = True
-            #Check whether the user has the authority to edit it
-            if g.user.role != ROLE_ADMIN and objective.created_by_id != g.user.id:
-                result['edit_objective_name'] = ["You do not have authority to edit this objective"]
-                proceed = False
+        except ValidationError, e:
+            return _ajax_failure(**e.errors)
+        except NotAuthorised, e:
+            return _ajax_failure(status_code=401, name="You do not have authority")
+        except NotFound, e:
+            if e.model == Objective:
+                return _ajax_failure(status_code=404, id="Not found")
+            else:
+                return _ajax_failure(errors=[e.message])
 
-            #Authorised to edit
-            #Check whether the name has changed and if so check it is valid
-            if proceed:
-                if name != objective.name:
-                    #Name has changed - need to check if new name already exists
-                    check_obj = g.user.visible_objectives().filter_by(
-                        name=name).first()  #DJG - code repeat of above, how to avoid this
-                    if check_obj is not None:
-                        #The new objective name is already taken
-                        result['edit_objective_name'] = ["Objective '" + name + "' already exists"]
-                        proceed = False
+    return _ajax_failure(**form.errors)
 
-            #Name not changed or new name not taken            
-            if proceed:
-                #Need to check user.subject is the same as the existing objective subject
-                if g.user.subject_id != objective.subject_id or (topic and topic.subject_id != objective.subject_id):
-                    result['edit_objective_subject'] = [objective.subject_id]
-                    proceed = False
-
-            #User subject same as exsting objective subject
-            if proceed:
-                #Need to check all the prerequisites exist already            
-                if undefined_prerequisites:  #DJG - code repeat of above, how to avoid this
-                    is_are = 'is not already defined as an objective' if len(
-                        undefined_prerequisites) == 1 else 'are not already defined as objectives'
-                    result['new_prerequisite'] = ["'" + "', '".join(undefined_prerequisites) + "' " + is_are]
-                else:
-                    #Need to check for cyclic prerequisites
-                    cyclic_prerequisites = [p.name for p in prerequisites if p.is_required_indirect(objective)]
-                    if cyclic_prerequisites:
-                        is_are = 'is' if len(cyclic_prerequisites) == 1 else 'are'
-                        result['new_prerequisite'] = ["'" + "', '".join(
-                            cyclic_prerequisites) + "' " + is_are + " dependent on the current objective"]
-                    else:
-                        objective.name = name
-                        objective.prerequisites = prerequisites
-                        objective.topic_id = topic_id
-                        db.session.add(objective)
-                        db.session.commit()
-                        result['savedsuccess'] = True
-
-        return json.dumps(result)
-
-    form.errors['savedsuccess'] = False
-    return json.dumps(form.errors)
-
-                # form_header = "Edit " + material_type + ":"
-                # material_source = module.material_source
-                # material_path = module.material_path if material_source == 'youtube' else ''
-                # #flash(material_path)
-                # moduleform = forms.EditModule(
-                #     name=module.name,
-                #     description=module.description,
-                #     notes=module.notes,
-                #     material_type=module.material_type,
-                #     material_source=material_source,
-                #     material_path=material_path,
-                #     subtitles=module.subtitles,
-                #     easy_language=module.easy_language,
-                #     extension=module.extension,
-                #     for_teachers=module.for_teachers
-                # )
-                # module_objectives = module.objectives
 
 @main.route('/objective-delete')
 def objective_delete():
@@ -317,9 +229,7 @@ def editmodule(id=0):
     title = 'CourseMe - Edit Module'
     moduleform = forms.EditModule()  #DJG - need the arguement because using validate not validate_on_submit?
     #import pdb; pdb.set_trace()            #DJG - remove
-    objectiveform = forms.EditObjective()
-    objectiveform.edit_objective_topic.choices = Topic.TopicChoices(
-        g.user)  #DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
+    objectiveform = forms.EditObjective(topic_choices=Topic.TopicChoices(g.user))
     module_objectives = []
     module = None
     if not g.user.subject:
@@ -931,9 +841,7 @@ def deny_access(request_id):
 def edit_question(id=0):
     title = "CourseMe - Questions"
     form = forms.EditQuestion()
-    objectiveform = forms.EditObjective()
-    objectiveform.edit_objective_topic.choices = Topic.TopicChoices(
-        g.user)  #DJG - need to include this extra line everywhere to populate the objective topic choices. Can't do this in forms or models directy as no knowledge of tyhe session variable and so user in those places?
+    objectiveform = forms.EditObjective(topic_choices=Topic.TopicChoices(g.user))
     question_objectives = []
     question = None
     #import pdb; pdb.set_trace()
@@ -1133,3 +1041,18 @@ def test_angular():
     return render_template('test_angular.html',
                            title=title
     )
+
+#### Private ####
+
+def _ajax_success(status_code=200, **data):
+    """Successfuly complete an AJAX request"""
+    result = {'success': True, 'data': data}
+    return json.dumps(result), status_code
+
+def _ajax_failure(status_code=400, **errors):
+    """Complete an AJAX request with listed errors"""
+    assert status_code >= 400, "Error status code must be >= 400"
+    result = {'success': False, 'errors': errors}
+    return json.dumps(result), status_code
+
+

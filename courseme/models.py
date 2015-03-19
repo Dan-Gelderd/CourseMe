@@ -370,6 +370,9 @@ class User(db.Model):
         else:
             return []
 
+    def is_admin(self):
+        return self.role == ROLE_ADMIN
+
     @staticmethod
     def make_unique_username(username):
         if User.query.filter_by(name=username).first() == None:
@@ -385,6 +388,10 @@ class User(db.Model):
     @staticmethod  # DJG - suspect this should be taken out of the user class as the user is passed to the template and so the server side through g.user - may therefore give access to the client about admin users?
     def admin_users():
         return User.query.filter(User.role == ROLE_ADMIN).all()
+
+    @staticmethod
+    def admin_usersQ():
+        return User.query.filter(User.role == ROLE_ADMIN)
 
     @staticmethod
     def main_admin_user():
