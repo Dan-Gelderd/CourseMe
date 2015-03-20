@@ -181,13 +181,19 @@ def objective_add_update(service_layer=_service_layer):
 
 
 @main.route('/objective-delete')
-def objective_delete():
-    # DJG - need to check user has authority to delete objective
-    objective = Objective.query.get(request.args.get("objective_id"))
-    db.session.delete(
-        objective)  #DJG - secondary table should be updated automatically because of relationship definintion
-    db.session.commit()
-    return ""
+def objective_delete(service_layer=_service_layer):
+    try:
+        service_layer.objectives.delete(request.args.get("objective_id"), g.user)
+        return _ajax_success()
+
+    except NotAuthorised, e:
+        return _ajax_failure(status_code=401, name="You are not authorised to delete this objective")
+    except NotFound, e:
+        # DJG - don't get this bit - repetition of above
+        if e.model == Objective:
+            return _ajax_failure(status_code=404, id="Not found")
+        else:
+            return _ajax_failure(errors=[e.message])
 
 
 @main.route('/objective-get')

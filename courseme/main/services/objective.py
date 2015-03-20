@@ -116,10 +116,33 @@ class ObjectiveService(BaseService):
         db.session.commit()
         return objective
 
+
+    def delete(self, objective_id, by_user):
+        """Delete an objective.
+
+        :param objective_id: is the id of the `Objective` to be deleted.
+        :param by_user: the `User` who is deleting the `Objective`.
+        """
+
+        delete_schema = {'id': s.Use(int)}
+        o = s.Schema(delete_schema).validate({'id': objective_id})
+        # DJG - do I need to be using schema here. I just want to check the single id data item
+        objective = self.require_by_id(o['id'])
+
+        self._check_delete_auth(objective, by_user)
+        db.session.delete(objective)
+        # DJG - secondary table should be updated automatically because of relationship def
+        db.session.commit()
+
     def _check_update_auth(self, objective, user):
         #import pdb; pdb.set_trace()
         if not user.is_admin() and objective.created_by_id != user.id:
             raise NotAuthorised
+
+    def _check_delete_auth(self, objective, user):
+        self._check_update_auth(objective, user)
+        # DJG - initially assume delete authentication is same as update authentication
+        # DJG - How do you just pass the arguments through without naming them if you know they are the same?
 
     def _validate_topic(self, topic_id, subject_id):
         t = self.services.topics.require_by_id(topic_id) if topic_id else None
