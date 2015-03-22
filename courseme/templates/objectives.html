@@ -87,7 +87,7 @@ $(document).ready(function () {
         $.getJSON(
             flask_util.url_for('main.objective_assess', {profile_id: {{profile.id}}, objective_id: objective_id}),
             function(result) {
-                $(cell).removeClass("objective_not objective_partial warning objective_complete success");  //DJG - when objective classes are properly customised can remove the warning and succsess classes here   
+                $(cell).removeClass("objective_not objective_partial warning objective_complete success objective_warning danger");  //DJG - when objective classes are properly customised can remove the warning, danger and succsess classes here; code is a bit poor as it needs to know the list of states available
                 $(cell).addClass(result.assessed_display_class);
                 $(cell).find('span').html(result.assessed);         //DJG - Datatable not recognising the new value for sorting until the page is refreshed; need way for datatable initialise functions to be retriggered
             }

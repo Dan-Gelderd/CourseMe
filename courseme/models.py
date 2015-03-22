@@ -20,6 +20,7 @@ VIEW_OWN = 2
 OBJ_NOT = 0
 OBJ_PART = 1
 OBJ_FULL = 2
+OBJ_WARN = 3
 
 ENTERPRISE_LICENCE_DURATION = 1
 
@@ -196,11 +197,13 @@ class User(db.Model):
                     )
                 return False
 
+
     def visible_objectives(self):
         visible_objective_user_ids = [u.id for u in User.admin_users()]
         visible_objective_user_ids.append(self.id)
         return Objective.query.filter(Objective.created_by_id.in_(visible_objective_user_ids)).filter(
             Objective.subject_id == self.subject_id)  # DJG - what about visible courses?
+
 
     def restricted_questions_view(self):
         institution_student = self.institution_student
@@ -215,6 +218,7 @@ class User(db.Model):
             query_select = Question.query
         restricted_view = query_select.intersect(query_student)
         return restricted_view
+
 
     def visible_questions(self, restricted=True, authored=True, live=True, subject=True, topic=None, answers=False):
         # union parts
@@ -318,7 +322,7 @@ class User(db.Model):
             self.tutors.append(tutor)
             db.session.add(self)
             db.session.commit()
-            student_message = Message.AdminMessage(
+            Message.AdminMessage(
                 to_id=self.id,
                 subject="Access granted to new tutor - " + tutor.name,
                 body="You have granted permission to " + tutor.name + " to view your progress through learning objectives. You can review and change who has permission to view this information on your own profile page."
@@ -385,7 +389,7 @@ class User(db.Model):
             version += 1
         return new_username
 
-    @staticmethod  # DJG - suspect this should be taken out of the user class as the user is passed to the template and so the server side through g.user - may therefore give access to the client about admin users?
+    @staticmethod
     def admin_users():
         return User.query.filter(User.role == ROLE_ADMIN).all()
 
@@ -474,7 +478,6 @@ class Objective(db.Model):
         # wouldn't handle relationships
         # public_fields = ['name']
         # return {key: getattr(self, key) for key in public_fields}
-
         data = {}
         data['id'] = self.id
         data['name'] = self.name
@@ -507,7 +510,6 @@ class Objective(db.Model):
         else:
             return False
 
-    @staticmethod
     def system_objectives():
         system_objectives_iterator = (set(u.objectives_created) for u in User.admin_users())
         system_objectives = set.union(*system_objectives_iterator)
@@ -519,6 +521,12 @@ class Objective(db.Model):
             return [(str(objective.id), objective.name) for objective in Objective.query.all()]
         except:
             return []
+
+    @staticmethod
+    def assigned_objectives(tutor_id, student_id):
+        return Objective.query.join(UserObjective)\
+            .filter(UserObjective.assessor_id == tutor_id)\
+            .filter(UserObjective.user_id == student_id).all()
 
 
 module_objectives = db.Table('module_objectives',
@@ -579,9 +587,9 @@ class UserObjective(db.Model):
 
 
     def assess(self):
-        states = (OBJ_NOT, OBJ_PART, OBJ_FULL)
+        states = (OBJ_NOT, OBJ_PART, OBJ_FULL, OBJ_WARN)
         completed = states[(states.index(self.completed) + 1) % len(states)]  # Cycles through the list of states
-        print completed
+        print completed     # DJG - remove
         self.completed = completed
         db.session.add(self)
         # Set all other members from the student's institution to have the same assessment. Assessment is therefore an institution wide thing bt stored at the individual member level
@@ -599,9 +607,11 @@ class UserObjective(db.Model):
         display_classes = {
             OBJ_NOT: "objective_not",
             OBJ_PART: "objective_partial warning",
-            OBJ_FULL: "objective_complete success"
+            OBJ_FULL: "objective_complete success",
+            OBJ_WARN: "objective_warning danger",
         }
         return display_classes[self.completed]
+
 
     @staticmethod
     def FindOrCreate(user_id, assessor_id, objective_id):
@@ -617,6 +627,18 @@ class UserObjective(db.Model):
             db.session.add(userobjective)
             db.session.commit()
         return userobjective
+
+
+    @staticmethod
+    def ignore_or_delete(user_id, assessor_id, objective_id):
+        # DJG - should check for multiple query returns
+        userobjective = UserObjective.query.filter_by(user_id=user_id, assessor_id=assessor_id,
+                                                      objective_id=objective_id).first()
+        if userobjective:
+            db.session.remove(userobjective)
+            db.session.commit()
+            return True
+        return False
 
 
 class Module(db.Model):  # DJG - change this class to material as it now captures modules and courses

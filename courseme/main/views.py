@@ -85,7 +85,8 @@ def objectives(profile_id, scheme_id=0):
         objectiveform = forms.EditObjective(topic_choices=Topic.TopicChoices(g.user))
         objectives = []
         if scheme_id == 0:
-            objectives = g.user.visible_objectives().all()
+            objectives = Objective.assigned_objectives(g.user.id, profile_id)
+            #objectives = g.user.visible_objectives().all()
         else:
             scheme = SchemeOfWork.query.get(scheme_id)
             if scheme:
