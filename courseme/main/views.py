@@ -85,7 +85,7 @@ def objectives(profile_id, scheme_id=0):
         objectiveform = forms.EditObjective(topic_choices=Topic.TopicChoices(g.user))
         objectives = []
         if scheme_id == 0:
-            objectives = Objective.assigned_objectives(g.user.id, profile_id)
+            objectives = Objective.assigned_objectives_q(g.user.id, profile_id).all()
             #objectives = g.user.visible_objectives().all()
         else:
             scheme = SchemeOfWork.query.get(scheme_id)
@@ -99,7 +99,7 @@ def objectives(profile_id, scheme_id=0):
                 "score"))  # DJG - isn't there a way of doing this within the order_by of the query
         return render_template(
             'objectives.html',
-            title=title,
+            title="CourseMe - Objectives",
             objectiveform=objectiveform,
             objectives=objectives,
             profile=profile,

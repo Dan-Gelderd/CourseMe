@@ -425,6 +425,7 @@ class Objective(db.Model):
     description = db.Column(db.String(50), nullable=True)
     time_created = db.Column(db.DateTime)
     last_updated = db.Column(db.DateTime)
+    approved = db.Column(db.DateTime, nullable=True)
     assessable = db.Column(db.Boolean, nullable=False, default=True)
 
     created_by_id = db.Column(db.Integer,
@@ -515,6 +516,14 @@ class Objective(db.Model):
         system_objectives = set.union(*system_objectives_iterator)
         return system_objectives
 
+
+    @staticmethod
+    def system_objectives_q(self, subject_id = None):
+        system_objectives = Objective.query.filter(bool(Objective.approved))
+        if subject_id:
+            system_objectives = system_objectives.filter(Objective.subject_id == subject_id)
+        return system_objectives
+
     @staticmethod
     def Choices():
         try:  # DJG - this exception handling is needed because the forms module references this method and so on database creation it creates an error since the table cannot be found and queries. Perhaps there is a better way to prevent the cyclic dependency on startup
@@ -523,10 +532,10 @@ class Objective(db.Model):
             return []
 
     @staticmethod
-    def assigned_objectives(tutor_id, student_id):
+    def assigned_objectives_q(tutor_id, student_id):
         return Objective.query.join(UserObjective)\
             .filter(UserObjective.assessor_id == tutor_id)\
-            .filter(UserObjective.user_id == student_id).all()
+            .filter(UserObjective.user_id == student_id)
 
 
 module_objectives = db.Table('module_objectives',
@@ -635,7 +644,7 @@ class UserObjective(db.Model):
         userobjective = UserObjective.query.filter_by(user_id=user_id, assessor_id=assessor_id,
                                                       objective_id=objective_id).first()
         if userobjective:
-            db.session.remove(userobjective)
+            db.session.delete(userobjective)
             db.session.commit()
             return True
         return False

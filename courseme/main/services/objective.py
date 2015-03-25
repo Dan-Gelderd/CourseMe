@@ -7,7 +7,7 @@ from sqlalchemy import or_, and_
 from sqlalchemy.orm import load_only
 
 from courseme import db
-from courseme.models import Objective, User
+from courseme.models import Objective, User, UserObjective
 from courseme.main.services.base import BaseService
 from courseme.util import merge
 from courseme.errors import NotAuthorised, ValidationError
@@ -134,9 +134,68 @@ class ObjectiveService(BaseService):
         # DJG - secondary table should be updated automatically because of relationship def
         db.session.commit()
 
+
+    def remove(self, objective_id, student_id, tutor_id, by_user):
+        """Remove an objective from a users set of adopted objectives.
+
+        :param objective_id: is the id of the `Objective` to be removed.
+        :param student_id: is the id of the `User` for whom the `Objective` is being removed.
+        :param tutor_id: is the id of the `User` who is removing the `Objective`.
+        :param by_user: is the `User` who is removing the `Objective`.
+        """
+
+        remove_schema = {'id': s.Use(int),
+                         'student_id': s.Use(int),
+                         'tutor_id': s.Use(int)
+        }
+        o = s.Schema(remove_schema).validate({'id': objective_id,
+                                              'student_id': student_id,
+                                              'tutor_id': tutor_id})
+
+        self._check_user_id(tutor_id, by_user)
+        UserObjective.ignore_or_delete(student_id, tutor_id, objective_id)
+
+
+    def objectives_for_selection(self, user, subject_id = None):
+        """The set of 'Objectives' that are visible to the 'User' is the set of system objectives and the objectives the
+        user has some self assessment for.
+
+        :param user: is the 'User' for whom the objectives are being collected.
+        :param subject_id: is the id of the `Subject` that will be used to filter the set of `Objectives` returned.
+        """
+
+        q = Objective.query.union(
+                    Objective.system_objectives_q(subject_id),
+                    Objective.assigned_objectives_q(user.id, user.id)
+        )
+        q = self._filter_on_subject(q, subject_id)
+        return q
+
+
+    def objectives_for_assessment(self, user, student_id, subject_id = None):
+        """The set of 'Objectives' that are visible to the 'User' for the purpose of assessing a given student.
+
+        :param user: is the 'User' for whom the objectives are being collected.
+        :param student_id: is the id of the 'User' who is being assessed.
+        :param subject_id: is the id of the `Subject` that will be used to filter the set of `Objectives` returned.
+        """
+        q = Objective.assigned_objectives_q(user.id, student_id)
+        q = self._filter_on_subject(q, subject_id)
+        return q
+
+
+    def _filter_on_subject(self, query, subject_id = None):
+        if subject_id:
+            return query.filter(Objective.subject_id == subject_id)
+        else:
+            return query
+
+    def _check_user_id(self, user_id, user):
+        if user_id != user.id:
+            raise NotAuthorised
+
     def _check_update_auth(self, objective, user):
-        #import pdb; pdb.set_trace()
-        if not user.is_admin() and objective.created_by_id != user.id:
+        if not user.is_admin():
             raise NotAuthorised
 
     def _check_delete_auth(self, objective, user):
