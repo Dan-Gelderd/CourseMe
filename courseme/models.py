@@ -20,6 +20,7 @@ VIEW_OWN = 2
 OBJ_NOT = 0
 OBJ_PART = 1
 OBJ_FULL = 2
+OBJ_WARN = 3
 
 ENTERPRISE_LICENCE_DURATION = 1
 
@@ -196,11 +197,13 @@ class User(db.Model):
                     )
                 return False
 
+
     def visible_objectives(self):
         visible_objective_user_ids = [u.id for u in User.admin_users()]
         visible_objective_user_ids.append(self.id)
         return Objective.query.filter(Objective.created_by_id.in_(visible_objective_user_ids)).filter(
             Objective.subject_id == self.subject_id)  # DJG - what about visible courses?
+
 
     def restricted_questions_view(self):
         institution_student = self.institution_student
@@ -215,6 +218,7 @@ class User(db.Model):
             query_select = Question.query
         restricted_view = query_select.intersect(query_student)
         return restricted_view
+
 
     def visible_questions(self, restricted=True, authored=True, live=True, subject=True, topic=None, answers=False):
         # union parts
@@ -318,7 +322,7 @@ class User(db.Model):
             self.tutors.append(tutor)
             db.session.add(self)
             db.session.commit()
-            student_message = Message.AdminMessage(
+            Message.AdminMessage(
                 to_id=self.id,
                 subject="Access granted to new tutor - " + tutor.name,
                 body="You have granted permission to " + tutor.name + " to view your progress through learning objectives. You can review and change who has permission to view this information on your own profile page."
@@ -385,7 +389,7 @@ class User(db.Model):
             version += 1
         return new_username
 
-    @staticmethod  # DJG - suspect this should be taken out of the user class as the user is passed to the template and so the server side through g.user - may therefore give access to the client about admin users?
+    @staticmethod
     def admin_users():
         return User.query.filter(User.role == ROLE_ADMIN).all()
 
@@ -421,6 +425,7 @@ class Objective(db.Model):
     description = db.Column(db.String(50), nullable=True)
     time_created = db.Column(db.DateTime)
     last_updated = db.Column(db.DateTime)
+    approved = db.Column(db.DateTime, nullable=True)
     assessable = db.Column(db.Boolean, nullable=False, default=True)
 
     created_by_id = db.Column(db.Integer,
@@ -474,7 +479,6 @@ class Objective(db.Model):
         # wouldn't handle relationships
         # public_fields = ['name']
         # return {key: getattr(self, key) for key in public_fields}
-
         data = {}
         data['id'] = self.id
         data['name'] = self.name
@@ -505,12 +509,19 @@ class Objective(db.Model):
         if userobjective:
             return userobjective.assessed_display_class()
         else:
-            return False
+            return UserObjective.not_assigned_class()
 
-    @staticmethod
     def system_objectives():
         system_objectives_iterator = (set(u.objectives_created) for u in User.admin_users())
         system_objectives = set.union(*system_objectives_iterator)
+        return system_objectives
+
+
+    @staticmethod
+    def system_objectives_q(self, subject_id = None):
+        system_objectives = Objective.query.filter(bool(Objective.approved))
+        if subject_id:
+            system_objectives = system_objectives.filter(Objective.subject_id == subject_id)
         return system_objectives
 
     @staticmethod
@@ -519,6 +530,12 @@ class Objective(db.Model):
             return [(str(objective.id), objective.name) for objective in Objective.query.all()]
         except:
             return []
+
+    @staticmethod
+    def assigned_objectives_q(tutor_id, student_id):
+        return Objective.query.join(UserObjective)\
+            .filter(UserObjective.assessor_id == tutor_id)\
+            .filter(UserObjective.user_id == student_id)
 
 
 module_objectives = db.Table('module_objectives',
@@ -579,29 +596,38 @@ class UserObjective(db.Model):
 
 
     def assess(self):
-        states = (OBJ_NOT, OBJ_PART, OBJ_FULL)
+        states = (OBJ_NOT, OBJ_PART, OBJ_FULL, OBJ_WARN)
         completed = states[(states.index(self.completed) + 1) % len(states)]  # Cycles through the list of states
-        print completed
         self.completed = completed
         db.session.add(self)
+
+        # DJG - this part should be moved into the service layer
         # Set all other members from the student's institution to have the same assessment. Assessment is therefore an institution wide thing bt stored at the individual member level
         institution = self.user.institution_student
         if institution:
             if institution.is_member(self.assessor):
+                # If the assessed user is a student of an institution for which the assessor is a member then share the objective assessment with all other institution members
                 for member in institution.members:
                     userobjective = UserObjective.FindOrCreate(user_id=self.user_id, assessor_id=member.id,
                                                                objective_id=self.objective_id)
                     userobjective.completed = completed
                     db.session.add(userobjective)
+
+                # If the assessed user is a student of an institution for which the assessor is a member then add the objective to the students set of assessable objectives
+                UserObjective.FindOrCreate(self.user.id, self.user.id, self.objective_id)
         db.session.commit()
 
+
     def assessed_display_class(self):
+        # DJG - need sr-only attribtes too
         display_classes = {
             OBJ_NOT: "objective_not",
             OBJ_PART: "objective_partial warning",
-            OBJ_FULL: "objective_complete success"
+            OBJ_FULL: "objective_complete success",
+            OBJ_WARN: "objective_warning danger",
         }
         return display_classes[self.completed]
+
 
     @staticmethod
     def FindOrCreate(user_id, assessor_id, objective_id):
@@ -617,6 +643,23 @@ class UserObjective(db.Model):
             db.session.add(userobjective)
             db.session.commit()
         return userobjective
+
+
+    @staticmethod
+    def ignore_or_delete(user_id, assessor_id, objective_id):
+        # DJG - should check for multiple query returns
+        userobjective = UserObjective.query.filter_by(user_id=user_id, assessor_id=assessor_id,
+                                                      objective_id=objective_id).first()
+        if userobjective:
+            db.session.delete(userobjective)
+            db.session.commit()
+            return True
+        return False
+
+
+    @staticmethod
+    def not_assigned_class():
+        return "objective_not_assigned active"
 
 
 class Module(db.Model):  # DJG - change this class to material as it now captures modules and courses

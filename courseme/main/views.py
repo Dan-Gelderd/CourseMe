@@ -72,37 +72,26 @@ def objectives_admin():
 @main.route('/objectives/<int:profile_id>')
 @main.route('/objectives/<int:profile_id>/<int:scheme_id>')
 @login_required
-def objectives(profile_id, scheme_id=0):
+def objectives(profile_id, scheme_id=0, service_layer=_service_layer):
     profile = User.query.get(profile_id)
-    if not profile:
-        flash("This user does not exist")
-        return redirect(url_for('.objectives', profile_id=g.user.id))
-    elif not profile.permission(g.user):
-        flash("You do not have permission to view this user's learning objectives")
-        return redirect(url_for('.objectives', profile_id=g.user.id))
+    if scheme_id == 0:
+        objectives = service_layer.objectives.objectives_for_assessment(g.user, profile_id, g.user.subject_id).all()
     else:
-        title = "CourseMe - Objectives"
-        objectiveform = forms.EditObjective(topic_choices=Topic.TopicChoices(g.user))
-        objectives = []
-        if scheme_id == 0:
-            objectives = g.user.visible_objectives().all()
+        scheme = SchemeOfWork.query.get(scheme_id)
+        if scheme:
+            objectives = scheme.objectives.all()
         else:
-            scheme = SchemeOfWork.query.get(scheme_id)
-            if scheme:
-                objectives = scheme.objectives.all()
-            else:
-                flash("Scheme of work not found")
-                return redirect(url_for('.schemes'))
-        objectives.sort(
-            key=operator.methodcaller(
-                "score"))  # DJG - isn't there a way of doing this within the order_by of the query
-        return render_template(
-            'objectives.html',
-            title=title,
-            objectiveform=objectiveform,
-            objectives=objectives,
-            profile=profile,
-            scheme_id=scheme_id)
+            flash("Scheme of work not found")
+            return redirect(url_for('.schemes'))
+    objectives.sort(
+        key=operator.methodcaller(
+            "score"))  # DJG - isn't there a way of doing this within the order_by of the query
+    return render_template(
+        'objectives.html',
+        title="CourseMe - Objectives",
+        objectives=objectives,
+        profile=profile,
+        scheme_id=scheme_id)
 
 
 @main.route('/objectives-group/<int:group_id>')
@@ -205,7 +194,7 @@ def objective_get():
 @main.route('/objective-assess/<int:profile_id>/<int:objective_id>')
 @login_required
 def objective_assess(profile_id, objective_id):
-    objective = Objective.query.get(objective_id)  # DJG - may restrict search to just some set of visisble objectives
+    objective = Objective.query.get(objective_id)  # DJG - may restrict search to just some set of visible objectives
     if not objective:
         flash("This objective does not exist")
         return redirect(url_for('.objectives', id=g.user.id))

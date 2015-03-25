@@ -75,3 +75,5 @@ class UserModelTestCase(unittest.TestCase):
         token = u1.generate_reset_token()
         self.assertFalse(u2.reset_password(token, 'horse'))
         self.assertTrue(u2.verify_password('dog'))
+
+
