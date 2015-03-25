@@ -114,6 +114,11 @@ class ObjectiveService(BaseService):
         objective.topic_id = o['topic_id']
         db.session.add(objective)
         db.session.commit()
+
+        UserObjective.FindOrCreate(by_user.id, by_user.id, objective.id)
+        # Adds a record to the UserObjective table if not already there. This is the official record of what objectives
+        # should be visible to the user
+
         return objective
 
 
@@ -131,7 +136,6 @@ class ObjectiveService(BaseService):
 
         self._check_delete_auth(objective, by_user)
         db.session.delete(objective)
-        # DJG - secondary table should be updated automatically because of relationship def
         db.session.commit()
 
 
@@ -148,13 +152,12 @@ class ObjectiveService(BaseService):
                          'student_id': s.Use(int),
                          'tutor_id': s.Use(int)
         }
-        o = s.Schema(remove_schema).validate({'id': objective_id,
+        s.Schema(remove_schema).validate({'id': objective_id,
                                               'student_id': student_id,
                                               'tutor_id': tutor_id})
 
         self._check_user_id(tutor_id, by_user)
         UserObjective.ignore_or_delete(student_id, tutor_id, objective_id)
-
 
     def objectives_for_selection(self, user, subject_id = None):
         """The set of 'Objectives' that are visible to the 'User' is the set of system objectives and the objectives the
@@ -171,7 +174,6 @@ class ObjectiveService(BaseService):
         q = self._filter_on_subject(q, subject_id)
         return q
 
-
     def objectives_for_assessment(self, user, student_id, subject_id = None):
         """The set of 'Objectives' that are visible to the 'User' for the purpose of assessing a given student.
 
@@ -182,7 +184,6 @@ class ObjectiveService(BaseService):
         q = Objective.assigned_objectives_q(user.id, student_id)
         q = self._filter_on_subject(q, subject_id)
         return q
-
 
     def _filter_on_subject(self, query, subject_id = None):
         if subject_id:
