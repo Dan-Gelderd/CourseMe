@@ -193,26 +193,8 @@ def objective_get():
 
 @main.route('/objective-assess/<int:profile_id>/<int:objective_id>')
 @login_required
-def objective_assess(profile_id, objective_id):
-    objective = Objective.query.get(objective_id)  # DJG - may restrict search to just some set of visible objectives
-    if not objective:
-        flash("This objective does not exist")
-        return redirect(url_for('.objectives', id=g.user.id))
-    profile = User.query.get(profile_id)
-    if not profile:
-        flash("This user does not exist")
-        return redirect(url_for('.objectives', id=g.user.id))
-    elif not profile.permission(g.user):
-        flash("You do not have permission to view this user's learning objectives")
-        return redirect(url_for('.objectives', id=g.user.id))
-    else:
-        userobjective = UserObjective.FindOrCreate(profile_id, g.user.id, objective_id)
-        userobjective.assess()
-        # import pdb; pdb.set_trace()
-        return json.dumps({
-            'assessed_display_class': userobjective.assessed_display_class(),
-            'assessed': userobjective.completed
-        })
+def objective_assess(profile_id, objective_id, service_layer=_service_layer):
+    return json.dumps(service_layer.objectives.assess(objective_id, profile_id, g.user.id, g.user))
 
 
 # modules

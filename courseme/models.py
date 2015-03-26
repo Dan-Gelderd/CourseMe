@@ -595,39 +595,11 @@ class UserObjective(db.Model):
     objective = db.relationship(Objective, backref='user_objectives')
 
 
-    def assess(self):
-        states = (OBJ_NOT, OBJ_PART, OBJ_FULL, OBJ_WARN)
-        completed = states[(states.index(self.completed) + 1) % len(states)]  # Cycles through the list of states
-        self.completed = completed
-        db.session.add(self)
-
-        # DJG - this part should be moved into the service layer
-        # Set all other members from the student's institution to have the same assessment. Assessment is therefore an institution wide thing bt stored at the individual member level
-        institution = self.user.institution_student
-        if institution:
-            if institution.is_member(self.assessor):
-                # If the assessed user is a student of an institution for which the assessor is a member then share the objective assessment with all other institution members
-                for member in institution.members:
-                    userobjective = UserObjective.FindOrCreate(user_id=self.user_id, assessor_id=member.id,
-                                                               objective_id=self.objective_id)
-                    userobjective.completed = completed
-                    db.session.add(userobjective)
-
-                # If the assessed user is a student of an institution for which the assessor is a member then add the objective to the students set of assessable objectives
-                UserObjective.FindOrCreate(self.user.id, self.user.id, self.objective_id)
-        db.session.commit()
-
-
     def assessed_display_class(self):
-        # DJG - need sr-only attribtes too
-        display_classes = {
-            OBJ_NOT: "objective_not",
-            OBJ_PART: "objective_partial warning",
-            OBJ_FULL: "objective_complete success",
-            OBJ_WARN: "objective_warning danger",
-        }
-        return display_classes[self.completed]
+        return UserObjective.assessment_states()[self.completed]["class"]
 
+    def assessed_sr_attribute(self):
+        return UserObjective.assessment_states()[self.completed]["sr-only"]
 
     @staticmethod
     def FindOrCreate(user_id, assessor_id, objective_id):
@@ -656,10 +628,23 @@ class UserObjective(db.Model):
             return True
         return False
 
+    @staticmethod
+    def assessment_states():
+        assessment_states = {
+            OBJ_NOT: {"class": "objective_not", "sr-only": "", "assessed": OBJ_NOT},
+            OBJ_PART: {"class": "objective_partial warning", "sr-only": "", "assessed": OBJ_PART},
+            OBJ_FULL: {"class": "objective_complete success", "sr-only": "", "assessed": OBJ_FULL},
+            OBJ_WARN: {"class": "objective_warning danger", "sr-only": "", "assessed": OBJ_WARN}
+        }
+        return assessment_states
 
     @staticmethod
     def not_assigned_class():
         return "objective_not_assigned active"
+
+    @staticmethod
+    def not_visible_class():
+        return "objective_not_visible active"
 
 
 class Module(db.Model):  # DJG - change this class to material as it now captures modules and courses

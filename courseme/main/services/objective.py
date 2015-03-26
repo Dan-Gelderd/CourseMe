@@ -185,6 +185,50 @@ class ObjectiveService(BaseService):
         q = self._filter_on_subject(q, subject_id)
         return q
 
+    def assess(self, objective_id, student_id, tutor_id, by_user):
+        """Remove an objective from a users set of adopted objectives.
+
+        :param objective_id: is the id of the `Objective` to be removed.
+        :param student_id: is the id of the `User` for whom the `Objective` is being removed.
+        :param tutor_id: is the id of the `User` who is removing the `Objective`.
+        :param by_user: is the `User` who is removing the `Objective`.
+        """
+
+        assess_schema = {'user_id': s.Use(int),
+                         'assessor_id': s.Use(int),
+                         'objective_id': s.Use(int)
+        }
+        u = s.Schema(assess_schema).validate({'objective_id': objective_id,
+                                            'user_id': student_id,
+                                            'assessor_id': tutor_id})
+
+        self._check_user_id(tutor_id, by_user)
+
+        userobjective = UserObjective.FindOrCreate(**u)
+
+        states = UserObjective.assessment_states().keys()
+        completed = states[(states.index(userobjective.completed) + 1) % len(states)]  # Cycles through the list of states
+        userobjective.completed = completed
+        db.session.add(userobjective)
+
+        student = User.query.get(u["user_id"])
+        # Set all other members from the student's institution to have the same assessment. Assessment is therefore an institution wide thing bt stored at the individual member level
+        institution = student.institution_student if student else None
+        if institution:
+            if institution.is_member(userobjective.assessor):
+                # If the assessed user is a student of an institution for which the assessor is a member then share the objective assessment with all other institution members
+                for member in institution.members:
+                    userobjective = UserObjective.FindOrCreate(user_id=u["user_id"], assessor_id=member.id,
+                                                               objective_id=u["objective_id"])
+                    userobjective.completed = completed
+                    db.session.add(userobjective)
+
+        # DJG - need condition to be simply if tutor is authorised by student
+        # If the assessed user is a student of an institution for which the assessor is a member then add the objective to the students set of assessable objectives
+        UserObjective.FindOrCreate(u["user_id"], u["user_id"], u["objective_id"])
+        db.session.commit()
+        return UserObjective.assessment_states()[completed]
+
     def _filter_on_subject(self, query, subject_id = None):
         if subject_id:
             return query.filter(Objective.subject_id == subject_id)
