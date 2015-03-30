@@ -197,12 +197,12 @@ class User(db.Model):
                     )
                 return False
 
-
-    def visible_objectives(self):
-        visible_objective_user_ids = [u.id for u in User.admin_users()]
-        visible_objective_user_ids.append(self.id)
-        return Objective.query.filter(Objective.created_by_id.in_(visible_objective_user_ids)).filter(
-            Objective.subject_id == self.subject_id)  # DJG - what about visible courses?
+# DJG - moved to service lasyer
+    # def visible_objectives(self):
+    #     visible_objective_user_ids = [u.id for u in User.admin_users()]
+    #     visible_objective_user_ids.append(self.id)
+    #     return Objective.query.filter(Objective.created_by_id.in_(visible_objective_user_ids)).filter(
+    #         Objective.subject_id == self.subject_id)  # DJG - what about visible courses?
 
 
     def restricted_questions_view(self):
@@ -511,15 +511,12 @@ class Objective(db.Model):
         else:
             return UserObjective.not_assigned_class()
 
-    def system_objectives():
-        system_objectives_iterator = (set(u.objectives_created) for u in User.admin_users())
-        system_objectives = set.union(*system_objectives_iterator)
-        return system_objectives
-
 
     @staticmethod
     def system_objectives_q(self, subject_id = None):
-        system_objectives = Objective.query.filter(bool(Objective.approved))
+        #import pdb; pdb.set_trace()
+        #DJG - this doesn't seem to be working - returning everything even when Objective.approved is null
+        system_objectives = Objective.query.filter(bool(Objective.approved) == True)
         if subject_id:
             system_objectives = system_objectives.filter(Objective.subject_id == subject_id)
         return system_objectives

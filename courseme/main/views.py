@@ -57,10 +57,10 @@ def select_subject(id):
 # objectives
 @main.route('/objectives-admin')
 @login_required
-def objectives_admin():
+def objectives_admin(service_layer=_service_layer):
     title = "CourseMe - Objectives"
     objectiveform = forms.EditObjective(topic_choices=Topic.TopicChoices(g.user))
-    objectives = g.user.visible_objectives().all()
+    objectives = service_layer.objectives.objectives_for_selection(g.user, g.user.subject_id).all()
     objectives.sort(
         key=operator.methodcaller("score"))  # DJG - isn't there a way of doing this within the order_by of the query
     return render_template('objectivesadmin.html',
