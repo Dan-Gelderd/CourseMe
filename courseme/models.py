@@ -73,8 +73,8 @@ class User(db.Model):
     confirmed = db.Column(db.Boolean, default=False)
     blurb = db.Column(db.String(256), default="This is some blurb")
     role = db.Column(db.SmallInteger, default=ROLE_USER, nullable=False)
-    last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     time_registered = db.Column(db.DateTime, default=datetime.utcnow)
+    last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     enterprise_licence = db.Column(db.DateTime)
     time_deleted = db.Column(db.DateTime)
 
@@ -197,7 +197,7 @@ class User(db.Model):
                     )
                 return False
 
-# DJG - moved to service lasyer
+# DJG - moved to service layer
     # def visible_objectives(self):
     #     visible_objective_user_ids = [u.id for u in User.admin_users()]
     #     visible_objective_user_ids.append(self.id)
@@ -293,13 +293,18 @@ class User(db.Model):
     def live_messages(self):
         return self.received_messages.filter(bool(Message.deleted)).order_by(desc(Message.sent))
 
-    def institution_tutors(
-            self):  # DJG - not really needed as a separate method means as creator is always added to list of members when institution created by create method
-        return self.institution_student.members
+    def institution_tutors_q(self):
+        # DJG - The members of the institution of which the user is a student
+        #if self.institution_student:
+            return self.institution_student.members
+        #else:
+        #    return User.query.filter(1==0)
 
     def permission(self, viewer):
-        return self == viewer or viewer in self.tutors.all() or (
-            self.institution_student and viewer in self.institution_tutors().all())
+        return self == viewer \
+               or viewer in self.tutors.all() \
+               # or (self.institution_student and viewer in self.institution_tutors().all())
+                # DJG - remove this automatic permission and allow institutions to manage the tutor-student relationships individually in the usual way
 
     def all_students(self):
         all_students = self.students.all()
@@ -366,14 +371,6 @@ class User(db.Model):
             self.select_question(question)
             return "success"
 
-    def objectives_to_assess(self, student):
-        if self == student:
-            return []
-        elif student.permission(self):
-            return []
-        else:
-            return []
-
     def is_admin(self):
         return self.role == ROLE_ADMIN
 
@@ -399,7 +396,7 @@ class User(db.Model):
 
     @staticmethod
     def main_admin_user():
-        return User.query.get(1)
+        return User.user_by_email('dan.gelderd@courseme.fake')
         # DJG - Not robust. Need some way to return the main system admin user
 
     @staticmethod
@@ -410,6 +407,21 @@ class User(db.Model):
         else:
             return None
 
+    @staticmethod
+    def _is_authorised(student_id, tutor_id):
+        student = User.query.get(student_id)
+        tutor = User.query.get(tutor_id)
+        return student.permission(tutor)
+        # DJG - feels like this logic should be in the service layer but want to have access to user.permission() type functions in templates; could pass service layer to template?
+
+    @staticmethod
+    def _common_assessors(student_id, tutor_id):
+        student = User.query.get(student_id)
+        tutor = User.query.get(tutor_id)
+        if student and tutor:
+            if student.institution_student.is_member(tutor):
+                return User.query.intersect(student.institution_tutors_q(),student.tutors).all()
+        return []
 
 objective_heirarchy = db.Table("objective_heirarchy",
                                db.Column("prerequisite_id", db.Integer, db.ForeignKey("objective.id")),
@@ -599,7 +611,7 @@ class UserObjective(db.Model):
         return UserObjective.assessment_states()[self.completed]["sr-only"]
 
     @staticmethod
-    def FindOrCreate(user_id, assessor_id, objective_id):
+    def create(user_id, assessor_id, objective_id):
         # DJG - should check for multiple query returns
         userobjective = UserObjective.query.filter_by(user_id=user_id, assessor_id=assessor_id,
                                                       objective_id=objective_id).first()

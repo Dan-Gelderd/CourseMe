@@ -9,7 +9,7 @@ $(document).ready(function () {
     //$('#edit_members_form_group').find('.dynamic-list-new-item').setAttribute('placeholder', '')      
     
     var availableTags = [];
-    {% for objective in g.user.visible_objectives() %}
+    {% for objective in service_layer.objectives.objectives_for_selection(g.user, g.user.subject_id).all() %}
         availableTags.push('{{ objective.name }}')    
     {% endfor %}    
         

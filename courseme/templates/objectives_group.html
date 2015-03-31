@@ -102,12 +102,12 @@ $(document).ready(function () {
     $("#objectives_to_view").on('change', function () {
         var scheme_id = $(this).val();
         console.log(scheme_id);
-        window.location.href = flask_util.url_for('main.objectives_group', {group_id: {{group.id}}, scheme_id: scheme_id});
+        window.location.href = flask_util.url_for('main.objectives_group', {group_id: {{group.id}}, scheme_id: scheme_id, name_display: {{name_display}}});
     });
 
     $("#profiles_to_view").on('change', function () {
         var group_id = $(this).val();
-        window.location.href = flask_util.url_for('main.objectives_group', {group_id: group_id, scheme_id: {{scheme_id}}});
+        window.location.href = flask_util.url_for('main.objectives_group', {group_id: group_id, scheme_id: {{scheme_id}}, name_display: {{name_display}}});
     });
 
     $("#name_display").on('change', function () {

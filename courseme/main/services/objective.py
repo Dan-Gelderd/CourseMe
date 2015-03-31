@@ -145,7 +145,7 @@ class ObjectiveService(BaseService):
         :param objective_id: is the id of the `Objective` to be removed.
         :param student_id: is the id of the `User` for whom the `Objective` is being removed.
         :param tutor_id: is the id of the `User` who is removing the `Objective`.
-        :param by_user: is the `User` who is removing the `Objective`.
+        :param by_user: is the `User` who is calling the action.
         """
 
         remove_schema = {'id': s.Use(int),
@@ -158,6 +158,39 @@ class ObjectiveService(BaseService):
 
         self._check_user_id(tutor_id, by_user)
         UserObjective.ignore_or_delete(student_id, tutor_id, objective_id)
+
+        # DJG - how do students remove objectives? Is it related to tutor removing the objective for them? What if you add an objective in error.
+
+    def find_or_include(self, objective_id, student_id, tutor_id, by_user, common_assessors=True):
+        """Include an objective among a users set of adopted objectives.
+
+        :param objective_id: is the id of the `Objective` to be included.
+        :param student_id: is the id of the `User` for whom the `Objective` is being included.
+        :param tutor_id: is the id of the `User` who is including the `Objective`.
+        :param by_user: is the `User` who is calling the action.
+        :param common_assessors: determines whether common assessors should have their assessment updated for the 'Student'.
+        """
+
+        include_schema = {'objective_id': s.Use(int),
+                         'user_id': s.Use(int),
+                         'assessor_id': s.Use(int)
+        }
+        u = s.Schema(include_schema).validate({'objective_id': objective_id,
+                                              'user_id': student_id,
+                                              'assessor_id': tutor_id})
+
+        self._check_user_id(u['assessor_id'], by_user)
+
+        userobjective = UserObjective.query.filter_by(**u).first()
+
+        if userobjective is None:
+            userobjective = UserObjective.create(**u)
+            # DJG - this includes a repetition of the logic to first search for a userobjective before creating it - is it better to have a fat model which listens for the new userobjective to be created and then acts on that
+            if common_assessors:
+                self._set_common_assessors(userobjective)
+                self._set_student_objective(userobjective)
+
+        return userobjective
 
     def objectives_for_selection(self, user, subject_id = None):
         """The set of 'Objectives' that are visible to the 'User' is the set of system objectives and the objectives the
@@ -194,40 +227,54 @@ class ObjectiveService(BaseService):
         :param by_user: is the `User` who is removing the `Objective`.
         """
 
-        assess_schema = {'user_id': s.Use(int),
-                         'assessor_id': s.Use(int),
+        assess_schema = {'student_id': s.Use(int),
+                         'tutor_id': s.Use(int),
                          'objective_id': s.Use(int)
         }
         u = s.Schema(assess_schema).validate({'objective_id': objective_id,
-                                            'user_id': student_id,
-                                            'assessor_id': tutor_id})
+                                            'student_id': student_id,
+                                            'tutor_id': tutor_id})
 
         self._check_user_id(tutor_id, by_user)
 
-        userobjective = UserObjective.FindOrCreate(**u)
+        userobjective = self.find_or_include(by_user=by_user, common_assessors=True, **u)
 
         states = UserObjective.assessment_states().keys()
         completed = states[(states.index(userobjective.completed) + 1) % len(states)]  # Cycles through the list of states
         userobjective.completed = completed
         db.session.add(userobjective)
-
-        student = User.query.get(u["user_id"])
-        # Set all other members from the student's institution to have the same assessment. Assessment is therefore an institution wide thing bt stored at the individual member level
-        institution = student.institution_student if student else None
-        if institution:
-            if institution.is_member(userobjective.assessor):
-                # If the assessed user is a student of an institution for which the assessor is a member then share the objective assessment with all other institution members
-                for member in institution.members:
-                    userobjective = UserObjective.FindOrCreate(user_id=u["user_id"], assessor_id=member.id,
-                                                               objective_id=u["objective_id"])
-                    userobjective.completed = completed
-                    db.session.add(userobjective)
-
-        # DJG - need condition to be simply if tutor is authorised by student
-        # If the assessed user is a student of an institution for which the assessor is a member then add the objective to the students set of assessable objectives
-        UserObjective.FindOrCreate(u["user_id"], u["user_id"], u["objective_id"])
         db.session.commit()
+
+        self._set_common_assessors(userobjective)
+        self._set_student_objective(userobjective)
         return UserObjective.assessment_states()[completed]
+
+    def _set_student_objective(self, userobjective):
+        student_id = userobjective.user_id
+        tutor_id = userobjective.assessor_id
+        objective_id = userobjective.objective_id
+        if User._is_authorised(student_id, tutor_id):
+            self.find_or_include(objective_id=objective_id,
+                                 student_id=student_id,
+                                 tutor_id=student_id,
+                                 by_user=User.main_admin_user(),
+                                 common_assessors=False)
+
+    def _set_common_assessors(self, userobjective):
+        # Set all other members from the student's institution to have the same assessment. Assessment is therefore an institution wide thing bt stored at the individual member level
+        student_id = userobjective.user_id
+        tutor_id = userobjective.assessor_id
+        objective_id = userobjective.objective_id
+        print User._common_assessors(student_id, tutor_id)
+        for member in User._common_assessors(student_id, tutor_id):
+            userobj = self.find_or_include(objective_id=objective_id,
+                                            student_id=student_id,
+                                            tutor_id=member.id,
+                                            by_user=User.main_admin_user(),
+                                            common_assessors=False)
+            userobj.completed = userobjective.completed
+            db.session.add(userobj)
+        db.session.commit()
 
     def _filter_on_subject(self, query, subject_id = None):
         if subject_id:
