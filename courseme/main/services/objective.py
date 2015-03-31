@@ -27,26 +27,29 @@ class ObjectiveService(BaseService):
         """Lookup Objective by name.  Returns None if not found."""
         return Objective.query.filter(Objective.name == name).first()
 
-    def available_to(self, user, matching_names=None):
+    def available_to(self, user, matching_names):
         """List of Objectives available to the given User
 
         :param user: User
-        :param matching_names: optional list of Objective names to further
+        :param matching_names: list of Objective names to further
                                restrict availability.
 
         TODO: matching should probably match on ID, rather than name.  It's
               based on the name because that's what the form that ultimately
               uses this query is using, but that could be changed.
         """
-        q = Objective.query.filter(
-           and_(
-               Objective.subject_id == user.subject_id,
-               or_(
-                   Objective.created_by_id.in_(
-                       User.admin_usersQ().options(load_only("id"))),
-                   Objective.created_by_id == user.id)))
+        # DJG - Ian's sick querying skills
+        # q = Objective.query.filter(
+        #    and_(
+        #        Objective.subject_id == user.subject_id,
+        #        or_(
+        #            Objective.created_by_id.in_(
+        #                User.admin_usersQ().options(load_only("id"))),
+        #            Objective.created_by_id == user.id)))
 
+        q = self.objectives_for_selection(user, user.subject_id)
         if matching_names:
+            # DJG - Avoid using in_ when list is empty as this is inefficient
             q = q.filter(Objective.name.in_(matching_names))
 
         return q.all()
