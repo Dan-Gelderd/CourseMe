@@ -57,10 +57,10 @@ def select_subject(id):
 # objectives
 @main.route('/objectives-admin')
 @login_required
-def objectives_admin():
+def objectives_admin(service_layer=_service_layer):
     title = "CourseMe - Objectives"
     objectiveform = forms.EditObjective(topic_choices=Topic.TopicChoices(g.user))
-    objectives = g.user.visible_objectives().all()
+    objectives = service_layer.objectives.objectives_for_selection(g.user, g.user.subject_id).all()
     objectives.sort(
         key=operator.methodcaller("score"))  # DJG - isn't there a way of doing this within the order_by of the query
     return render_template('objectivesadmin.html',
@@ -98,7 +98,7 @@ def objectives(profile_id, scheme_id=0, service_layer=_service_layer):
 @main.route('/objectives-group/<int:group_id>/<int:scheme_id>')
 @main.route('/objectives-group/<int:group_id>/<int:scheme_id>/<int:name_display>')
 @login_required
-def objectives_group(group_id, scheme_id=0, name_display=1):
+def objectives_group(group_id, scheme_id=0, name_display=1, service_layer=_service_layer):
     if group_id == 0:
         group = {"id": 0, "name": "All Students"}
         profiles = g.user.all_students()
@@ -114,9 +114,8 @@ def objectives_group(group_id, scheme_id=0, name_display=1):
             return redirect(url_for('.groups'))
 
     title = "CourseMe - Objectives"
-    objectives = []
     if scheme_id == 0:
-        objectives = g.user.visible_objectives().all()
+        objectives = service_layer.objectives.objectives_for_selection(g.user, g.user.subject_id).all()
     else:
         scheme = SchemeOfWork.query.get(scheme_id)
         if scheme:
@@ -193,26 +192,8 @@ def objective_get():
 
 @main.route('/objective-assess/<int:profile_id>/<int:objective_id>')
 @login_required
-def objective_assess(profile_id, objective_id):
-    objective = Objective.query.get(objective_id)  # DJG - may restrict search to just some set of visible objectives
-    if not objective:
-        flash("This objective does not exist")
-        return redirect(url_for('.objectives', id=g.user.id))
-    profile = User.query.get(profile_id)
-    if not profile:
-        flash("This user does not exist")
-        return redirect(url_for('.objectives', id=g.user.id))
-    elif not profile.permission(g.user):
-        flash("You do not have permission to view this user's learning objectives")
-        return redirect(url_for('.objectives', id=g.user.id))
-    else:
-        userobjective = UserObjective.FindOrCreate(profile_id, g.user.id, objective_id)
-        userobjective.assess()
-        # import pdb; pdb.set_trace()
-        return json.dumps({
-            'assessed_display_class': userobjective.assessed_display_class(),
-            'assessed': userobjective.completed
-        })
+def objective_assess(profile_id, objective_id, service_layer=_service_layer):
+    return json.dumps(service_layer.objectives.assess(objective_id, profile_id, g.user.id, g.user))
 
 
 # modules
@@ -634,14 +615,14 @@ def group_delete(id):
 
 @main.route('/schemes')
 @login_required
-def schemes():
+def schemes(service_layer=_service_layer):
     title = "CourseMe - Schemes of Work"
     form = forms.EditScheme()
     return render_template(
         'schemes.html',
         form=form,
-        title=title
-    )
+        title=title,
+        service_layer=_service_layer)
 
 
 @main.route('/scheme_get/<int:id>')
