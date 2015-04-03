@@ -352,7 +352,7 @@ def editmodule(id=0, service_layer=_service_layer):
 @main.route('/module/<int:id>')
 @login_required
 #DJG - Login should not be required just temporary to stop user_module tracking breaking - need guest user
-def module(id):
+def module(id, service_layer=_service_layer):
     title = "CourseMe - Module"
     module = Module.query.get_or_404(id)
     g.user.subject_id = module.subject_id
@@ -366,7 +366,8 @@ def module(id):
                            title=title,
                            messageform=messageform,
                            module=module,
-                           usermodule=usermodule)
+                           usermodule=usermodule,
+                           service_layer=service_layer)
 
 
 @main.route('/star/<int:id>')
