@@ -5,7 +5,23 @@
 
 <script type='text/javascript'>
 $(document).ready(function () {
-  
+
+    // DJG - repetition of code on Objective assessment page
+    $(".mark_assessed").on('click', function () {
+        cell = this
+        var objective_id = $(cell).closest(".objective_actions").attr("id").split('_')[0]
+        console.log("assess objective " + objective_id + " clicked")
+        $.getJSON(
+            flask_util.url_for('main.objective_assess', {profile_id: {{g.user.id}}, objective_id: objective_id}),
+            function(result) {
+                $(cell).removeClass("objective_not objective_partial warning objective_complete success objective_warning danger objective_not_assigned active");  //DJG - when objective classes are properly customised can remove the warning, danger and success classes here; code is a bit poor as it needs to know the list of states available
+                $(cell).addClass(result.class);
+                $(cell).find('span').html(result.assessed);
+            }
+        );
+    });
+
+
   $("#recommend_material").click(function(){
     $("#send_message_form").find(".help-block").text("");
     $("#send_message_form").find(".has-error").removeClass("has-error");
@@ -263,12 +279,12 @@ $(document).ready(function () {
           <div class="panel panel-default">
             <div class="panel-heading">
               <span class="panel-title">
-                <a data-toggle="collapse" data-parent="#collapsable-course-navigation" href="#objective_{{ objective.id }}">
+                <a data-toggle="collapse" data-parent="#collapsable-course-navigation" href="#{{ objective.id }}_objective">
                   {{ objective.name }}
                 </a>
               </span>
             </div>
-            <div id="objective_{{ objective.id }}" class="panel-collapse collapse">
+            <div id="{{ objective.id }}_objective" class="panel-collapse collapse objective_actions">
               <div class="panel-body">
                 <dl class="dl">
                   <dt>Alternative Lectures</dt>
@@ -293,6 +309,14 @@ $(document).ready(function () {
                   <dd>
                     <ul class="list-unstyled">
                       <li><a href="{{url_for('main.index')}}"><i>Search all...</i></a></li>
+                    </ul>
+                  </dd>
+                  <dt>Assessment</dt>
+                  <dd>
+                    <ul class="list-unstyled">
+                      <li><button class="mark_assessed {{ objective.assessed_display_class(g.user, g.user) }}">Self Assessment: <span></span></button></li>
+                      <li><a href="{{url_for('main.index')}}"><i>Assign to students...</i></a></li>
+                      <li><a href="{{url_for('main.index')}}"><i>Add to scheme of work...</i></a></li>
                     </ul>
                   </dd>
                 </dl>

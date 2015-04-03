@@ -396,7 +396,7 @@ class User(db.Model):
 
     @staticmethod
     def main_admin_user():
-        return User.user_by_email('dan.gelderd@courseme.fake')
+        return User.user_by_email('support@courseme.com')
         # DJG - Not robust. Need some way to return the main system admin user
 
     @staticmethod
@@ -419,7 +419,7 @@ class User(db.Model):
         student = User.query.get(student_id)
         tutor = User.query.get(tutor_id)
         if student and tutor:
-            if student.institution_student.is_member(tutor):
+            if student.institution_student and student.institution_student.is_member(tutor):
                 return User.query.intersect(student.institution_tutors_q(),student.tutors).all()
         return []
 

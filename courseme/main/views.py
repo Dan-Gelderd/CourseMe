@@ -199,10 +199,9 @@ def objective_assess(profile_id, objective_id, service_layer=_service_layer):
 # modules
 @main.route('/editmodule/<int:id>', methods=["GET", "POST"])
 @login_required
-def editmodule(id=0):
+def editmodule(id=0, service_layer=_service_layer):
     title = 'CourseMe - Edit Module'
-    moduleform = forms.EditModule()  #DJG - need the arguement because using validate not validate_on_submit?
-    #import pdb; pdb.set_trace()            #DJG - remove
+    moduleform = forms.EditModule()
     objectiveform = forms.EditObjective(topic_choices=Topic.TopicChoices(g.user))
     module_objectives = []
     module = None
@@ -226,7 +225,7 @@ def editmodule(id=0):
             flash('There is no such module to edit')
 
     if request.method == 'GET':
-        objectives = g.user.visible_objectives().all()
+        objectives = service_layer.objectives.objectives_for_selection(g.user, g.user.subject_id).all()
         objectives.sort(key=operator.methodcaller(
             "score"))  #DJG - isn't there a way of doing this within the order_by of the query
 
@@ -264,12 +263,10 @@ def editmodule(id=0):
             material_path = ""
             if material_type != "Course":
                 select_list = moduleform.module_objectives.data
-                if select_list:
-                    objectives = g.user.visible_objectives().filter(Objective.name.in_(
-                        select_list)).all()  #DJG - avoiding using the in_ operation when the list is empty as this is an inefficiency
-
+                objectives = service_layer.objectives.available_to(g.user, select_list)
                 undefined_objectives = list(set(select_list) - set(obj.name for obj in
-                                                                   objectives))  #DJG - Need to trap undefined objectives and return savedsucess as json if failed
+                                                                   objectives))
+                                # DJG - Need to trap undefined objectives and return savedsucess as json if failed
 
                 if undefined_objectives:  #DJG - code repeat of above, how to avoid this
                     is_are = 'is not already defined as an objetive' if len(
@@ -355,7 +352,7 @@ def editmodule(id=0):
 @main.route('/module/<int:id>')
 @login_required
 #DJG - Login should not be required just temporary to stop user_module tracking breaking - need guest user
-def module(id):
+def module(id, service_layer=_service_layer):
     title = "CourseMe - Module"
     module = Module.query.get_or_404(id)
     g.user.subject_id = module.subject_id
@@ -369,7 +366,8 @@ def module(id):
                            title=title,
                            messageform=messageform,
                            module=module,
-                           usermodule=usermodule)
+                           usermodule=usermodule,
+                           service_layer=service_layer)
 
 
 @main.route('/star/<int:id>')
@@ -812,7 +810,7 @@ def deny_access(request_id):
 
 @main.route('/edit-question/<int:id>', methods=['GET', 'POST'])
 @login_required
-def edit_question(id=0):
+def edit_question(id=0, service_layer=_service_layer):
     title = "CourseMe - Questions"
     form = forms.EditQuestion()
     objectiveform = forms.EditObjective(topic_choices=Topic.TopicChoices(g.user))
@@ -842,7 +840,7 @@ def edit_question(id=0):
             return redirect(url_for('.questions'))
 
     if request.method == 'GET':
-        objectives = g.user.visible_objectives().all()
+        objectives = service_layer.objectives.objectives_for_selection(g.user, g.user.subject_id).all()
         objectives.sort(key=operator.methodcaller(
             "score"))  #DJG - isn't there a way of doing this within the order_by of the query
 
@@ -866,8 +864,7 @@ def edit_question(id=0):
             proceed = False
 
             select_list = form.question_objectives.data
-            if select_list: objectives = g.user.visible_objectives().filter(Objective.name.in_(
-                select_list)).all()  #DJG - avoiding using the in_ operation when the list is empty as this is an inefficiency
+            if select_list: objectives = service_layer.objectives.available_to(g.user, select_list)
             undefined_objectives = list(set(select_list) - set(obj.name for obj in
                                                                objectives))  #DJG - Need to trap undefined objectives and return savedsucess as json if failed
 

@@ -27,26 +27,29 @@ class ObjectiveService(BaseService):
         """Lookup Objective by name.  Returns None if not found."""
         return Objective.query.filter(Objective.name == name).first()
 
-    def available_to(self, user, matching_names=None):
+    def available_to(self, user, matching_names):
         """List of Objectives available to the given User
 
         :param user: User
-        :param matching_names: optional list of Objective names to further
+        :param matching_names: list of Objective names to further
                                restrict availability.
 
         TODO: matching should probably match on ID, rather than name.  It's
               based on the name because that's what the form that ultimately
               uses this query is using, but that could be changed.
         """
-        q = Objective.query.filter(
-           and_(
-               Objective.subject_id == user.subject_id,
-               or_(
-                   Objective.created_by_id.in_(
-                       User.admin_usersQ().options(load_only("id"))),
-                   Objective.created_by_id == user.id)))
+        # DJG - Ian's sick querying skills
+        # q = Objective.query.filter(
+        #    and_(
+        #        Objective.subject_id == user.subject_id,
+        #        or_(
+        #            Objective.created_by_id.in_(
+        #                User.admin_usersQ().options(load_only("id"))),
+        #            Objective.created_by_id == user.id)))
 
+        q = self.objectives_for_selection(user, user.subject_id)
         if matching_names:
+            # DJG - Avoid using in_ when list is empty as this is inefficient
             q = q.filter(Objective.name.in_(matching_names))
 
         return q.all()
@@ -156,7 +159,7 @@ class ObjectiveService(BaseService):
                                               'student_id': student_id,
                                               'tutor_id': tutor_id})
 
-        self._check_user_id(tutor_id, by_user)
+        self._check_user_authorised(tutor_id, by_user)
         UserObjective.ignore_or_delete(student_id, tutor_id, objective_id)
 
         # DJG - how do students remove objectives? Is it related to tutor removing the objective for them? What if you add an objective in error.
@@ -179,7 +182,7 @@ class ObjectiveService(BaseService):
                                               'user_id': student_id,
                                               'assessor_id': tutor_id})
 
-        self._check_user_id(u['assessor_id'], by_user)
+        self._check_user_authorised(u['assessor_id'], by_user)
 
         userobjective = UserObjective.query.filter_by(**u).first()
 
@@ -281,6 +284,10 @@ class ObjectiveService(BaseService):
             return query.filter(Objective.subject_id == subject_id)
         else:
             return query
+
+    def _check_user_authorised(self, user_id, user):
+        if user_id != user.id and user != User.main_admin_user():
+            raise NotAuthorised
 
     def _check_user_id(self, user_id, user):
         if user_id != user.id:
