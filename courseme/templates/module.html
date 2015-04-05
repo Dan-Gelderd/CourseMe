@@ -7,7 +7,7 @@
 $(document).ready(function () {
 
     // DJG - repetition of code on Objective assessment page
-    $(".mark_assessed").on('click', function () {
+    $(".mark-assessed").on('click', function () {
         cell = this
         var objective_id = $(cell).closest(".objective_actions").attr("id").split('_')[0]
         console.log("assess objective " + objective_id + " clicked")
@@ -31,7 +31,18 @@ $(document).ready(function () {
     $("#send_message_modal").modal('show');
     return false;
   });
-  
+
+  $(".assign-objective").click(function(){
+    $("#send_message_form").find(".help-block").text("");
+    $("#send_message_form").find(".has-error").removeClass("has-error");
+    $("#message_subject").val("New objective assignment - " + "{{module.name}}" + " by " + "{{g.user.name}}")
+    $("#recommended_material").val({{ module.id }});
+    $("#recommended_material_form_group").removeClass("hidden");
+    $("#request_access_form_group").addClass("hidden");
+    $("#send_message_modal").modal('show');
+    return false;
+  });
+
   $(".star").on('click', function( event ) {
     //console.log("Star Click");
     var star = $(this)
@@ -314,8 +325,8 @@ $(document).ready(function () {
                   <dt>Assessment</dt>
                   <dd>
                     <ul class="list-unstyled">
-                      <li><button class="mark_assessed {{ objective.assessed_display_class(g.user, g.user) }}">Self Assessment: <span></span></button></li>
-                      <li><a href="{{url_for('main.index')}}"><i>Assign to students...</i></a></li>
+                      <li><button class="mark-assessed {{ objective.assessed_display_class(g.user, g.user) }}">Self Assessment: <span></span></button></li>
+                      <li><a href="{{url_for('main.index')}}" class="assign-objective" ><i>Assign to students...</i></a></li>
                       <li><a href="{{url_for('main.index')}}"><i>Add to scheme of work...</i></a></li>
                     </ul>
                   </dd>

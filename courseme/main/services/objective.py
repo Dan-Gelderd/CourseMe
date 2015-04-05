@@ -159,7 +159,7 @@ class ObjectiveService(BaseService):
                                               'student_id': student_id,
                                               'tutor_id': tutor_id})
 
-        self._check_user_authorised(tutor_id, by_user)
+        self._check_user_id_or_admin(tutor_id, by_user)
         UserObjective.ignore_or_delete(student_id, tutor_id, objective_id)
 
         # DJG - how do students remove objectives? Is it related to tutor removing the objective for them? What if you add an objective in error.
@@ -182,7 +182,7 @@ class ObjectiveService(BaseService):
                                               'user_id': student_id,
                                               'assessor_id': tutor_id})
 
-        self._check_user_authorised(u['assessor_id'], by_user)
+        self._check_user_id_or_admin(u['assessor_id'], by_user)
 
         userobjective = UserObjective.query.filter_by(**u).first()
 
@@ -285,7 +285,7 @@ class ObjectiveService(BaseService):
         else:
             return query
 
-    def _check_user_authorised(self, user_id, user):
+    def _check_user_id_or_admin(self, user_id, user):
         if user_id != user.id and user != User.main_admin_user():
             raise NotAuthorised
 
