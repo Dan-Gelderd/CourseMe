@@ -899,6 +899,8 @@ class Message(
     request_access = db.Column(db.Boolean, default=False)
 
     recommended_material_id = db.Column(db.Integer, db.ForeignKey(Module.id))
+    assign_objective_id = db.Column(db.Integer, db.ForeignKey(Objective.id))
+    assign_scheme_id = db.Column(db.Integer, db.ForeignKey(SchemeOfWork.id))
 
     from_user = db.relationship(User, foreign_keys=[from_id], backref=db.backref('sent_messages', lazy="dynamic"))
     to_user = db.relationship(User, foreign_keys=[to_id], backref=db.backref('received_messages', lazy="dynamic"))

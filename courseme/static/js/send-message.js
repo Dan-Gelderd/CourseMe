@@ -13,8 +13,6 @@ $(document).ready(function () {
                 
                 var result = $.parseJSON(json);
                 console.log(result);
-                console.log(result["savedsuccess"]);
-                console.log(result.savedsuccess);                
                 
                 $("#send_message_form").find(".help-block").text("");
                             
@@ -24,7 +22,8 @@ $(document).ready(function () {
                     location.reload();
                 }
                 else
-                {       
+                {
+                    console.log($("#error_message_to"))
                     if(result.message_type!=undefined) {
                         $("#error_message_type").text(result.message_type[0]);
                         $("#message_type_form_group").addClass("has-error");
@@ -45,10 +44,14 @@ $(document).ready(function () {
                         $("#error_recommended_material").text(result.recommended_material[0]);
                         $("#recommended_material_form_group").addClass("has-error");
                     }
+                    if(result.assign_objective!=undefined) {
+                        $("#error_assign_objective").text(result.assign_objective[0]);
+                        $("#assign_objective_form_group").addClass("has-error");
+                    }
                     if(result.request_access!=undefined) {
                         $("#error_request_access").text(result.request_access[0]);
                         $("#request_access_form_group").addClass("has-error");
-                    }    
+                    }
                 }
             }
         );

@@ -5,7 +5,7 @@ from wtforms.validators import DataRequired, Length, Email, Regexp, EqualTo, url
 from wtforms.fields.html5 import URLField
 from wtforms.fields import FieldList
 from wtforms import ValidationError
-from .. models import Module, Objective, User
+from ..models import Module, Objective, User
 
 
 class SignupForm(Form):
@@ -20,15 +20,18 @@ class SignupForm(Form):
     username = StringField('Username', validators=[
         DataRequired(),
         Length(min=1, message='Username is too short'),
-        Regexp('^[A-Za-z][A-Za-z0-9_.\- ]*$', 0, 'Usernames must have only letters, numbers, dots, dashes, underscores, or spaces')])
+        Regexp('^[A-Za-z][A-Za-z0-9_.\- ]*$', 0,
+               'Usernames must have only letters, numbers, dots, dashes, underscores, or spaces')])
     forename = StringField('Forename', validators=[
         Optional(),
         Length(min=1, message='Forename is too short'),
-        Regexp('^[A-Za-z][A-Za-z0-9_.\- ]*$', 0, 'Forenames must have only letters, numbers, dots, dashes, underscores, or spaces')])
+        Regexp('^[A-Za-z][A-Za-z0-9_.\- ]*$', 0,
+               'Forenames must have only letters, numbers, dots, dashes, underscores, or spaces')])
     surname = StringField('Surname', validators=[
         Optional(),
         Length(min=1, message='Forename is too short'),
-        Regexp('^[A-Za-z][A-Za-z0-9_.\- ]*$', 0, 'Surnames must have only letters, numbers, dots, dashes, underscores, or spaces')])
+        Regexp('^[A-Za-z][A-Za-z0-9_.\- ]*$', 0,
+               'Surnames must have only letters, numbers, dots, dashes, underscores, or spaces')])
     agree = BooleanField('By signing up your agree to follow our <a href="#">Terms and Conditions</a>',
                          validators=[DataRequired(u'You must agree the Terms of Service')])
     remember_me = BooleanField('Remember me', default=True)
@@ -63,6 +66,7 @@ class PasswordResetRequestForm(Form):
     def validate_email(self, field):
         if not User.user_by_email(field.data):
             raise ValidationError('This email address is not recognised')
+
 
 class PasswordResetForm(Form):
     email = StringField('Email', validators=[

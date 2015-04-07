@@ -20,6 +20,8 @@ def make_shell_context():
 manager.add_command("shell", Shell(make_context=make_shell_context))
 manager.add_command('db', MigrateCommand)
 
+# DJG - Run db init, db migrate, db upgrade, test_data when setting up database for first time
+
 @manager.command
 def test(coverage=False):
     """Run the unit tests."""

@@ -1,39 +1,12 @@
 from flask.ext.wtf import Form, RecaptchaField
 from wtforms import TextField, TextAreaField, PasswordField, BooleanField, HiddenField, FileField, SelectMultipleField, \
-    SelectField, RadioField
+    SelectField, RadioField, ValidationError
 from wtforms.validators import DataRequired, Length, Email, Regexp, EqualTo, url
 from wtforms.fields.html5 import URLField
 from wtforms.fields import FieldList
-from .. models import Module, Objective
+from .. models import Module, Objective, User
 
 from courseme.util.wtform_utils import blank_to_none
-
-class SignupForm(Form):
-    email = TextField('Email address', validators=[
-        DataRequired('Please provide a valid email address'),
-        Email(message=(u'That\'s not a valid email address'))])
-    password = PasswordField('Pick a secure password', validators=[
-        DataRequired('Please enter a password'),
-        Length(min=6, message=(u'Password must be at least 6 characters'))])
-    confirm_password = PasswordField('Confirm password', validators=[
-        EqualTo('password', message='Password confirmation did not match')])
-    username = TextField('Username', validators=[DataRequired()])
-    forename = TextField('Forename')
-    surname = TextField('Surname')
-    agree = BooleanField('By signing up your agree to follow our <a href="#">Terms and Conditions</a>',
-                         validators=[DataRequired(u'You must agree the Terms of Service')])
-    remember_me = BooleanField('remember_me', default=False)
-    recaptcha = RecaptchaField()
-
-
-class LoginForm(Form):
-    email = TextField('Email address', validators=[
-        DataRequired('Please enter the email address you used to sign up'),
-        Email(message=(u'That\'s not a valid email address'))])
-    password = PasswordField('Enter password', validators=[
-        DataRequired('Please enter your password'),
-        Length(min=6, message=(u'Password must be at least 6 characters'))])
-    remember_me = BooleanField('remember_me', default=False)
 
 
 class EditObjective(Form):
@@ -107,8 +80,15 @@ class SendMessage(Form):
                               default='Individual',
                               validators=[DataRequired(
                                   'Please specify whether you are sending an individual or a group message')])
-    message_to = TextField('To', validators=[DataRequired('Enter a recipient or group of recipients for your message')])
+    message_to = TextField('To') #, validators=[DataRequired('Enter a recipient or group of recipients for your message')])
+    message_to_group = SelectField('To', choices=[])
     message_subject = TextField('Message Subject')
     message_body = TextAreaField('Message Content')
+    recommended_material = SelectField('Recommend Material', choices=[])
+    assign_objective = SelectField('Assign Objective', choices=[])
+    assign_scheme = SelectField('Assign Scheme of Work', choices=[])
     request_access = BooleanField("Request to view students' progress", default=False)
-    recommended_material = SelectField('Recommend Material', choices=Module.RecommendChoices())
+
+    #def validate_message_to(self, field):
+    #    if not User.user_by_email(field.data):
+    #        raise ValidationError('This email address is not recognised')
