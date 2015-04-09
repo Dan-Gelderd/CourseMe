@@ -69,22 +69,6 @@ me = User(email="dan.gelderd@courseme.com",
             role = ROLE_ADMIN)
 db.session.add(me)
 
-user = User(email="dan@server.fake",
-            password="111111",
-            name="Dan",
-            time_registered=datetime.utcnow(),
-            last_seen=datetime.utcnow(),
-            role = ROLE_USER)
-db.session.add(user)
-
-user = User(email="liz@server.fake",
-            password="111111",
-            name="Liz",
-            time_registered=datetime.utcnow(),
-            last_seen=datetime.utcnow(),
-            role = ROLE_USER)
-db.session.add(user)
-
 head = User(email="head@server.fake",
             password="111111",
             name="Head of School",

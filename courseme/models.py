@@ -25,6 +25,10 @@ OBJ_WARN = 3
 ENTERPRISE_LICENCE_DURATION = 1
 
 
+def create_slug(context):
+    slug = context.current_parameters['name']
+    return slug
+
 class Subject(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), nullable=False, unique=True)
@@ -65,8 +69,9 @@ question_selections = db.Table('question_selections',
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    password_hash = db.Column(db.String(128))  # DJG - want nullable to be false but won't allow me to migrate without a default value
+    password_hash = db.Column(db.String(128), nullable=False, default=generate_password_hash("1234"))  # DJG - want nullable to be false but won't allow me to migrate without a default value
     email = db.Column(db.String(128), index=True, unique=True, nullable=False)
+    slug = db.Column(db.String(128), index=True, unique=True, nullable=False, default=create_slug)  # DJG - tried , onupdate=create_slug - better to have lister for name change as this is only input to slug
     name = db.Column(db.String(64), nullable=False)
     forename = db.Column(db.String(64))
     surname = db.Column(db.String(64))
@@ -562,6 +567,10 @@ scheme_objectives = db.Table('scheme_objectives',
                              db.Column('objective_id', db.Integer, db.ForeignKey('objective.id'))
 )
 
+scheme_users = db.Table('scheme_users',
+                             db.Column('scheme_id', db.Integer, db.ForeignKey('scheme_of_work.id')),
+                             db.Column('user_id', db.Integer, db.ForeignKey('user.id'))
+)
 
 class SchemeOfWork(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -571,6 +580,9 @@ class SchemeOfWork(db.Model):
 
     objectives = db.relationship(Objective, secondary=scheme_objectives, lazy='dynamic',
                                  backref=db.backref('schemes_of_work', lazy='dynamic'))
+
+    users = db.relationship(User, secondary=scheme_users, lazy='dynamic',
+                                 backref=db.backref('schemes_of_work_used', lazy='dynamic'))
 
     def is_objective(self, objective):
         return self.objectives.filter(scheme_objectives.c.objective_id == objective.id).count() > 0
@@ -663,7 +675,7 @@ class Module(db.Model):  # DJG - change this class to material as it now capture
     notes = db.Column(db.String(400))
     material_type = db.Column(db.String(120), default='Lecture')
     time_created = db.Column(db.DateTime)
-    last_updated = db.Column(db.DateTime)
+    last_updated = db.Column(db.DateTime, onupdate=datetime.utcnow)
     material_source = db.Column(db.String(120), default='youtube')
     material_path = db.Column(db.String(400))
     submitted = db.Column(db.DateTime)
@@ -904,6 +916,7 @@ class Message(
 
     from_user = db.relationship(User, foreign_keys=[from_id], backref=db.backref('sent_messages', lazy="dynamic"))
     to_user = db.relationship(User, foreign_keys=[to_id], backref=db.backref('received_messages', lazy="dynamic"))
+    recommended_material = db.relationship(Module, foreign_keys=[recommended_material_id], backref='recommendations')
     recommended_material = db.relationship(Module, foreign_keys=[recommended_material_id], backref='recommendations')
 
     def report(self):
