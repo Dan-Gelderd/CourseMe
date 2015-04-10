@@ -11,7 +11,7 @@ from ..email import send_email
 
 from courseme.main.services import Services
 import courseme.util.json as json
-from courseme.util.wtform_utils import list_to_tuples
+from courseme.util.wtform_utils import select_choices
 from courseme.errors import ValidationError, NotAuthorised, NotFound
 from courseme.util import merge
 
@@ -360,8 +360,10 @@ def module(id, service_layer=_service_layer):
     db.session.add(g.user)
     db.session.commit()
     messageform = forms.SendMessage()
-    messageform.recommended_material.choices = list_to_tuples(g.user.visible_modules())
-    messageform.assign_objective.choices = list_to_tuples(_service_layer.objectives.objectives_for_selection(g.user, g.user.subject_id))
+    messageform.message_to_group.choices = select_choices(g.user.groups_created.all(), True)
+    messageform.recommended_material.choices = select_choices(g.user.visible_modules(), True)
+    messageform.assign_objective.choices = select_choices(service_layer.objectives.objectives_for_selection(g.user, g.user.subject_id), True)
+    messageform.assign_scheme.choices = select_choices(service_layer.objectives.schemes_for_selection(g.user, g.user.subject_id), True)
     usermodule = UserModule.FindOrCreate(g.user.id, id)
     templates = {"Lecture": "lecture.html", "Course": "course.html"}
 
@@ -738,8 +740,8 @@ def restrict_modules_viewed(user_id, institution_id):
 @login_required
 def send_message(service_layer=_service_layer):
     form = forms.SendMessage()
-    form.recommended_material.choices = list_to_tuples(g.user.visible_modules())
-    form.assign_objective.choices = list_to_tuples(_service_layer.objectives.objectives_for_selection(g.user, g.user.subject_id))
+    form.recommended_material.choices = select_choices(g.user.visible_modules(), True)
+    form.assign_objective.choices = select_choices(service_layer.objectives.objectives_for_selection(g.user, g.user.subject_id), True)
 
     result = {}
     result['savedsuccess'] = False

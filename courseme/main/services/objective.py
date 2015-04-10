@@ -7,7 +7,7 @@ from sqlalchemy import or_, and_
 from sqlalchemy.orm import load_only
 
 from courseme import db
-from courseme.models import Objective, User, UserObjective
+from courseme.models import Objective, User, UserObjective, SchemeOfWork
 from courseme.main.services.base import BaseService
 from courseme.util import merge
 from courseme.errors import NotAuthorised, ValidationError
@@ -252,6 +252,20 @@ class ObjectiveService(BaseService):
         self._set_student_objective(userobjective)
         return UserObjective.assessment_states()[completed]
 
+    def schemes_for_selection(self, user, subject_id = None):
+        """The set of 'Schemes of Work' that are visible to the 'User' is the set of schemes they have defined plus
+        any others they are viewing.
+
+        :param user: is the 'User' for whom the schemes are being collected.
+        :param subject_id: is the id of the `Subject` that will be used to filter the set of `Schemes` returned.
+        """
+
+        q = SchemeOfWork.query.union(user.schemes_of_work_used, SchemeOfWork.query.filter(SchemeOfWork.creator_id==user.id))
+        # DJG - build in filtering out any schemes with no objectives for selected subject
+        return q.all()
+
+        return []
+
     def _set_student_objective(self, userobjective):
         student_id = userobjective.user_id
         tutor_id = userobjective.assessor_id
@@ -284,14 +298,6 @@ class ObjectiveService(BaseService):
             return query.filter(Objective.subject_id == subject_id)
         else:
             return query
-
-    def _check_user_id_or_admin(self, user_id, user):
-        if user_id != user.id and user != User.main_admin_user():
-            raise NotAuthorised
-
-    def _check_user_id(self, user_id, user):
-        if user_id != user.id:
-            raise NotAuthorised
 
     def _check_update_auth(self, objective, user):
         if not user.is_admin():

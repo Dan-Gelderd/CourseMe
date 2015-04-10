@@ -27,6 +27,7 @@ ENTERPRISE_LICENCE_DURATION = 1
 
 def create_slug(context):
     slug = context.current_parameters['name']
+
     return slug
 
 class Subject(db.Model):
@@ -72,7 +73,7 @@ class User(db.Model):
     password_hash = db.Column(db.String(128), nullable=False, default=generate_password_hash("1234"))  # DJG - want nullable to be false but won't allow me to migrate without a default value
     email = db.Column(db.String(128), index=True, unique=True, nullable=False)
     slug = db.Column(db.String(128), index=True, unique=True, nullable=False, default=create_slug)  # DJG - tried , onupdate=create_slug - better to have lister for name change as this is only input to slug
-    name = db.Column(db.String(64), nullable=False)
+    name = db.Column(db.String(32), nullable=False)
     forename = db.Column(db.String(64))
     surname = db.Column(db.String(64))
     confirmed = db.Column(db.Boolean, default=False)

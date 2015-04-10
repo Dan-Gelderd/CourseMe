@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from courseme.errors import NotFound
+from courseme.errors import NotFound, NotAuthorised
+from courseme.models import User
 
 class BaseService(object):
     """Base class to inherit Service implementations from.
@@ -26,3 +27,11 @@ class BaseService(object):
             return v
         else:
             raise NotFound(self.__model__, 'id', id)
+
+    def _check_user_id_or_admin(self, user_id, user):
+        if user_id != user.id and user != User.main_admin_user():
+            raise NotAuthorised
+
+    def _check_user_id(self, user_id, user):
+        if user_id != user.id:
+            raise NotAuthorised
