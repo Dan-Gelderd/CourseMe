@@ -359,11 +359,11 @@ def module(id, service_layer=_service_layer):
     g.user.subject_id = module.subject_id
     db.session.add(g.user)
     db.session.commit()
-    messageform = forms.SendMessage()
-    messageform.message_to_group.choices = select_choices(g.user.groups_created.all(), True)
-    messageform.recommended_material.choices = select_choices(g.user.visible_modules(), True)
-    messageform.assign_objective.choices = select_choices(service_layer.objectives.objectives_for_selection(g.user, g.user.subject_id), True)
-    messageform.assign_scheme.choices = select_choices(service_layer.objectives.schemes_for_selection(g.user, g.user.subject_id), True)
+    messageform = service_layer.messages.populate_message_form(g.user, g.user.subject_id)
+    #messageform.message_to_group.choices = select_choices(g.user.groups_created.all(), True)
+    #messageform.recommended_material.choices = select_choices(g.user.visible_modules(), True)
+    #messageform.assign_objective.choices = select_choices(service_layer.objectives.objectives_for_selection(g.user, g.user.subject_id), True)
+    #messageform.assign_scheme.choices = select_choices(service_layer.objectives.schemes_for_selection(g.user, g.user.subject_id), True)
     usermodule = UserModule.FindOrCreate(g.user.id, id)
     templates = {"Lecture": "lecture.html", "Course": "course.html"}
 
@@ -739,10 +739,8 @@ def restrict_modules_viewed(user_id, institution_id):
 @main.route('/send_message', methods=['POST'])
 @login_required
 def send_message(service_layer=_service_layer):
-    form = forms.SendMessage()
-    form.recommended_material.choices = select_choices(g.user.visible_modules(), True)
-    form.assign_objective.choices = select_choices(service_layer.objectives.objectives_for_selection(g.user, g.user.subject_id), True)
 
+    form = service_layer.messages.populate_message_form(g.user, g.user.subject_id)
     result = {}
     result['savedsuccess'] = False
     if form.validate():

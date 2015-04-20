@@ -259,7 +259,7 @@ class ObjectiveService(BaseService):
         :param user: is the 'User' for whom the schemes are being collected.
         :param subject_id: is the id of the `Subject` that will be used to filter the set of `Schemes` returned.
         """
-
+        #DJG - not working; returning additional schemes.
         q = SchemeOfWork.query.union(user.schemes_of_work_used, SchemeOfWork.query.filter(SchemeOfWork.creator_id==user.id))
         # DJG - build in filtering out any schemes with no objectives for selected subject
         return q.all()

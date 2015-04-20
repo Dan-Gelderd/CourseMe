@@ -52,7 +52,15 @@
       <p>{{ message.body }}</p>
       {% if message.recommended_material %}
       <h5 class="media-heading">Reccommendation:</h5>
-      <p>{{ message.from_user.name }} has recommended <a href="{{ url_for('main.module', id=message.recommended_material.id) }}">{{ message.recommended_material.name }}</a> for you</p>
+      <p>{{ message.from_user.name }} has recommended <a href="{{ url_for('main.module', id=message.recommended_material_id) }}">{{ message.recommended_material.name }}</a> for you</p>
+      {% endif %}
+      {% if message.assign_objective %}
+      <h5 class="media-heading">Assignment:</h5>
+      <p>{{ message.from_user.name }} has suggested you complete a new learning objective for you: <a href="{{ url_for('main.objectives', profile_id=g.user.id) }}">{{ message.assign_objective.name }}</a></p>
+      {% endif %}
+      {% if message.assign_scheme %}
+      <h5 class="media-heading">Assignment:</h5>
+      <p>{{ message.from_user.name }} has suggested you complete a new scheme of work: <a href="{{ url_for('main.objectives', profile_id=g.user.id, scheme_id=message.assign_scheme_id) }}">{{ message.assign_scheme.name }}</a></p>
       {% endif %}
       {% if message.request_access and not g.user.permission(message.from_user) %}
       <h5 class="media-heading">Access Request:</h5>

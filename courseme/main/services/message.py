@@ -10,6 +10,8 @@ from sqlalchemy import or_, and_
 from sqlalchemy.orm import load_only
 from courseme.util import merge
 from courseme import db
+from courseme.main.forms import SendMessage
+from courseme.util.wtform_utils import select_choices
 
 from courseme.errors import NotAuthorised, ValidationError
 
@@ -49,5 +51,10 @@ class MessageService(BaseService):
         db.session.commit()
         return message
 
+    def populate_message_form(self, user, subject_id = None):
 
-    #from_id, to_id, subject, body, recommended_material_id, assign_objective_id, assign_scheme_id
+        form = SendMessage()
+        form.recommended_material.choices = select_choices(user.visible_modules(), True)
+        form.assign_objective.choices = select_choices(self.services.objectives.objectives_for_selection(user, subject_id), True)
+        form.assign_scheme.choices = select_choices(self.services.objectives.schemes_for_selection(user, subject_id), True)
+        return form

@@ -6,6 +6,20 @@
 <script type='text/javascript'>
 $(document).ready(function () {
 
+    //Want to move this so not repeated everywhere a message is used - currently needs jinja though so needs to be in main page
+    $(function() {
+        var availableTags = [];
+        {% for user in g.user.all_students() %}
+            availableTags.push('{{ user.name }}');
+        {% endfor %}
+        console.log(availableTags);
+        $("#message_to").autocomplete({
+            disabled: false,
+            source: availableTags
+        });
+    });
+
+
     // DJG - repetition of code on Objective assessment page
     $(".mark-assessed").on('click', function () {
         cell = this
@@ -21,26 +35,34 @@ $(document).ready(function () {
         );
     });
 
-  $("#recommend_material").click(function(){
-    $("#send_message_form").find(".help-block").text("");
-    $("#send_message_form").find(".has-error").removeClass("has-error");
-    $("#message_subject").val("New recommendation - " + "{{module.name}}" + " by " + "{{module.author.name}}")
-    $("#recommended_material").val({{ module.id }});
-    $("#recommended_material_form_group").addClass("hidden");  
-    $("#send_message_modal").modal('show');
-    return false;
-  });
+    $("#recommend_material").click(function(){
+        $("#send_message_form").find(".help-block").text("");
+        $("#send_message_form").find(".has-error").removeClass("has-error");
+        $("#message_subject").val("New recommendation - " + "{{module.name}}" + " by " + "{{module.author.name}}")
+        $("#recommended_material").val({{ module.id }});
+        $("#recommended_material_form_group").addClass("hidden");
+        $("#assign_objective").val('');
+        $("#assign_objective_form_group").addClass("hidden");
+        $("#assign_scheme").val('');
+        $("#assign_scheme_form_group").addClass("hidden");
+        $("#send_message_modal").modal('show');
+        return false;
+    });
 
-  $(".assign-objective").click(function(){
-    $("#send_message_form").find(".help-block").text("");
-    $("#send_message_form").find(".has-error").removeClass("has-error");
-    $("#message_subject").val("New objective assignment - " + "{{module.name}}" + " by " + "{{g.user.name}}")
-    $("#recommended_material").val({{ module.id }});
-    $("#recommended_material_form_group").removeClass("hidden");
-    $("#request_access_form_group").addClass("hidden");
-    $("#send_message_modal").modal('show');
-    return false;
-  });
+    $(".assign-objective").click(function(){
+        var objective_id = 1;
+        $("#send_message_form").find(".help-block").text("");
+        $("#send_message_form").find(".has-error").removeClass("has-error");
+        $("#message_subject").val("New objective assignment - " + "{{module.name}}" + " by " + "{{g.user.name}}")
+        $("#recommended_material").val('');
+        $("#recommended_material_form_group").addClass("hidden");
+        $("#assign_objective").val(objective_id);
+        $("#assign_objective_form_group").addClass("hidden");
+        $("#assign_scheme").val('');
+        $("#assign_scheme_form_group").addClass("hidden");
+        $("#send_message_modal").modal('show');
+        return false;
+    });
 
   $(".star").on('click', function( event ) {
     //console.log("Star Click");

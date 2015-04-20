@@ -8,3 +8,6 @@ from courseme.errors import NotFound, NotAuthorised
 class UserService(BaseService):
     __model__ = User
 
+    def visible_modules(self):
+        pass
+

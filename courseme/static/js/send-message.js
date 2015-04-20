@@ -1,4 +1,5 @@
 $(document).ready(function () {
+
     $("#send_message").click(function(event){
         event.preventDefault();
         
@@ -56,6 +57,22 @@ $(document).ready(function () {
             }
         );
     });   
+
+//var material_type = $('[name="material_type"]:checked' ).val();
+
+
+    $('[name="message_type"]').change(function(event){
+        console.log("change message type");
+        var message_type = $('[name="message_type"]:checked' ).val();
+        if(message_type == "Individual"){
+            $('#message_to_group').closest('.form-group').addClass("hidden");
+            $('#message_to').closest('.form-group').removeClass("hidden");
+        }
+        if(message_type == "Group"){
+            $('#message_to_group').closest('.form-group').removeClass("hidden");
+            $('#message_to').closest('.form-group').addClass("hidden");
+        }
+    });
 
 
   $('.allow-access').click(function(event){

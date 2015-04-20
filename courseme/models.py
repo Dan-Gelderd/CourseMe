@@ -429,6 +429,7 @@ class User(db.Model):
                 return User.query.intersect(student.institution_tutors_q(),student.tutors).all()
         return []
 
+
 objective_heirarchy = db.Table("objective_heirarchy",
                                db.Column("prerequisite_id", db.Integer, db.ForeignKey("objective.id")),
                                db.Column("followon_id", db.Integer, db.ForeignKey("objective.id"))

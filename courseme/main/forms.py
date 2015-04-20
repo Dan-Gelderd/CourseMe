@@ -1,7 +1,7 @@
 from flask.ext.wtf import Form, RecaptchaField
 from wtforms import TextField, TextAreaField, PasswordField, BooleanField, HiddenField, FileField, SelectMultipleField, \
     SelectField, RadioField, ValidationError
-from wtforms.validators import DataRequired, Length, Email, Regexp, EqualTo, url
+from wtforms.validators import DataRequired, Length, Email, Regexp, EqualTo, url, optional
 from wtforms.fields.html5 import URLField
 from wtforms.fields import FieldList
 from .. models import Module, Objective, User
@@ -80,8 +80,8 @@ class SendMessage(Form):
                               default='Individual',
                               validators=[DataRequired(
                                   'Please specify whether you are sending an individual or a group message')])
-    message_to = TextField('To') #, validators=[DataRequired('Enter a recipient or group of recipients for your message')])
-    message_to_group = SelectField('To', choices=[])
+    message_to = TextField('To', validators=[optional()])
+    message_to_group = SelectField('To', choices=[], validators=[optional()])
     message_subject = TextField('Message Subject')
     message_body = TextAreaField('Message Content')
     recommended_material = SelectField('Recommend Material', choices=[])
