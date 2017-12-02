@@ -13,7 +13,6 @@ flask-uploads
 flask-util-js
 flask-wtf
 markupsafe
-migrate
 Flask-RESTful
 Flask-RESTless
 WTForms-Alchemy

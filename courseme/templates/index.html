@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<div id="greeting">Hello {% if current_user.is_authenticated() %}{{current_user.name }}{% else %}Stranger{% endif %}</div>
+<div id="greeting">Hello {% if current_user.is_authenticated %}{{current_user.name }}{% else %}Stranger{% endif %}</div>
 
 
 <div id="carousel_top_modules" class="carousel slide" data-ride="carousel">

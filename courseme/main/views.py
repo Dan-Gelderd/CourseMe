@@ -1,5 +1,5 @@
 from flask import render_template, flash, redirect, session, url_for, request, g
-from flask.ext.login import login_user, logout_user, current_user, login_required
+from flask_login import login_user, logout_user, current_user, login_required
 from . import main
 from .. import db, lectures
 import forms
@@ -29,7 +29,7 @@ _service_layer = Services()
 @main.route('/index')
 def index():
     title = "CourseMe"
-    if g.user.is_authenticated():
+    if g.user.is_authenticated:
         modules = g.user.visible_modules().all()
     else:
         modules = Module.LiveModules().all()

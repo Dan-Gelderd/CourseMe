@@ -71,7 +71,7 @@
                   <a href="#" class="dropdown-toggle" data-toggle="dropdown">Quick Links<b class="caret"></b></a>
                   <ul class="dropdown-menu">
                     <li><a href="{{ url_for('main.editmodule', id=0) }}">Create new material</a></li>
-                    {% if g.user.is_authenticated() %}
+                    {% if g.user.is_authenticated %}
                     <li role="presentation" class="divider"></li>
                     <li role="presentation" class="dropdown-header">Recent modules</li>
                     {% for mod in g.user.recent_modules(10) %}
@@ -93,11 +93,11 @@
               
               <ul class="nav navbar-nav navbar-right">
                 <li><a href="{{ url_for('main.objectives_admin') }}">Objectives Map</a></li>
-                {% if g.user.is_authenticated() and g.user.has_students() %}
+                {% if g.user.is_authenticated and g.user.has_students() %}
                 <li><a href="{{ url_for('main.students') }}">Students</a></li>
                 {% endif %}
                 <li class="dropdown">
-                  {% if g.user.is_authenticated() %}
+                  {% if g.user.is_authenticated %}
                   <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-user"></span> {{ g.user.name }}<b class="caret"></b></a>
                   <ul class="dropdown-menu" role="menu">
                     <li><a href="{{ url_for('auth.logout') }}">Sign Out</a></li>

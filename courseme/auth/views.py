@@ -1,5 +1,5 @@
 from flask import render_template, flash, redirect, session, url_for, request, g
-from flask.ext.login import login_user, logout_user, current_user, login_required
+from flask_login import login_user, logout_user, current_user, login_required
 from courseme import db, lm
 from . import auth
 import forms
@@ -16,7 +16,7 @@ import courseme.util.json as json
 def before_request():
     g.user = current_user  # DJG - Could scrap this and just use current_user directly?
     g.subjects = Subject.query.all()        #DJG - Needed to populate the subject dropdown at the top of each page - look for alternatives
-    if g.user.is_authenticated():
+    if g.user.is_authenticated:
         g.user.last_seen = datetime.utcnow()
         db.session.add(g.user)
         db.session.commit()
