@@ -25,5 +25,3 @@ To get a feel for the site you could try: Viewing a lecture. Creating a lecture 
 
 Switching into working environment using virtuaslenv-wrapper
 >>workon courseme
-
-test svn branches
