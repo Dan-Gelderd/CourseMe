@@ -16,6 +16,10 @@ Initial environment setup
 >>python run.py test
 >>python run.py runserver
 
+or 
+>>workon courseme
+
+
 Have a go at logging in with email teacher1@server.fake and password 111111.
 
 Hopefully the site is pretty clear even though some parts are not formatted at all well yet.
