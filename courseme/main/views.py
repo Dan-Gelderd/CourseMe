@@ -70,6 +70,11 @@ def objectives_admin(service_layer=_service_layer):
                            objectives=objectives)
 
 
+@main.route('/api/objectives')
+def objectives_api(service_layer=_service_layer):
+    objectives_list = service_layer.objectives.all()
+    return json.dumps(objectives_list)
+
 @main.route('/objectives/<int:profile_id>')
 @main.route('/objectives/<int:profile_id>/<int:scheme_id>')
 @login_required

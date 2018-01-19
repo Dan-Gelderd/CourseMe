@@ -27,6 +27,9 @@ class ObjectiveService(BaseService):
         """Lookup Objective by name.  Returns None if not found."""
         return Objective.query.filter(Objective.name == name).first()
 
+    def all(self):
+        return Objective.query.all()
+
     def available_to(self, user, matching_names):
         """List of Objectives available to the given User
 
