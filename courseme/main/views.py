@@ -72,7 +72,7 @@ def objectives_admin(service_layer=_service_layer):
 
 @main.route('/api/objectives')
 def objectives_api(service_layer=_service_layer):
-    subject_list = service_layer.subject.all()
+    subject_list = service_layer.subjects.all()
     objectives_list = service_layer.objectives.all()
     print subject_list
     print objectives_list
