@@ -72,8 +72,11 @@ def objectives_admin(service_layer=_service_layer):
 
 @main.route('/api/objectives')
 def objectives_api(service_layer=_service_layer):
+    subject_list = service_layer.subject.all()
     objectives_list = service_layer.objectives.all()
-    return json.dumps(objectives_list)
+    print subject_list
+    print objectives_list
+    return _ajax_success()
 
 @main.route('/objectives/<int:profile_id>')
 @main.route('/objectives/<int:profile_id>/<int:scheme_id>')
